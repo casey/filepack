@@ -60,9 +60,7 @@ impl Verify {
       }
     }
 
-    let current_dir = current_dir()?;
-
-    let root = self.root.clone().unwrap_or_else(|| current_dir.clone());
+    let root = self.root.clone().unwrap_or_else(|| ".".into());
 
     ensure! {
       filesystem::metadata(&root)?.is_dir(),

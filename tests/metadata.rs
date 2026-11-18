@@ -861,9 +861,9 @@ fn create_rejects_flac_missing_track_total() {
       ",
     )
     .arg("create")
-    .stderr_regex(
+    .stderr(
       "
-        error: invalid audio track `.*foo.flac`
+        error: invalid audio track `foo.flac`
                └─ missing `TRACKTOTAL` tag
       ",
     )
@@ -924,7 +924,7 @@ fn create_rejects_invalid_tracks() {
     .arg("create")
     .stderr_regex(
       "
-        error: invalid audio track `.*foo.flac`
+        error: invalid audio track `foo.flac`
                ├─ failed to decode FLAC
                └─ Ill-formed FLAC stream: .*
       ",
@@ -946,9 +946,9 @@ fn create_rejects_invalid_videos() {
       ",
     )
     .arg("create")
-    .stderr_regex(
+    .stderr(
       "
-        error: invalid video `.*foo.mp4`
+        error: invalid video `foo.mp4`
                ├─ failed to decode MP4
                └─ truncated
       ",
@@ -983,9 +983,9 @@ fn create_rejects_m4a_missing_disc_total() {
       ",
     )
     .arg("create")
-    .stderr_regex(
+    .stderr(
       "
-        error: invalid audio track `.*foo.m4a`
+        error: invalid audio track `foo.m4a`
                └─ `disk` tag is missing disc total
       ",
     )
@@ -1019,9 +1019,9 @@ fn create_rejects_m4a_with_unsupported_codec() {
       ",
     )
     .arg("create")
-    .stderr_regex(
+    .stderr(
       "
-        error: invalid audio track `.*foo.m4a`
+        error: invalid audio track `foo.m4a`
                ├─ failed to decode MP4
                └─ unsupported audio codec `MP3`
       ",
@@ -1044,7 +1044,7 @@ fn create_rejects_metadata_deco_without_yaml() {
     .success()
     .remove_file("metadata.yaml")
     .args(["create", "--force"])
-    .stderr_regex("error: metadata `.*metadata.filemeta` already exists\n")
+    .stderr("error: metadata `metadata.filemeta` already exists\n")
     .failure();
 }
 
@@ -1074,9 +1074,9 @@ fn create_rejects_mp3_missing_track_total() {
       ",
     )
     .arg("create")
-    .stderr_regex(
+    .stderr(
       "
-        error: invalid audio track `.*foo.mp3`
+        error: invalid audio track `foo.mp3`
                └─ `TRCK` tag is missing track total
       ",
     )
@@ -1121,7 +1121,7 @@ fn create_requires_manifest_not_exist_before_generating_thumbnails() {
     .write("foo.jpg", image(1280, 1280, ImageFormat::Jpeg))
     .write("metadata.yaml", "artwork: foo.jpg")
     .touch("manifest.filepack")
-    .args(["create", "."])
+    .arg("create")
     .stderr(
       "error: manifest `manifest.filepack` already exists, use `filepack update` to update it or \
       `--force` to overwrite it\n",
@@ -1162,7 +1162,7 @@ fn create_validates_metadata_before_generating_thumbnails() {
   let test = Test::new()
     .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
     .write("metadata.yaml", "artwork: foo.jpg")
-    .args(["create", "."])
+    .arg("create")
     .stderr("error: artwork `foo.jpg` is 1280×640 but must be square\n")
     .failure();
 
@@ -1191,9 +1191,7 @@ fn metadata_deco_already_exists() {
     .write("metadata.yaml", "title: Foo")
     .touch("metadata.filemeta")
     .arg("create")
-    .stderr_regex(
-      "error: metadata `.*metadata.filemeta` already exists, use `--force` to overwrite it\n",
-    )
+    .stderr("error: metadata `metadata.filemeta` already exists, use `--force` to overwrite it\n")
     .failure();
 }
 

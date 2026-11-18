@@ -44,7 +44,7 @@ fn create_rejects_invalid_artwork() {
     .write("cover.png", "foo")
     .write("metadata.yaml", "artwork: cover.png")
     .arg("create")
-    .stderr_regex("error: failed to decode PNG image `.*cover\\.png`\n.*")
+    .stderr_regex("error: failed to decode PNG image `cover\\.png`\n.*")
     .failure();
 }
 
@@ -309,7 +309,7 @@ fn magic_bytes() {
 fn manifest_already_exists_error() {
   Test::new()
     .touch("manifest.filepack")
-    .args(["create", "."])
+    .arg("create")
     .stderr(
       "error: manifest `manifest.filepack` already exists, use `filepack update` to update it or \
        `--force` to overwrite it\n",
@@ -323,7 +323,7 @@ fn manifest_already_exists_error_precedes_metadata_error() {
     .write("metadata.yaml", "title: Foo")
     .arg("create")
     .success()
-    .args(["create", "."])
+    .arg("create")
     .stderr(
       "error: manifest `manifest.filepack` already exists, use `filepack update` to update it or \
        `--force` to overwrite it\n",
@@ -473,8 +473,8 @@ fn non_unicode_path_error() {
 
   Test::new()
     .touch_non_unicode()
-    .args(["create", "."])
-    .stderr_path("error: path not valid unicode: `./�`\n")
+    .arg("create")
+    .stderr("error: path not valid unicode: `�`\n")
     .failure();
 }
 
