@@ -43,9 +43,7 @@ pub(crate) struct Packager {
 
 impl Packager {
   pub(crate) fn package(self, options: Options, operation: Operation) -> Result {
-    let current_dir = current_dir()?;
-
-    let root = self.root.unwrap_or_else(|| current_dir.clone());
+    let root = self.root.unwrap_or_else(|| ".".into());
 
     ensure! {
       filesystem::metadata(&root)?.is_dir(),

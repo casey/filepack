@@ -476,8 +476,8 @@ fn non_unicode_path_error() {
       "manifest.filepack",
       json! { embedded: {}, package: {}, signatures: [] },
     )
-    .args(["verify", "."])
-    .stderr_path("error: path not valid unicode: `./�`\n")
+    .arg("verify")
+    .stderr("error: path not valid unicode: `�`\n")
     .failure();
 }
 

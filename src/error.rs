@@ -408,7 +408,7 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: RelativePath,
   },
-  #[snafu(display("path not valid unicode: `{}`", path.display()))]
+  #[snafu(display("path not valid unicode: `{}`", path.lexiclean().display()))]
   PathUnicode {
     backtrace: Option<Backtrace>,
     path: PathBuf,

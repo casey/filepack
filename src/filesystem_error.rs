@@ -5,7 +5,7 @@ use super::*;
 pub enum FilesystemError {
   #[snafu(display("I/O error at `{path}`"))]
   Io {
-    path: Utf8PathBuf,
+    path: DisplayPath,
     source: io::Error,
   },
 }

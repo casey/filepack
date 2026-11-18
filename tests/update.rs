@@ -79,7 +79,7 @@ fn lagging_server() {
 #[test]
 fn manifest_not_found() {
   Test::new()
-    .args(["update", "."])
+    .arg("update")
     .stderr("error: manifest `manifest.filepack` not found\n")
     .failure();
 }
