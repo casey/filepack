@@ -57,13 +57,13 @@ impl Message for RevisionHash {
   const SIGNATURE_EXAMPLE_DESCRIPTION: &'static str = "Signature over the hash of the revision \
     with no parents whose package is the empty package by the all-zero private key.";
   const SIGNATURE_TAG: Tag = Tag::Signature;
-  type Error = Error;
+  type Error = AttestationError;
   type Policy<'a> = RevisionHash;
 
-  fn check(&self, _signer: PublicKey, revision: RevisionHash) -> Result {
+  fn check(&self, _signer: PublicKey, revision: RevisionHash) -> Result<(), AttestationError> {
     ensure! {
       *self == revision,
-      error::SignatureRevisionMismatch {
+      attestation_error::Revision {
         package: revision,
         signature: *self,
       },
@@ -172,10 +172,9 @@ mod tests {
         .unwrap()
         .verify(other)
         .unwrap_err(),
-      Error::SignatureRevisionMismatch {
+      AttestationError::Revision {
         package,
         signature,
-        ..
       } if package == other && signature == revision,
     );
   }

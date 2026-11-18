@@ -19,6 +19,10 @@ pub struct Signature<T> {
 }
 
 impl<T: Message> Signature<T> {
+  pub(crate) fn message(&self) -> &T {
+    &self.message
+  }
+
   pub(crate) fn new(
     public_key: PublicKey,
     message: T,

@@ -13,7 +13,10 @@ const METADATA: TableDefinition<DatabaseMetadata, u64> = TableDefinition::new("m
 const NUMBERS: TableDefinition<u64, RevisionHash> = TableDefinition::new("numbers");
 const PACKAGES: TableDefinition<Fingerprint, ()> = TableDefinition::new("packages");
 const REVISIONS: TableDefinition<RevisionHash, ()> = TableDefinition::new("revisions");
-const SCHEMA_VERSION: u64 = 9;
+const SIGNATURES: TableDefinition<(RevisionHash, PublicKeyBytes), Hash> =
+  TableDefinition::new("signatures");
+
+const SCHEMA_VERSION: u64 = 10;
 
 pub(crate) struct Server {
   database: Database,
@@ -129,12 +132,16 @@ impl Server {
 
     let mut revisions_removed = BTreeSet::new();
 
+    let mut signatures_removed = BTreeSet::new();
+
     {
       let mut directories = tx.open_table(DIRECTORIES)?;
 
       let mut packages = tx.open_table(PACKAGES)?;
 
       let mut revisions = tx.open_table(REVISIONS)?;
+
+      let mut signatures = tx.open_table(SIGNATURES)?;
 
       let mut directory_stack = Vec::new();
 
@@ -178,6 +185,17 @@ impl Server {
         .extract_from_if::<RevisionHash, _>(.., |revision, ()| !marked.contains(&revision.into()))?
       {
         revisions_removed.insert(entry?.0.value());
+      }
+
+      for entry in signatures.extract_from_if::<(RevisionHash, PublicKeyBytes), _>(
+        ..,
+        |(revision, _public_key), _hash| !marked.contains(&revision.into()),
+      )? {
+        signatures_removed.insert(entry?.1.value());
+      }
+
+      for entry in signatures.iter()? {
+        marked.insert(entry?.1.value());
       }
 
       while let Some(hash) = directory_stack.pop() {
@@ -242,6 +260,7 @@ impl Server {
       files: files_removed.into(),
       packages: packages_removed.into(),
       revisions: revisions_removed.into(),
+      signatures: signatures_removed.into(),
     })
   }
 
@@ -793,8 +812,15 @@ impl Server {
       .map(|number| Ok(number?.value()))
       .collect::<ServerResult<BTreeSet<u64>>>()?;
 
+    let signatures = tx
+      .open_table(SIGNATURES)?
+      .range((revision, [u8::MIN; PublicKey::LEN])..=(revision, [u8::MAX; PublicKey::LEN]))?
+      .map(|entry| Ok(entry?.1.value()))
+      .collect::<ServerResult<BTreeSet<Hash>>>()?;
+
     Ok(api::revision::get::Response {
       numbers: numbers.into(),
+      signatures: signatures.into(),
     })
   }
 
@@ -1046,6 +1072,38 @@ impl Server {
     Ok(number)
   }
 
+  pub(crate) fn verify_signature(&self, hash: Hash) -> ServerResult {
+    let tx = self.database.begin_write()?;
+
+    let signature = Attestation::decode_from_slice(&self.read_file(hash)?)
+      .context(server_error::SignatureDecode { hash })?;
+
+    let revision = *signature.message();
+
+    ensure!(
+      tx.open_table(REVISIONS)?.get(&revision)?.is_some(),
+      server_error::SignatureRevisionUnverified { hash, revision },
+    );
+
+    signature
+      .verify(revision)
+      .context(server_error::SignatureInvalid { hash })?;
+
+    {
+      let mut signatures = tx.open_table(SIGNATURES)?;
+
+      let key = (revision, signature.public_key().inner().to_bytes());
+
+      if signatures.get(&key)?.is_none() {
+        signatures.insert(&key, &hash)?;
+      }
+    }
+
+    tx.commit()?;
+
+    Ok(())
+  }
+
   pub(crate) fn with_data_dir(data_dir: &Utf8Path, unstable: bool) -> Result<Self> {
     let path = data_dir.join("database.redb");
     let database = Database::create(&path).context(error::DatabaseOpen { path })?;
@@ -1063,6 +1121,7 @@ impl Server {
         tx.open_table(NUMBERS)?;
         tx.open_table(PACKAGES)?;
         tx.open_table(REVISIONS)?;
+        tx.open_table(SIGNATURES)?;
       }
 
       tx.commit()?;

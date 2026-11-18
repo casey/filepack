@@ -9,18 +9,21 @@ pub(crate) mod gc {
     /// Bytes freed.
     #[n(1)]
     pub(crate) bytes: u64,
-    /// Hashes of the deleted directories.
+    /// Hashes of deleted directories.
     #[n(2)]
     pub(crate) directories: SortedSet<Hash>,
-    /// Hashes of the deleted files.
+    /// Hashes of deleted files.
     #[n(3)]
     pub(crate) files: SortedSet<Hash>,
-    /// Fingerprints of the deleted packages.
+    /// Fingerprints of deleted packages.
     #[n(4)]
     pub(crate) packages: SortedSet<Fingerprint>,
-    /// Hashes of the deleted revisions.
+    /// Hashes of deleted revisions.
     #[n(5)]
     pub(crate) revisions: SortedSet<RevisionHash>,
+    /// Hashes of deleted signatures.
+    #[n(6)]
+    pub(crate) signatures: SortedSet<Hash>,
   }
 }
 
@@ -95,6 +98,9 @@ pub(crate) mod revision {
       /// Numbers of the packages whose head is the revision.
       #[n(1)]
       pub(crate) numbers: SortedSet<u64>,
+      /// Hashes of the signatures over the revision.
+      #[n(2)]
+      pub(crate) signatures: SortedSet<Hash>,
     }
   }
 

@@ -30,6 +30,7 @@ Summary
   - [/api/package/\{fingerprint\}](api/package-fingerprint.md)
   - [/api/packages](api/packages.md)
   - [/api/revision/\{revision\}](api/revision-revision.md)
+  - [/api/signature/\{hash\}](api/signature-hash.md)
 - [Commands](commands.md)
   - [filepack](commands/filepack.md)
   - [filepack archive](commands/filepack-archive.md)

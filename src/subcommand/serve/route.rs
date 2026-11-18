@@ -29,6 +29,7 @@ impl Route {
       api_verify_directory_route(registry),
       api_verify_package_route(registry),
       api_verify_revision_route(registry),
+      api_verify_signature_route(registry),
       artwork_route(registry),
       artwork_thumbnail_route(registry),
       directory_route(registry),
@@ -81,8 +82,8 @@ pub(crate) async fn api_file(
   block_in_place(|| Ok(server.open_file(*hash)?.range(range)))
 }
 
-/// Delete files, directories, packages, and revisions not reachable by package
-/// number or mount.
+/// Delete files, directories, packages, revisions, and signatures not reachable
+/// by package number or mount.
 #[route(POST, "/api/gc")]
 pub(crate) async fn api_gc(
   _: Authenticated,
@@ -220,6 +221,18 @@ pub(crate) async fn api_verify_revision(
       number: server.verify_revision(*revision, request)?,
     }))
   })
+}
+
+/// Verify uploaded signature with `hash`.
+///
+/// `hash`: Hash of the signature.
+#[route(POST, "/api/signature/{hash}")]
+pub(crate) async fn api_verify_signature(
+  _: Authenticated,
+  server: ServerExtension,
+  hash: Path<Hash>,
+) -> ServerResult {
+  block_in_place(|| server.verify_signature(*hash))
 }
 
 /// Serve cover art of package with `fingerprint`.

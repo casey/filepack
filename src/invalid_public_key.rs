@@ -3,7 +3,7 @@ use super::*;
 /// Invalid Ed25519 public key.
 #[derive(Debug, Decode, Encode)]
 #[deco(transparent)]
-pub struct InvalidPublicKey(pub(crate) [u8; PublicKey::LEN]);
+pub struct InvalidPublicKey(pub(crate) PublicKeyBytes);
 
 impl Hex for InvalidPublicKey {
   const EXAMPLE: &'static str =
