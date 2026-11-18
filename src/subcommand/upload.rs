@@ -149,6 +149,10 @@ impl Upload {
       .as_ref()
       .map_or_default(NonEmptyOrderedSet::as_slice);
 
+    for signature in manifest.signatures() {
+      signature.verify(revision)?;
+    }
+
     let mode = if self.no_revision {
       let context = Self::upload_package_contents(&options, client, loader, &manifest, package)?;
 
@@ -163,7 +167,7 @@ impl Upload {
     } else if let Some(number) = self.replace {
       for &parent in parents {
         client
-          .revision(parent)?
+          .revision_opt(parent)?
           .context(error::RevisionParentUnpublished {
             parent,
             server: &server,
@@ -185,6 +189,8 @@ impl Upload {
           eprintln!("package number {number} is up to date");
         }
 
+        Self::upload_signatures(&options, &client, &manifest, revision)?;
+
         return Ok(());
       }
 
@@ -198,7 +204,7 @@ impl Upload {
       }
 
       api::revision::post::Mode::Update { number }
-    } else if let Some(response) = client.revision(revision)?
+    } else if let Some(response) = client.revision_opt(revision)?
       && let Some(&number) = response.numbers.first()
     {
       ensure! {
@@ -218,10 +224,12 @@ impl Upload {
         eprintln!("server already has this revision as package number {number}");
       }
 
+      Self::upload_signatures(&options, &client, &manifest, revision)?;
+
       return Ok(());
     } else if let Some(&parent) = parents.first() {
       let response = client
-        .revision(parent)?
+        .revision_opt(parent)?
         .context(error::RevisionParentUnpublished {
           parent,
           server: &server,
@@ -268,6 +276,8 @@ impl Upload {
     if !options.quiet {
       eprintln!("{} package number {number}", mode.verb());
     }
+
+    Self::upload_signatures(&options, &context.client, &manifest, revision)?;
 
     Ok(())
   }
@@ -323,6 +333,47 @@ impl Upload {
     let body = Body::sized(context.progress_bar.wrap_read(file), expected.size);
 
     context.client.put_file(expected.hash, body)?;
+
+    Ok(())
+  }
+
+  fn upload_signatures(
+    options: &Options,
+    client: &Client,
+    manifest: &Manifest,
+    revision: RevisionHash,
+  ) -> Result {
+    let present = client.revision(revision)?.signatures;
+
+    let mut uploaded = 0;
+
+    for signature in manifest.signatures() {
+      let signature = signature.encode_to_vec();
+
+      let hash = Hash::bytes(&signature);
+
+      if present.contains(&hash) {
+        continue;
+      }
+
+      client.put_file(hash, signature.into())?;
+
+      client.verify_signature(hash)?;
+
+      uploaded += 1;
+    }
+
+    if !options.quiet {
+      let unknown = manifest.unknown_signatures();
+
+      if unknown > 0 {
+        eprintln!("ignored {}", Count::new(unknown, "unrecognized signature"));
+      }
+
+      if uploaded > 0 {
+        eprintln!("uploaded {}", Count::new(uploaded, "signature"));
+      }
+    }
 
     Ok(())
   }

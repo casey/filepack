@@ -151,7 +151,11 @@ impl Client {
     builder.send().context(error::Request)
   }
 
-  pub(crate) fn revision(
+  pub(crate) fn revision(&self, revision: RevisionHash) -> Result<api::revision::get::Response> {
+    self.get(&format!("api/revision/{revision}"))?.deco()
+  }
+
+  pub(crate) fn revision_opt(
     &self,
     revision: RevisionHash,
   ) -> Result<Option<api::revision::get::Response>> {
@@ -191,6 +195,11 @@ impl Client {
         .deco::<api::revision::post::Response>()?
         .number,
     )
+  }
+
+  pub(crate) fn verify_signature(&self, hash: Hash) -> Result {
+    self.post(&format!("api/signature/{hash}"))?;
+    Ok(())
   }
 }
 
