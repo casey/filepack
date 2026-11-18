@@ -553,6 +553,21 @@ fn api_file() {
 }
 
 #[test]
+fn api_number_invalid() {
+  let server = TestServer::new();
+
+  for number in ["+0", "00"] {
+    server
+      .get(format!("/api/number/{number}"))
+      .status(StatusCode::BAD_REQUEST)
+      .assert_body(format!(
+        "Invalid URL: Cannot parse `number` with value `{number}`: invalid number `{number}`",
+      ))
+      .send();
+  }
+}
+
+#[test]
 fn api_number_not_found() {
   TestServer::new()
     .get("/api/number/0")
