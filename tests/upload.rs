@@ -528,7 +528,7 @@ fn upload_package_skips_directories_already_on_server() {
     )
     .success()
     .write("qux", "quux")
-    .args(["create", "--force"])
+    .arg("update")
     .success()
     .env("FILEPACK_LOG", "filepack=debug")
     .args(["upload", "--server", &server.address()])
@@ -674,6 +674,146 @@ fn upload_records_state() {
 }
 
 #[test]
+fn upload_recovers_number_from_parent() {
+  let server = Test::new().serve().spawn();
+
+  Test::new()
+    .write("foo", "bar")
+    .arg("create")
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success()
+    .write("foo", "baz")
+    .arg("update")
+    .success()
+    .remove_file(".filepack/state.json")
+    .args(["upload", "--server", &server.address()])
+    .stderr(
+      "
+        uploading 1 of 1 file
+        updated package number 0
+      ",
+    )
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
+fn upload_rejects_ambiguous_number() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "bar")
+    .arg("create")
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
+  Test::new()
+    .write("foo", "baz")
+    .arg("create")
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
+  test
+    .args([
+      "--quiet",
+      "upload",
+      "--server",
+      &server.address(),
+      "--replace",
+      "1",
+    ])
+    .success()
+    .remove_file(".filepack/state.json")
+    .args(["upload", "--server", &server.address()])
+    .stderr(
+      "error: server already has this revision as package numbers `0`, `1`, use `--update N` to \
+       select one\n",
+    )
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
+fn upload_rejects_ambiguous_parent() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new().write("foo", "bar").arg("create").success();
+
+  let parent = fingerprint(&test.path().join("manifest.filepack"))
+    .revision()
+    .hash();
+
+  let test = test
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
+  Test::new()
+    .write("foo", "baz")
+    .arg("create")
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
+  test
+    .args([
+      "--quiet",
+      "upload",
+      "--server",
+      &server.address(),
+      "--replace",
+      "1",
+    ])
+    .success()
+    .write("foo", "qux")
+    .arg("update")
+    .success()
+    .remove_file(".filepack/state.json")
+    .args(["upload", "--server", &server.address()])
+    .stderr(&format!(
+      "error: parent revision {parent} is the head of packages `0`, `1` on `{}/`, use `--update N` \
+       to select one\n",
+      server.address(),
+    ))
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
+fn upload_rejects_parent_that_is_not_head() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new().write("foo", "bar").arg("create").success();
+
+  let parent = fingerprint(&test.path().join("manifest.filepack"))
+    .revision()
+    .hash();
+
+  test
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success()
+    .args(["delete", "--server", &server.address(), "0"])
+    .success()
+    .write("foo", "baz")
+    .arg("update")
+    .success()
+    .remove_file(".filepack/state.json")
+    .args(["upload", "--server", &server.address()])
+    .stderr(&format!(
+      "error: parent revision {parent} is not the head of a package on `{}/`\n",
+      server.address(),
+    ))
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
 fn upload_rejects_stale_state() {
   let server = Test::new().serve().spawn();
 
@@ -699,10 +839,10 @@ fn upload_rejects_stale_state() {
     .arg("create")
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
-    .stderr("server already has package number 0\n")
+    .stderr("server already has this revision as package number 0\n")
     .success()
     .write("foo", "baz")
-    .args(["create", "--force"])
+    .arg("update")
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(
@@ -719,14 +859,47 @@ fn upload_rejects_stale_state() {
   }
   .hash();
 
-  a.write("foo", "qux")
-    .args(["create", "--force"])
-    .success()
-    .args(["upload", "--server", &server.address(), "manifest.filepack"])
+  let a = a.write("foo", "qux").arg("update").success();
+
+  let revision = Revision {
+    package: fingerprint(&a.path().join("manifest.filepack")),
+    parents: Some(NonEmptyOrderedSet::singleton(root)),
+  }
+  .hash();
+
+  a.args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(&format!(
-      "error: package number 0 is at revision {head} on the server, but the last uploaded \
-      revision is {root}\n"
+      "error: package number 0 is at revision {head} on the server, which is not the parent of \
+      revision {revision}\n"
     ))
+    .failure();
+
+  server.terminate().success();
+}
+
+#[test]
+fn upload_rejects_unpublished_parent() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new().arg("create").success();
+
+  let path = test.path().join("manifest.filepack");
+
+  let parent = fingerprint(&path).revision().hash();
+
+  add_parent(&path);
+
+  let stderr = format!(
+    "error: parent revision {parent} has not been uploaded to `{}/`\n",
+    server.address(),
+  );
+
+  test
+    .args(["upload", "--server", &server.address()])
+    .stderr(&stderr)
+    .failure()
+    .args(["upload", "--server", &server.address(), "--replace", "0"])
+    .stderr(&stderr)
     .failure();
 
   server.terminate().success();
@@ -809,7 +982,7 @@ fn upload_updates_implicitly() {
     )
     .success()
     .write("foo", "baz")
-    .args(["create", "--force"])
+    .arg("update")
     .success()
     .args(["upload", "--server", &server.address(), "manifest.filepack"])
     .stderr(
@@ -873,7 +1046,7 @@ fn upload_updates_package() {
     .stderr("package number 0 is up to date\n")
     .success()
     .write("foo", "baz")
-    .args(["create", "--force"])
+    .arg("update")
     .success();
 
   let new = fingerprint(&test.path().join("manifest.filepack"));

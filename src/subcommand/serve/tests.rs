@@ -122,8 +122,8 @@ impl<'a> PackageBuilder<'a> {
     server
       .post(format!("/api/revision/{revision}"))
       .body(
-        api::revision::Request {
-          mode: api::revision::Mode::New,
+        api::revision::post::Request {
+          mode: api::revision::post::Mode::New,
         }
         .encode_to_vec(),
       )
@@ -388,12 +388,12 @@ impl TestServer {
     self
       .post(format!("/api/revision/{revision}"))
       .body(
-        api::revision::Request {
-          mode: api::revision::Mode::New,
+        api::revision::post::Request {
+          mode: api::revision::post::Mode::New,
         }
         .encode_to_vec(),
       )
-      .assert_body(api::revision::Response { number }.encode_to_vec())
+      .assert_body(api::revision::post::Response { number }.encode_to_vec())
       .send();
 
     revision
@@ -553,24 +553,6 @@ fn api_file() {
 }
 
 #[test]
-fn api_head() {
-  let server = TestServer::new();
-
-  let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
-
-  let revision = server.write_revision(fingerprint, None);
-
-  server.head(format!("/api/head/{revision}")).send();
-
-  server.delete("/api/number/0").send();
-
-  server
-    .head(format!("/api/head/{revision}"))
-    .status(StatusCode::NOT_FOUND)
-    .send();
-}
-
-#[test]
 fn api_number_not_found() {
   TestServer::new()
     .get("/api/number/0")
@@ -656,6 +638,52 @@ fn api_packages_returns_package_fingerprints() {
       }
       .encode_to_vec(),
     )
+    .send();
+}
+
+#[test]
+fn api_revision() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().file("foo", b"foo").upload(&server);
+
+  let revision = server.write_revision(fingerprint, None);
+
+  server
+    .get(format!("/api/revision/{revision}"))
+    .assert_body(
+      api::revision::get::Response {
+        numbers: BTreeSet::from([0]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+
+  server.delete("/api/number/0").send();
+
+  server
+    .get(format!("/api/revision/{revision}"))
+    .assert_body(
+      api::revision::get::Response {
+        numbers: SortedSet::default(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
+}
+
+#[test]
+fn api_revision_not_found() {
+  let server = TestServer::new();
+
+  let package = PackageBuilder::new().file("foo", b"foo");
+
+  let revision = server.write_revision(Fingerprint(package.root.upload(&server)), None);
+
+  server
+    .get(format!("/api/revision/{revision}"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("revision {revision} not found"))
     .send();
 }
 
@@ -1068,17 +1096,25 @@ fn delete_number_keeps_shared_head() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Replace { number: 1 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Replace { number: 1 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 1 }.encode_to_vec())
     .send();
 
   server.delete("/api/number/0").send();
 
-  server.head(format!("/api/head/{revision}")).send();
+  server
+    .get(format!("/api/revision/{revision}"))
+    .assert_body(
+      api::revision::get::Response {
+        numbers: BTreeSet::from([1]).into(),
+      }
+      .encode_to_vec(),
+    )
+    .send();
 }
 
 #[test]
@@ -1528,12 +1564,12 @@ fn gc_retains_merge_parents() {
   server
     .post(format!("/api/revision/{merge}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Update { number: 0 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 0 }.encode_to_vec())
     .send();
 
   server.delete("/api/number/1").send();
@@ -1617,23 +1653,23 @@ fn gc_shares_ancestors() {
   server
     .post(format!("/api/revision/{head}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Update { number: 0 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 0 }.encode_to_vec())
     .send();
 
   server
     .post(format!("/api/revision/{root}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::New,
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::New,
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 1 }.encode_to_vec())
     .send();
 
   server
@@ -1742,12 +1778,12 @@ fn get_package_by_revision() {
   server
     .post(format!("/api/revision/{head}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Update { number: 0 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 0 }.encode_to_vec())
     .send();
 
   server
@@ -1818,12 +1854,12 @@ fn get_package_history() {
   server
     .post(format!("/api/revision/{head}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Update { number: 0 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 0 }.encode_to_vec())
     .send();
 
   server
@@ -3033,12 +3069,12 @@ fn mount_number_follows_head() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Replace { number: 0 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Replace { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 0 }.encode_to_vec())
     .send();
 
   server.get("/mount/0/").assert_body("bar").send();
@@ -4853,12 +4889,12 @@ fn verify_package_assigns_numbers() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Replace { number: 0 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Replace { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 0 }.encode_to_vec())
     .send();
 }
 
@@ -4881,12 +4917,12 @@ fn verify_package_replace() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Replace { number: 0 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Replace { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 0 }.encode_to_vec())
     .send();
 
   server
@@ -4969,8 +5005,8 @@ fn verify_package_replace_not_found() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Replace { number: 99 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Replace { number: 99 },
       }
       .encode_to_vec(),
     )
@@ -4991,12 +5027,12 @@ fn verify_package_replace_shares_head() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Replace { number: 1 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Replace { number: 1 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 1 }.encode_to_vec())
     .send();
 
   for number in 0..=1 {
@@ -5015,12 +5051,12 @@ fn verify_package_replace_shares_head() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::New,
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::New,
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 0 }.encode_to_vec())
     .send();
 }
 
@@ -5040,12 +5076,12 @@ fn verify_package_replace_with_history() {
   server
     .post(format!("/api/revision/{head}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Update { number: 0 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 0 }.encode_to_vec())
     .send();
 
   PackageBuilder::new().file("baz", b"baz").upload(&server);
@@ -5053,12 +5089,12 @@ fn verify_package_replace_with_history() {
   server
     .post(format!("/api/revision/{head}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Replace { number: 1 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Replace { number: 1 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 1 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 1 }.encode_to_vec())
     .send();
 
   server
@@ -5124,8 +5160,8 @@ fn verify_revision_decode_error() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::New,
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::New,
       }
       .encode_to_vec(),
     )
@@ -5143,8 +5179,8 @@ fn verify_revision_not_found() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::New,
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::New,
       }
       .encode_to_vec(),
     )
@@ -5164,8 +5200,8 @@ fn verify_revision_package_unverified() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::New,
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::New,
       }
       .encode_to_vec(),
     )
@@ -5189,8 +5225,8 @@ fn verify_revision_parent_not_found() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::New,
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::New,
       }
       .encode_to_vec(),
     )
@@ -5217,8 +5253,8 @@ fn verify_revision_parent_unexpected() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::New,
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::New,
       }
       .encode_to_vec(),
     )
@@ -5244,12 +5280,12 @@ fn verify_revision_update() {
     server
       .post(format!("/api/revision/{revision}"))
       .body(
-        api::revision::Request {
-          mode: api::revision::Mode::Update { number: 0 },
+        api::revision::post::Request {
+          mode: api::revision::post::Mode::Update { number: 0 },
         }
         .encode_to_vec(),
       )
-      .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
+      .assert_body(api::revision::post::Response { number: 0 }.encode_to_vec())
       .send();
   }
 
@@ -5265,8 +5301,13 @@ fn verify_revision_update() {
     .send();
 
   server
-    .head(format!("/api/head/{head}"))
-    .status(StatusCode::NOT_FOUND)
+    .get(format!("/api/revision/{head}"))
+    .assert_body(
+      api::revision::get::Response {
+        numbers: SortedSet::default(),
+      }
+      .encode_to_vec(),
+    )
     .send();
 
   server
@@ -5296,8 +5337,8 @@ fn verify_revision_update_conflict() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Update { number: 0 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
@@ -5327,12 +5368,12 @@ fn verify_revision_update_merge() {
   server
     .post(format!("/api/revision/{merge}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Update { number: 0 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
-    .assert_body(api::revision::Response { number: 0 }.encode_to_vec())
+    .assert_body(api::revision::post::Response { number: 0 }.encode_to_vec())
     .send();
 
   server
@@ -5363,8 +5404,8 @@ fn verify_revision_update_merge_conflict() {
   server
     .post(format!("/api/revision/{merge}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Update { number: 0 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )
@@ -5386,8 +5427,8 @@ fn verify_revision_update_not_found() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Update { number: 99 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Update { number: 99 },
       }
       .encode_to_vec(),
     )
@@ -5412,8 +5453,8 @@ fn verify_revision_update_parent_missing() {
   server
     .post(format!("/api/revision/{revision}"))
     .body(
-      api::revision::Request {
-        mode: api::revision::Mode::Update { number: 0 },
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Update { number: 0 },
       }
       .encode_to_vec(),
     )

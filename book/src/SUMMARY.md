@@ -24,7 +24,6 @@ Summary
   - [/api/directory/\{hash\}](api/directory-hash.md)
   - [/api/file/\{hash\}](api/file-hash.md)
   - [/api/gc](api/gc.md)
-  - [/api/head/\{revision\}](api/head-revision.md)
   - [/api/missing](api/missing.md)
   - [/api/number/\{number\}](api/number-number.md)
   - [/api/numbers](api/numbers.md)

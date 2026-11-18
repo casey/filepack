@@ -493,14 +493,43 @@ pub enum Error {
   #[snafu(display("revision hash mismatch"))]
   RevisionHashMismatch { backtrace: Option<Backtrace> },
   #[snafu(display(
-    "package number {number} is at revision {server} on the server, but the last uploaded revision \
-     is {local}"
+    "server already has this revision as package numbers {numbers}, use `--update N` to select one"
+  ))]
+  RevisionNumberAmbiguous {
+    backtrace: Option<Backtrace>,
+    numbers: Ticked<u64>,
+  },
+  #[snafu(display("parent revision {parent} is not the head of a package on `{server}`"))]
+  RevisionParentNotHead {
+    backtrace: Option<Backtrace>,
+    parent: RevisionHash,
+    server: String,
+  },
+  #[snafu(display(
+    "parent revision {parent} is the head of packages {numbers} on `{server}`, use `--update N` to \
+     select one"
+  ))]
+  RevisionParentNumberAmbiguous {
+    backtrace: Option<Backtrace>,
+    numbers: Ticked<u64>,
+    parent: RevisionHash,
+    server: String,
+  },
+  #[snafu(display("parent revision {parent} has not been uploaded to `{server}`"))]
+  RevisionParentUnpublished {
+    backtrace: Option<Backtrace>,
+    parent: RevisionHash,
+    server: String,
+  },
+  #[snafu(display(
+    "package number {number} is at revision {head} on the server, which is not the parent of \
+     revision {revision}"
   ))]
   RevisionStale {
     backtrace: Option<Backtrace>,
-    local: RevisionHash,
+    head: RevisionHash,
     number: u64,
-    server: RevisionHash,
+    revision: RevisionHash,
   },
   #[snafu(display("revision {revision} has not been uploaded to {servers}"))]
   RevisionUnpublished {

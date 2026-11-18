@@ -19,12 +19,12 @@ impl Route {
       api_delete_number_route(registry),
       api_file_route(registry),
       api_gc_route(registry),
-      api_head_route(registry),
       api_missing_route(registry),
       api_number_route(registry),
       api_numbers_route(registry),
       api_package_route(registry),
       api_packages_route(registry),
+      api_revision_route(registry),
       api_upload_file_route(registry),
       api_verify_directory_route(registry),
       api_verify_package_route(registry),
@@ -92,23 +92,6 @@ pub(crate) async fn api_gc(
   block_in_place(|| Ok(DecoResponse(server.gc(&server_config.mounts)?)))
 }
 
-/// Check whether `revision` is the head of a package.
-///
-/// `revision`: Hash of the revision to check.
-#[route(HEAD, "/api/head/{revision}")]
-pub(crate) async fn api_head(
-  server: ServerExtension,
-  Path(revision): Path<RevisionHash>,
-) -> ServerResult {
-  block_in_place(|| {
-    ensure!(
-      server.is_head(revision)?,
-      server_error::HeadNotFound { revision },
-    );
-    Ok(())
-  })
-}
-
 /// Report which files the server lacks.
 #[route(POST, "/api/missing")]
 pub(crate) async fn api_missing(
@@ -174,6 +157,17 @@ pub(crate) async fn api_packages(
   })
 }
 
+/// Return information about `revision`.
+///
+/// `revision`: Hash of the uploaded revision.
+#[route(GET, "/api/revision/{revision}")]
+pub(crate) async fn api_revision(
+  server: ServerExtension,
+  revision: Path<RevisionHash>,
+) -> ServerResult<DecoResponse<api::revision::get::Response>> {
+  block_in_place(|| Ok(DecoResponse(server.revision(*revision)?)))
+}
+
 /// Upload file with `hash`.
 ///
 /// `hash`: Hash of the file.
@@ -219,10 +213,10 @@ pub(crate) async fn api_verify_revision(
   _: Authenticated,
   server: ServerExtension,
   revision: Path<RevisionHash>,
-  DecoRequest(request): DecoRequest<api::revision::Request, { MIB }>,
-) -> ServerResult<DecoResponse<api::revision::Response>> {
+  DecoRequest(request): DecoRequest<api::revision::post::Request, { MIB }>,
+) -> ServerResult<DecoResponse<api::revision::post::Response>> {
   block_in_place(|| {
-    Ok(DecoResponse(api::revision::Response {
+    Ok(DecoResponse(api::revision::post::Response {
       number: server.verify_revision(*revision, request)?,
     }))
   })

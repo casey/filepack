@@ -5,7 +5,7 @@ pub(crate) trait ReqwestResponseExt: Sized {
 
   fn deco<T: DecodeOwned>(self) -> Result<T>;
 
-  fn found(self) -> Result<bool>;
+  fn found(self) -> Result<Option<Self>>;
 }
 
 impl ReqwestResponseExt for reqwest::blocking::Response {
@@ -35,12 +35,11 @@ impl ReqwestResponseExt for reqwest::blocking::Response {
     T::decode_from_slice(&bytes).context(error::DecodeResponse { url })
   }
 
-  fn found(self) -> Result<bool> {
+  fn found(self) -> Result<Option<Self>> {
     if self.status() == StatusCode::NOT_FOUND {
-      Ok(false)
+      Ok(None)
     } else {
-      self.check_status()?;
-      Ok(true)
+      Ok(Some(self.check_status()?))
     }
   }
 }

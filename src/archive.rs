@@ -140,6 +140,11 @@ impl Archive {
     Component::new(Self::PACKAGE).unwrap()
   }
 
+  pub(crate) fn revision(&self, options: DecodeOptions) -> Result<&[u8], ArchiveError> {
+    let entry = Self::revision_entry(&self.decode_root(options)?)?;
+    self.file(entry.hash, entry.size)
+  }
+
   pub(crate) fn revision_component() -> &'static Component {
     Component::new(Self::REVISION).unwrap()
   }
