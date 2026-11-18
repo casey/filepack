@@ -11,7 +11,7 @@ struct Context {
 pub(crate) struct Upload {
   #[arg(help = "Authenticate with key <KEY>", long, value_name = "KEY")]
   auth: Option<KeyName>,
-  #[arg(help = "Upload file instead of package", long)]
+  #[arg(group = "mode", help = "Upload file instead of package", long)]
   file: bool,
   #[arg(
     help = "Upload <PATH>, defaults to current directory for packages",
@@ -20,8 +20,10 @@ pub(crate) struct Upload {
     value_name = "PATH"
   )]
   input: Option<Utf8PathBuf>,
+  #[arg(group = "mode", help = "Upload package without revision", long)]
+  no_revision: bool,
   #[arg(
-    conflicts_with = "file",
+    group = "mode",
     help = "Replace package number <NUMBER>",
     long,
     value_name = "NUMBER"
@@ -30,7 +32,7 @@ pub(crate) struct Upload {
   #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
   server: ServerUrl,
   #[arg(
-    conflicts_with_all = ["file", "replace"],
+    group = "mode",
     help = "Update package number <NUMBER>",
     long,
     value_name = "NUMBER"
@@ -128,8 +130,6 @@ impl Upload {
 
     let package = loader.package()?;
 
-    let fingerprint = Fingerprint(package.hash);
-
     let update = match (self.replace, self.update) {
       (Some(_), Some(_)) => unreachable!(),
       (Some(_), None) => None,
@@ -149,7 +149,18 @@ impl Upload {
       .as_ref()
       .map_or_default(NonEmptyOrderedSet::as_slice);
 
-    let mode = if let Some(number) = self.replace {
+    let mode = if self.no_revision {
+      let context = Self::upload_package_contents(&options, client, loader, &manifest, package)?;
+
+      if !options.quiet {
+        eprintln!(
+          "uploaded {}",
+          context.client.package_url(package.hash.into()),
+        );
+      }
+
+      return Ok(());
+    } else if let Some(number) = self.replace {
       for &parent in parents {
         client
           .revision(parent)?
@@ -238,38 +249,7 @@ impl Upload {
       api::revision::post::Mode::New
     };
 
-    let manifest_files = manifest.files();
-
-    let missing = client.missing_files(loader.hashes()?)?;
-
-    let mut files = 0;
-
-    let mut bytes = 0;
-
-    for file in manifest_files.values() {
-      if missing.contains(&file.hash) {
-        files += 1;
-        bytes += file.size;
-      }
-    }
-
-    if !options.quiet {
-      eprintln!(
-        "uploading {files} of {}",
-        Count::new(manifest_files.len(), "file")
-      );
-    }
-
-    let mut context = Context {
-      client,
-      loader,
-      missing,
-      progress_bar: ProgressBar::items(&options, bytes, files, "files"),
-    };
-
-    Self::upload_directory(&mut context, &root, package.hash, package.size)?;
-
-    context.client.verify_package(fingerprint)?;
+    let context = Self::upload_package_contents(&options, client, loader, &manifest, package)?;
 
     context
       .client
@@ -292,6 +272,51 @@ impl Upload {
     Ok(())
   }
 
+  fn upload_package_contents(
+    options: &Options,
+    client: Client,
+    loader: Loader,
+    manifest: &Manifest,
+    package: Entry,
+  ) -> Result<Context> {
+    let manifest_files = manifest.files();
+
+    let missing = client.missing_files(loader.hashes()?)?;
+
+    let mut files = 0;
+
+    let mut bytes = 0;
+
+    for file in manifest_files.values() {
+      if missing.contains(&file.hash) {
+        files += 1;
+        bytes += file.size;
+      }
+    }
+
+    if !options.quiet {
+      eprintln!(
+        "uploading {files} of {}",
+        Count::new(manifest_files.len(), "file")
+      );
+    }
+
+    let root = loader.root().to_owned();
+
+    let mut context = Context {
+      client,
+      loader,
+      missing,
+      progress_bar: ProgressBar::items(options, bytes, files, "files"),
+    };
+
+    Self::upload_directory(&mut context, &root, package.hash, package.size)?;
+
+    context.client.verify_package(package.hash.into())?;
+
+    Ok(context)
+  }
+
   fn upload_package_file(context: &Context, expected: &Entry, path: &Utf8Path) -> Result {
     let file = filesystem::open(path)?;
 
@@ -310,6 +335,21 @@ mod tests {
   #[test]
   fn file_requires_path() {
     assert_missing_argument::<Upload>(&["--server", "http://127.0.0.1:1", "--file"], &["<PATH>"]);
+  }
+
+  #[test]
+  fn no_revision_conflicts_with_update() {
+    assert_argument_conflict::<Upload>(
+      &[
+        "--server",
+        "http://127.0.0.1:1",
+        "--no-revision",
+        "--update",
+        "1",
+      ],
+      "--no-revision",
+      "--update <NUMBER>",
+    );
   }
 
   #[test]

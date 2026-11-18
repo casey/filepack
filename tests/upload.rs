@@ -236,6 +236,41 @@ fn upload_creates_file() {
 }
 
 #[test]
+fn upload_no_revision() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new().write("foo", "bar").arg("create").success();
+
+  let path = test.path().join("manifest.filepack");
+
+  let fingerprint = fingerprint(&path);
+
+  add_parent(&path);
+
+  let test = test
+    .args(["upload", "--server", &server.address(), "--no-revision"])
+    .stderr(&format!(
+      "
+        uploading 1 of 1 file
+        uploaded {}/package/{fingerprint}
+      ",
+      server.address(),
+    ))
+    .success();
+
+  assert!(!test.path().join(".filepack").exists());
+
+  server.get(format!("/package/{fingerprint}")).send();
+
+  server
+    .get("/package/0")
+    .status(StatusCode::NOT_FOUND)
+    .send();
+
+  server.terminate().success();
+}
+
+#[test]
 fn upload_package_accepts_directory() {
   let server = Test::new().serve().assert_server_file("bar").spawn();
 
