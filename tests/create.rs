@@ -473,7 +473,7 @@ fn non_unicode_path_error() {
 
   Test::new()
     .touch_non_unicode()
-    .arg("create")
+    .args(["create", "."])
     .stderr_path("error: path not valid unicode: `./�`\n")
     .failure();
 }
