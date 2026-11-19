@@ -62,6 +62,7 @@ impl Download {
     client: Client,
     fingerprint: Fingerprint,
     parents: Option<&NonEmptyOrderedSet<RevisionHash>>,
+    signatures: BTreeSet<Attestation>,
   ) -> Result {
     let mut stack = vec![(Hash::from(fingerprint), self.output.clone(), None)];
 
@@ -74,23 +75,12 @@ impl Download {
     let mut progress_bar = ProgressBar::items(options, 0, 0, "entries");
 
     while let Some((hash, path, expected)) = stack.pop() {
-      let url = client.file_url(hash);
-
-      let response = client.file(hash)?;
-
-      let deco = response
-        .bytes()
-        .with_context(|_| error::ResponseBody { url: url.clone() })?;
-
-      let actual = Hash::bytes(&deco);
-
-      ensure! {
-        actual == hash,
-        error::DownloadHashMismatch { actual, expected: hash },
-      }
+      let deco = client.file_bytes(hash)?;
 
       let directory =
-        Directory::decode_from_slice(&deco).context(error::DecodeResponseDirectory { url })?;
+        Directory::decode_from_slice(&deco).context(error::DecodeResponseDirectory {
+          url: client.file_url(hash),
+        })?;
 
       let actual = directory
         .totals()
@@ -121,7 +111,7 @@ impl Download {
 
       progress_bar.item_done();
 
-      directories.insert(hash, deco.to_vec());
+      directories.insert(hash, deco);
 
       for component in directory.entries.keys() {
         if component.is_reserved() {
@@ -165,7 +155,12 @@ impl Download {
     );
 
     let archive = builder
-      .build_package(package, parents, &BTreeSet::new(), BTreeMap::new())
+      .build_package(
+        package,
+        parents,
+        &signatures.into_iter().map(Decoded::Known).collect(),
+        BTreeMap::new(),
+      )
       .unwrap();
 
     let manifest = archive.unpack().unwrap();
@@ -207,28 +202,49 @@ impl Download {
     Ok(())
   }
 
-  fn download_revision(&self, options: &Options, revision: RevisionHash) -> Result {
+  fn download_revision(&self, options: &Options, hash: RevisionHash) -> Result {
     let client = Client::new(options, self.server.clone(), None)?;
 
-    let hash = Hash::from(revision);
+    let revision = client.file_bytes(hash.into())?;
 
-    let url = client.file_url(hash);
+    let revision = Revision::decode_strict(&revision).context(error::DecodeResponse {
+      url: client.file_url(hash.into()),
+    })?;
 
-    let deco = client
-      .file(hash)?
-      .bytes()
-      .with_context(|_| error::ResponseBody { url: url.clone() })?;
+    let mut signatures = BTreeSet::new();
 
-    let actual = Hash::bytes(&deco);
+    let mut unknown = 0;
 
-    ensure! {
-      actual == hash,
-      error::DownloadHashMismatch { actual, expected: hash },
+    if let Some(response) = client.revision_opt(hash)? {
+      for &signature in &*response.signatures {
+        let deco = client.file_bytes(signature)?;
+
+        let signature =
+          Decoded::<Attestation>::decode_from_slice(&deco).context(error::DecodeResponse {
+            url: client.file_url(signature),
+          })?;
+
+        match signature {
+          Decoded::Known(signature) => {
+            signature.verify(hash)?;
+            signatures.insert(signature);
+          }
+          Decoded::Unknown(_) => unknown += 1,
+        }
+      }
     }
 
-    let revision = Revision::decode_strict(&deco).context(error::DecodeResponse { url })?;
+    if unknown > 0 && !options.quiet {
+      eprintln!("ignored {}", Count::new(unknown, "unrecognized signature"));
+    }
 
-    self.download_package(options, client, revision.package, revision.parents.as_ref())
+    self.download_package(
+      options,
+      client,
+      revision.package,
+      revision.parents.as_ref(),
+      signatures,
+    )
   }
 
   pub(crate) fn run(self, options: Options) -> Result {
@@ -247,6 +263,7 @@ impl Download {
         Client::new(&options, self.server.clone(), None)?,
         self.package.unwrap(),
         None,
+        BTreeSet::new(),
       )
     }
   }
