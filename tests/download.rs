@@ -857,12 +857,10 @@ fn download_verifies_signature_from_key() {
     .hash()
     .to_string();
 
-  for (i, key) in ["master", &test.read("keychain/master.public")]
-    .into_iter()
-    .enumerate()
-  {
-    let output = i.to_string();
-
+  for (key, output) in [
+    ("master", "name"),
+    (&*test.read("keychain/master.public"), "public-key"),
+  ] {
     Test::new()
       .data_dir(test.path().as_str())
       .args([
@@ -873,9 +871,9 @@ fn download_verifies_signature_from_key() {
         &revision,
         "--key",
         key,
-        &output,
+        output,
       ])
-      .assert_dir(&output)
+      .assert_dir(output)
       .success();
   }
 
