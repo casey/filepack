@@ -165,7 +165,6 @@ use {
     signature_error::SignatureError,
     sort::Sort,
     sort_key::SortKey,
-    sorted_set::SortedSet,
     static_asset::StaticAsset,
     style::Style,
     subcommand::Subcommand,
@@ -311,6 +310,7 @@ pub use self::{
   reference::Reference,
   revision::Revision,
   server_state::ServerState,
+  sorted_set::SortedSet,
   state::State,
   tag::Tag,
   totals::Totals,
@@ -329,7 +329,7 @@ macro_rules! assert_matches_regex {
   }};
 }
 
-mod api;
+pub mod api;
 mod application;
 mod archive;
 mod archive_builder;

@@ -27,6 +27,24 @@ impl Client {
     self.get(&format!("api/file/{hash}"))
   }
 
+  pub(crate) fn file_bytes(&self, hash: Hash) -> Result<Vec<u8>> {
+    let bytes = self
+      .file(hash)?
+      .bytes()
+      .with_context(|_| error::ResponseBody {
+        url: self.file_url(hash),
+      })?;
+
+    let actual = Hash::bytes(&bytes);
+
+    ensure! {
+      actual == hash,
+      error::DownloadHashMismatch { actual, expected: hash },
+    }
+
+    Ok(bytes.into())
+  }
+
   pub(crate) fn file_url(&self, hash: Hash) -> Url {
     self.url(&format!("api/file/{hash}"))
   }

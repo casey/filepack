@@ -1,12 +1,15 @@
 use {
-  self::{child::Child, dedent::Dedent, expected::Expected, request::Request, test::Test},
+  self::{
+    child::Child, dedent::Dedent, expected::Expected, request::Request, stub_server::StubServer,
+    test::Test,
+  },
   axum::{body, response::IntoResponse},
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
     Decode, DecodeOptions, Decoded, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry,
     Fingerprint, FlacBuilder, Hash, Loader, MagicType, Manifest, Metadata, Mp3Builder, Mp4Builder,
     NonEmptyOrderedSet, PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, Reference,
-    Revision, ServerState, State, Totals, gradient, gradient_alpha, hex,
+    Revision, ServerState, State, Totals, api, gradient, gradient_alpha, hex,
     templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},
@@ -19,12 +22,16 @@ use {
     assert_matches,
     collections::{BTreeMap, BTreeSet},
     fs,
-    io::{self, Cursor, Read, Write},
-    net::TcpListener,
+    io::{self, BufRead, BufReader, Cursor, Read, Write},
+    net::{TcpListener, TcpStream},
     path::{MAIN_SEPARATOR_STR, Path},
     process::{Command, Stdio},
     str,
-    sync::{LazyLock, mpsc},
+    sync::{
+      Arc, LazyLock,
+      atomic::{AtomicBool, Ordering},
+      mpsc,
+    },
     thread,
     time::{Duration, Instant},
   },
@@ -69,6 +76,7 @@ mod serve;
 mod sign;
 mod signatures;
 mod size;
+mod stub_server;
 mod test;
 mod update;
 mod upload;
@@ -144,6 +152,27 @@ fn fingerprint(path: &Utf8Path) -> Fingerprint {
 
 fn manifest(path: &Utf8Path) -> Manifest {
   Manifest::load_with_options(DecodeOptions::strict(), Some(path)).unwrap()
+}
+
+fn signed_revision() -> (Revision, PublicKey, BTreeMap<u64, Vec<u8>>) {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create_dir("foo")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  let path = test.path().join("foo/manifest.filepack");
+
+  let manifest = manifest(&path);
+
+  let signature = manifest.signatures.first().unwrap().known().unwrap();
+
+  (
+    fingerprint(&path).revision(),
+    signature.public_key(),
+    BTreeMap::decode_from_slice(&signature.encode_to_vec()).unwrap(),
+  )
 }
 
 fn tempdir() -> TempDir {

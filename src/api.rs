@@ -86,21 +86,21 @@ pub(crate) mod packages {
   }
 }
 
-pub(crate) mod revision {
+pub mod revision {
   use super::*;
 
-  pub(crate) mod get {
+  pub mod get {
     use super::*;
 
     /// Response body of `GET /api/revision/{revision}`.
     #[derive(Encode, Decode)]
-    pub(crate) struct Response {
+    pub struct Response {
       /// Numbers of the packages whose head is the revision.
       #[n(1)]
-      pub(crate) numbers: SortedSet<u64>,
+      pub numbers: SortedSet<u64>,
       /// Hashes of the signatures over the revision.
       #[n(2)]
-      pub(crate) signatures: SortedSet<Hash>,
+      pub signatures: SortedSet<Hash>,
     }
   }
 

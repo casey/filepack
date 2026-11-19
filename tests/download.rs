@@ -118,6 +118,40 @@ fn download_fails_with_404_when_file_missing() {
 }
 
 #[test]
+fn download_ignores_unrecognized_signatures() {
+  let (revision, _public_key, mut signature) = signed_revision();
+
+  assert!(signature.insert(4, b"foo".to_vec()).is_none());
+
+  let signature = signature.encode_to_vec();
+
+  let server = StubServer::new()
+    .file(Directory::new().deco().0)
+    .file(revision.encode_to_vec())
+    .file(signature.clone())
+    .revision(&revision, &[Hash::bytes(&signature)])
+    .spawn();
+
+  let test = Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--revision",
+      &revision.hash().to_string(),
+      "out",
+    ])
+    .stderr("ignored 1 unrecognized signature\n")
+    .success();
+
+  assert!(
+    manifest(&test.path().join("out/manifest.filepack"))
+      .signatures
+      .is_empty(),
+  );
+}
+
+#[test]
 fn download_package_fails_if_output_directory_already_exists() {
   Test::new()
     .create_dir("out")
@@ -344,6 +378,74 @@ fn download_package_rejects_reserved_filename() {
 }
 
 #[test]
+fn download_rejects_invalid_signature() {
+  let (revision, public_key, mut signature) = signed_revision();
+
+  signature.get_mut(&3).unwrap()[32] ^= 1;
+
+  let signature = signature.encode_to_vec();
+
+  let server = StubServer::new()
+    .file(revision.encode_to_vec())
+    .file(signature.clone())
+    .revision(&revision, &[Hash::bytes(&signature)])
+    .spawn();
+
+  let test = Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--revision",
+      &revision.hash().to_string(),
+      "out",
+    ])
+    .stderr(&format!(
+      "
+        error: invalid signature for key `{public_key}`
+               ├─ signature error
+               └─ Verification equation was not satisfied
+      "
+    ))
+    .failure();
+
+  assert!(!test.path().join("out").exists());
+}
+
+#[test]
+fn download_rejects_signature_for_different_revision() {
+  let (signed, _public_key, signature) = signed_revision();
+
+  let signature = signature.encode_to_vec();
+
+  let revision = Fingerprint::from(Hash::bytes(b"foo")).revision();
+
+  let server = StubServer::new()
+    .file(revision.encode_to_vec())
+    .file(signature.clone())
+    .revision(&revision, &[Hash::bytes(&signature)])
+    .spawn();
+
+  let test = Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--revision",
+      &revision.hash().to_string(),
+      "out",
+    ])
+    .stderr(&format!(
+      "error: signature revision `{}` does not match package revision `{}`\n",
+      signed.hash(),
+      revision.hash(),
+    ))
+    .failure();
+
+  assert!(!test.path().join("out").exists());
+}
+
+#[test]
 fn download_retrieves_file() {
   let server = Test::new().serve().assert_server_file("bar").spawn();
 
@@ -561,6 +663,81 @@ fn download_retrieves_revision() {
 
   downloaded
     .args(["verify", "out", "--revision", &revision])
+    .stderr("successfully verified 1 file totaling 3 bytes\n")
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
+fn download_retrieves_signatures() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .write("foo/bar", "baz")
+    .args(["create", "--sign", "foo"])
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address(), "foo"])
+    .success();
+
+  let path = test.path().join("foo/manifest.filepack");
+
+  let downloaded = Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--revision",
+      &fingerprint(&path).revision().hash().to_string(),
+      "out",
+    ])
+    .success();
+
+  assert_eq!(
+    fs::read(downloaded.path().join("out/manifest.filepack")).unwrap(),
+    fs::read(&path).unwrap(),
+  );
+
+  downloaded
+    .args([
+      "verify",
+      "out",
+      "--key",
+      &test.read("keychain/master.public"),
+    ])
+    .stderr("successfully verified 1 file totaling 3 bytes with 1 signature\n")
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
+fn download_retrieves_unregistered_package() {
+  let (directory, hash) = Directory::new().insert_file("foo", b"bar").deco();
+
+  let revision = Fingerprint::from(hash).revision();
+
+  let server = Test::new()
+    .serve()
+    .write_server_file("bar")
+    .write_server_file(directory)
+    .write_server_file(revision.encode_to_vec())
+    .spawn();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--revision",
+      &revision.hash().to_string(),
+      "out",
+    ])
+    .assert_file("out/foo", "bar")
+    .success()
+    .args(["verify", "out"])
     .stderr("successfully verified 1 file totaling 3 bytes\n")
     .success();
 
