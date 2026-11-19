@@ -446,6 +446,45 @@ fn download_rejects_signature_for_different_revision() {
 }
 
 #[test]
+fn download_requires_signature_from_key() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .args(["keygen", "--name", "bar"])
+    .success()
+    .create_dir("foo")
+    .args(["create", "--sign", "foo"])
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address(), "foo"])
+    .success();
+
+  let revision = fingerprint(&test.path().join("foo/manifest.filepack"))
+    .revision()
+    .hash()
+    .to_string();
+
+  let test = test
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--revision",
+      &revision,
+      "--key",
+      "bar",
+      "out",
+    ])
+    .stderr("error: no signature found for key `bar`\n")
+    .failure();
+
+  assert!(!test.path().join("out").exists());
+
+  server.terminate().success();
+}
+
+#[test]
 fn download_retrieves_file() {
   let server = Test::new().serve().assert_server_file("bar").spawn();
 
@@ -796,6 +835,47 @@ fn download_revision_fails_when_not_found() {
       server.address(),
     ))
     .failure();
+
+  server.terminate().success();
+}
+
+#[test]
+fn download_verifies_signature_from_key() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create_dir("foo")
+    .args(["create", "--sign", "foo"])
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address(), "foo"])
+    .success();
+
+  let revision = fingerprint(&test.path().join("foo/manifest.filepack"))
+    .revision()
+    .hash()
+    .to_string();
+
+  for (key, output) in [
+    ("master", "name"),
+    (&*test.read("keychain/master.public"), "public-key"),
+  ] {
+    Test::new()
+      .data_dir(test.path().as_str())
+      .args([
+        "download",
+        "--server",
+        &server.address(),
+        "--revision",
+        &revision,
+        "--key",
+        key,
+        output,
+      ])
+      .assert_dir(output)
+      .success();
+  }
 
   server.terminate().success();
 }

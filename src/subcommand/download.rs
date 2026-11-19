@@ -16,6 +16,13 @@ pub(crate) struct Download {
   )]
   file: Option<Hash>,
   #[arg(
+    conflicts_with_all = ["file", "package"],
+    help = "Require signature by <KEY>",
+    long = "key",
+    value_name = "KEY"
+  )]
+  keys: Vec<KeyIdentifier>,
+  #[arg(
     help = "Download to <PATH>",
     value_hint = ValueHint::AnyPath,
     value_name = "PATH"
@@ -203,6 +210,8 @@ impl Download {
   }
 
   fn download_revision(&self, options: &Options, hash: RevisionHash) -> Result {
+    let keys = Keychain::resolve(options, &self.keys)?;
+
     let client = Client::new(options, self.server.clone(), None)?;
 
     let revision = client.file_bytes(hash.into())?;
@@ -236,6 +245,13 @@ impl Download {
 
     if unknown > 0 && !options.quiet {
       eprintln!("ignored {}", Count::new(unknown, "unrecognized signature"));
+    }
+
+    for (key, identifier) in keys {
+      ensure! {
+        signatures.iter().any(|signature| signature.public_key() == key),
+        error::SignatureMissing { identifier: identifier.clone() },
+      }
     }
 
     self.download_package(
@@ -314,6 +330,40 @@ impl Download {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn key_conflicts_with_file() {
+    assert_argument_conflict::<Download>(
+      &[
+        "--server",
+        "http://127.0.0.1:1",
+        "--file",
+        Hash::EXAMPLE,
+        "--key",
+        "foo",
+        "bar",
+      ],
+      "--file <HASH>",
+      "--key <KEY>",
+    );
+  }
+
+  #[test]
+  fn key_conflicts_with_package() {
+    assert_argument_conflict::<Download>(
+      &[
+        "--server",
+        "http://127.0.0.1:1",
+        "--package",
+        Fingerprint::EXAMPLE,
+        "--key",
+        "foo",
+        "bar",
+      ],
+      "--package <FINGERPRINT>",
+      "--key <KEY>",
+    );
+  }
 
   #[test]
   fn revision_conflicts_with_package() {
