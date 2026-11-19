@@ -44,21 +44,7 @@ impl Verify {
       signatures: u64,
     }
 
-    let keychain = Keychain::load(&options)?;
-
-    let mut keys = BTreeMap::new();
-    for second in &self.keys {
-      let key = keychain.identifier_public_key(second)?;
-      if let Some(first) = keys.insert(key, second) {
-        return Err(
-          error::DuplicateKey {
-            first: first.clone(),
-            second: second.clone(),
-          }
-          .build(),
-        );
-      }
-    }
+    let keys = Keychain::resolve(&options, &self.keys)?;
 
     let root = self.root.clone().unwrap_or_else(|| ".".into());
 

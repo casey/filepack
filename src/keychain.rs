@@ -141,6 +141,35 @@ impl Keychain {
       })
   }
 
+  pub(crate) fn resolve<'a>(
+    options: &Options,
+    identifiers: &'a [KeyIdentifier],
+  ) -> Result<BTreeMap<PublicKey, &'a KeyIdentifier>> {
+    if identifiers.is_empty() {
+      return Ok(BTreeMap::new());
+    }
+
+    let keychain = Self::load(options)?;
+
+    let mut keys = BTreeMap::new();
+
+    for second in identifiers {
+      let key = keychain.identifier_public_key(second)?;
+
+      if let Some(first) = keys.insert(key, second) {
+        return Err(
+          error::DuplicateKey {
+            first: first.clone(),
+            second: second.clone(),
+          }
+          .build(),
+        );
+      }
+    }
+
+    Ok(keys)
+  }
+
   pub(crate) fn sign<T: Message>(&self, name: &KeyName, message: T) -> Result<Signature<T>> {
     let public_key = self.public_key(name)?;
 
