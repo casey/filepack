@@ -189,8 +189,8 @@ filepack revision
 
 The revision hash is a string starting with `revision1…` which commits to the
 fingerprint and the previous revision hashes. In this way it commits to both the
-contents of the package and its history. If the fingerprint changes, or if an
-update is made to the package, the revision hash will change.
+contents of the package and its history. If either the package fingerprint or
+the revision history changes, the revision hash will change.
 
 Update
 ------
@@ -206,8 +206,8 @@ changes made to the package.
 
 There are two limitations of Filepack which complicate the construction of the
 new revision. The first is that Filepack does not store previous package
-revisions locally. The second is that the Filepack server only accept uploads of
-revisions whose parents have already been uploaded.
+revisions locally. The second is that the Filepack server only accepts uploads
+of revisions whose parents have already been uploaded.
 
 Filepack thus endeavors to avoid the situation where you have a package with the
 following history:
@@ -217,23 +217,39 @@ following history:
 - A: Grandparent revision, on server.
 
 To upload C, the server requires B to already have been uploaded. However, since
-Filepack does not store previous revisions, it no longer exists locally.
+Filepack does not store previous revisions, B no longer exists locally.
 
 Filepack tracks which servers have which revisions in `.filepack/state.json` in
-the package directory.
+the package root.
 
 To avoid creating revisions which cannot be uploaded, `filepack update` creates
 revisions with the following rules:
 
 - If the package has not changed, no new revision is created.
 
-- If the package has changed, and `state.json` shows that it has never been
-  uploaded, the new revision uses the parents of the current revision, replacing
-  it and effectively rewriting the current revision.
+- If the package has changed, and `state.json` shows that the current revision
+  has never been uploaded, the new revision uses the parents of the current
+  revision, replacing it and effectively rewriting the current revision.
 
-- If the package has changed and `state.json` shows that it has been uploadeded,
-  the new revision uses the current revision as its parent, extending the chain
-  of revisions.
+- If the package has changed and `state.json` shows that the current revision
+  has been uploaded, the new revision uses the current revision as its parent,
+  extending the chain of revisions.
+
+After creating a revision you wish to publish, it should be uploaded to all
+servers before creating the next revision.
+
+If you need to upload a revision that no longer exists locally, download it from
+a server that has it with:
+
+```sh
+filepack download --server <SERVER> --revision <REVISION> <DIRECTORY>
+```
+
+And upload it to the server that needs it with:
+
+```sh
+filepack upload --server <SERVER> <DIRECTORY>
+```
 
 Lints
 -----
