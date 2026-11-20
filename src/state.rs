@@ -10,23 +10,11 @@ impl State {
   pub(crate) const DIR: &'static str = ".filepack";
   const FILENAME: &'static str = "state.json";
 
-  pub(crate) fn is_published(&self, revision: RevisionHash) -> Result<bool> {
-    let lagging = self
+  pub(crate) fn is_published(&self, revision: RevisionHash) -> bool {
+    self
       .servers
-      .iter()
-      .filter(|(_server, state)| state.revision != revision)
-      .map(|(server, _state)| server.clone())
-      .collect::<BTreeSet<String>>();
-
-    ensure! {
-      lagging.is_empty() || lagging.len() == self.servers.len(),
-      error::RevisionUnpublished {
-        revision,
-        servers: lagging,
-      },
-    }
-
-    Ok(lagging.is_empty() && !self.servers.is_empty())
+      .values()
+      .any(|server| server.revision == revision)
   }
 
   pub fn load(root: &Utf8Path) -> Result<Self> {
@@ -82,27 +70,13 @@ mod tests {
     let published = RevisionHash::ZERO;
     let unpublished = RevisionHash::EXAMPLE.parse::<RevisionHash>().unwrap();
 
-    assert!(!state(&[]).is_published(published).unwrap());
+    assert!(!state(&[]).is_published(published));
 
-    assert!(
-      state(&[("foo", published)])
-        .is_published(published)
-        .unwrap()
-    );
+    assert!(state(&[("foo", published)]).is_published(published));
 
-    assert!(
-      !state(&[("foo", unpublished)])
-        .is_published(published)
-        .unwrap()
-    );
+    assert!(!state(&[("foo", unpublished)]).is_published(published));
 
-    assert_eq!(
-      state(&[("foo", published), ("bar", unpublished)])
-        .is_published(published)
-        .unwrap_err()
-        .to_string(),
-      format!("revision {published} has not been uploaded to `bar`"),
-    );
+    assert!(state(&[("foo", published), ("bar", unpublished)]).is_published(published));
   }
 
   #[test]

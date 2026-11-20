@@ -329,6 +329,17 @@ macro_rules! assert_matches_regex {
   }};
 }
 
+macro_rules! warn {
+  ($($arg:tt)*) => {{
+    let style = $crate::Style::stderr();
+    eprintln!(
+      "{}: {}",
+      "warning".style(style.warning()),
+      format_args!($($arg)*).style(style.message()),
+    );
+  }};
+}
+
 pub mod api;
 mod application;
 mod archive;

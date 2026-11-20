@@ -97,7 +97,7 @@ impl Packager {
 
         let revision_hash = loader.revision_hash()?;
 
-        let parents = if State::load(&root)?.is_published(revision_hash)? {
+        let parents = if State::load(&root)?.is_published(revision_hash) {
           Some(NonEmptyOrderedSet::singleton(revision_hash))
         } else {
           manifest.parents.clone()

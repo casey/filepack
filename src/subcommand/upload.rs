@@ -44,6 +44,62 @@ pub(crate) type Input = ();
 pub(crate) type Output = ();
 
 impl Upload {
+  fn finish(
+    options: &Options,
+    client: &Client,
+    manifest: &Manifest,
+    revision: RevisionHash,
+    state: &State,
+  ) -> Result {
+    let present = client.revision(revision)?.signatures;
+
+    let mut uploaded = 0;
+
+    for signature in manifest.signatures() {
+      let signature = signature.encode_to_vec();
+
+      let hash = Hash::bytes(&signature);
+
+      if present.contains(&hash) {
+        continue;
+      }
+
+      client.put_file(hash, signature.into())?;
+
+      client.verify_signature(hash)?;
+
+      uploaded += 1;
+    }
+
+    if !options.quiet {
+      let unknown = manifest.unknown_signatures();
+
+      if unknown > 0 {
+        eprintln!("ignored {}", Count::new(unknown, "unrecognized signature"));
+      }
+
+      if uploaded > 0 {
+        eprintln!("uploaded {}", Count::new(uploaded, "signature"));
+      }
+
+      let lagging = state
+        .servers
+        .iter()
+        .filter(|(_server, state)| state.revision != revision)
+        .map(|(server, _state)| server.as_str())
+        .collect::<BTreeSet<&str>>();
+
+      if !lagging.is_empty() {
+        warn!(
+          "revision {revision} has not yet been uploaded to {}",
+          Ticked(lagging),
+        );
+      }
+    }
+
+    Ok(())
+  }
+
   pub(crate) fn run(self, options: Options) -> Result {
     let client = Client::new(&options, self.server.clone(), self.auth.as_ref())?;
 
@@ -187,7 +243,7 @@ impl Upload {
           eprintln!("package number {number} is up to date");
         }
 
-        Self::upload_signatures(&options, &client, &manifest, revision)?;
+        Self::finish(&options, &client, &manifest, revision, &state)?;
 
         return Ok(());
       }
@@ -222,7 +278,7 @@ impl Upload {
         eprintln!("server already has this revision as package number {number}");
       }
 
-      Self::upload_signatures(&options, &client, &manifest, revision)?;
+      Self::finish(&options, &client, &manifest, revision, &state)?;
 
       return Ok(());
     } else if let Some(&parent) = parents.first() {
@@ -275,7 +331,7 @@ impl Upload {
       eprintln!("{} package number {number}", mode.verb());
     }
 
-    Self::upload_signatures(&options, &context.client, &manifest, revision)?;
+    Self::finish(&options, &context.client, &manifest, revision, &state)?;
 
     Ok(())
   }
@@ -331,47 +387,6 @@ impl Upload {
     let body = Body::sized(context.progress_bar.wrap_read(file), expected.size);
 
     context.client.put_file(expected.hash, body)?;
-
-    Ok(())
-  }
-
-  fn upload_signatures(
-    options: &Options,
-    client: &Client,
-    manifest: &Manifest,
-    revision: RevisionHash,
-  ) -> Result {
-    let present = client.revision(revision)?.signatures;
-
-    let mut uploaded = 0;
-
-    for signature in manifest.signatures() {
-      let signature = signature.encode_to_vec();
-
-      let hash = Hash::bytes(&signature);
-
-      if present.contains(&hash) {
-        continue;
-      }
-
-      client.put_file(hash, signature.into())?;
-
-      client.verify_signature(hash)?;
-
-      uploaded += 1;
-    }
-
-    if !options.quiet {
-      let unknown = manifest.unknown_signatures();
-
-      if unknown > 0 {
-        eprintln!("ignored {}", Count::new(unknown, "unrecognized signature"));
-      }
-
-      if uploaded > 0 {
-        eprintln!("uploaded {}", Count::new(uploaded, "signature"));
-      }
-    }
 
     Ok(())
   }

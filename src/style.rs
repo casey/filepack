@@ -56,4 +56,11 @@ impl Style {
       inner: owo_colors::Style::default(),
     }
   }
+
+  pub(crate) fn warning(self) -> Self {
+    Self {
+      inner: self.inner.yellow(),
+      ..self
+    }
+  }
 }
