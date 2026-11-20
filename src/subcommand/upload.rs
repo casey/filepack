@@ -23,21 +23,20 @@ pub(crate) struct Upload {
   #[arg(group = "mode", help = "Upload package without revision", long)]
   no_revision: bool,
   #[arg(
-    group = "mode",
-    help = "Replace package number <NUMBER>",
+    conflicts_with_all = ["file", "no_revision"],
+    help = "Upload to package number <NUMBER>",
     long,
     value_name = "NUMBER"
   )]
-  replace: Option<u64>,
+  number: Option<u64>,
+  #[arg(
+    conflicts_with_all = ["file", "no_revision"],
+    help = "Replace package regardless of revision history",
+    long
+  )]
+  replace: bool,
   #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
   server: ServerUrl,
-  #[arg(
-    group = "mode",
-    help = "Update package number <NUMBER>",
-    long,
-    value_name = "NUMBER"
-  )]
-  update: Option<u64>,
 }
 
 pub(crate) type Input = ();
@@ -130,15 +129,12 @@ impl Upload {
 
     let package = loader.package()?;
 
-    let update = match (self.replace, self.update) {
-      (Some(_), Some(_)) => unreachable!(),
-      (Some(_), None) => None,
-      (None, Some(number)) => Some(number),
-      (None, None) => state
+    let number = self.number.or_else(|| {
+      state
         .servers
         .get(&server)
-        .map(|server_state| server_state.number),
-    };
+        .map(|server_state| server_state.number)
+    });
 
     let manifest = loader.unpack()?;
 
@@ -164,7 +160,9 @@ impl Upload {
       }
 
       return Ok(());
-    } else if let Some(number) = self.replace {
+    } else if self.replace {
+      let number = number.context(error::ReplaceNumberMissing)?;
+
       for &parent in parents {
         client
           .revision_opt(parent)?
@@ -175,7 +173,7 @@ impl Upload {
       }
 
       api::revision::post::Mode::Replace { number }
-    } else if let Some(number) = update {
+    } else if let Some(number) = number {
       let head = client.number(number)?.revision;
 
       if head == revision {
@@ -389,17 +387,33 @@ mod tests {
   }
 
   #[test]
-  fn no_revision_conflicts_with_update() {
+  fn number_conflicts_with_file() {
+    assert_argument_conflict::<Upload>(
+      &[
+        "--server",
+        "http://127.0.0.1:1",
+        "--file",
+        "--number",
+        "1",
+        "foo",
+      ],
+      "--file",
+      "--number <NUMBER>",
+    );
+  }
+
+  #[test]
+  fn number_conflicts_with_no_revision() {
     assert_argument_conflict::<Upload>(
       &[
         "--server",
         "http://127.0.0.1:1",
         "--no-revision",
-        "--update",
+        "--number",
         "1",
       ],
       "--no-revision",
-      "--update <NUMBER>",
+      "--number <NUMBER>",
     );
   }
 
@@ -411,11 +425,24 @@ mod tests {
         "http://127.0.0.1:1",
         "--file",
         "--replace",
-        "1",
         "foo",
       ],
       "--file",
-      "--replace <NUMBER>",
+      "--replace",
+    );
+  }
+
+  #[test]
+  fn replace_conflicts_with_no_revision() {
+    assert_argument_conflict::<Upload>(
+      &[
+        "--server",
+        "http://127.0.0.1:1",
+        "--no-revision",
+        "--replace",
+      ],
+      "--no-revision",
+      "--replace",
     );
   }
 
@@ -426,22 +453,6 @@ mod tests {
       "--server <URL>",
       "ftp://example.com",
       "URL scheme `ftp` not allowed, must be `http` or `https`",
-    );
-  }
-
-  #[test]
-  fn update_conflicts_with_replace() {
-    assert_argument_conflict::<Upload>(
-      &[
-        "--server",
-        "http://127.0.0.1:1",
-        "--replace",
-        "1",
-        "--update",
-        "1",
-      ],
-      "--replace <NUMBER>",
-      "--update <NUMBER>",
     );
   }
 }

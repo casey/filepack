@@ -744,13 +744,14 @@ fn upload_rejects_ambiguous_number() {
       "--server",
       &server.address(),
       "--replace",
+      "--number",
       "1",
     ])
     .success()
     .remove_file(".filepack/state.json")
     .args(["upload", "--server", &server.address()])
     .stderr(
-      "error: server already has this revision as package numbers `0`, `1`, use `--update N` to \
+      "error: server already has this revision as package numbers `0`, `1`, use `--number N` to \
        select one\n",
     )
     .failure();
@@ -786,6 +787,7 @@ fn upload_rejects_ambiguous_parent() {
       "--server",
       &server.address(),
       "--replace",
+      "--number",
       "1",
     ])
     .success()
@@ -795,7 +797,7 @@ fn upload_rejects_ambiguous_parent() {
     .remove_file(".filepack/state.json")
     .args(["upload", "--server", &server.address()])
     .stderr(&format!(
-      "error: parent revision {parent} is the head of packages `0`, `1` on `{}/`, use `--update N` \
+      "error: parent revision {parent} is the head of packages `0`, `1` on `{}/`, use `--number N` \
        to select one\n",
       server.address(),
     ))
@@ -941,11 +943,28 @@ fn upload_rejects_unpublished_parent() {
     .args(["upload", "--server", &server.address()])
     .stderr(&stderr)
     .failure()
-    .args(["upload", "--server", &server.address(), "--replace", "0"])
+    .args([
+      "upload",
+      "--server",
+      &server.address(),
+      "--replace",
+      "--number",
+      "0",
+    ])
     .stderr(&stderr)
     .failure();
 
   server.terminate().success();
+}
+
+#[test]
+fn upload_replace_requires_number() {
+  Test::new()
+    .arg("create")
+    .success()
+    .args(["upload", "--server", "http://127.0.0.1:1", "--replace"])
+    .stderr("error: no package number to replace, use `--number N` to select one\n")
+    .failure();
 }
 
 #[test]
@@ -977,7 +996,6 @@ fn upload_replaces_package() {
       "--server",
       &server.address(),
       "--replace",
-      "0",
       "manifest.filepack",
     ])
     .stderr(
@@ -1082,7 +1100,7 @@ fn upload_updates_package() {
       "upload",
       "--server",
       &server.address(),
-      "--update",
+      "--number",
       "0",
       "manifest.filepack",
     ])
@@ -1099,7 +1117,7 @@ fn upload_updates_package() {
       "upload",
       "--server",
       &server.address(),
-      "--update",
+      "--number",
       "0",
       "manifest.filepack",
     ])

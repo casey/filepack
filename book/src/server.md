@@ -140,7 +140,7 @@ for example if `filepack` is updated.
 Package Numbers and Revisions
 -----------------------------
 
-When a client uploads a package to the server, it creates and uploads a
+When a client uploads a package to the server, it uploads a
 [revision](deco/revision.md), similar to a
 [Git](https://en.wikipedia.org/wiki/Git) commit.
 
@@ -150,7 +150,7 @@ Revisions have a `package` field containing a package fingerprint, and a
 Uploaded packages are assigned sequential package numbers starting from zero.
 Deleted package numbers are not reused.
 
-A package revision with a number is a head.
+A revision with a number is a head, and a revision with no parents is a root.
 
 Newly uploaded packages are assigned numbers and are thus heads. When a new
 revision of the same package is published, the package number is updated to
@@ -170,53 +170,52 @@ Uploading Packages
 Packages can be uploaded to the server with
 [`filepack upload`](commands/filepack-upload.md).
 
-`filepack upload` actually performs three distinct operations: creation,
-replacement, and update.
+`filepack upload` actually performs three distinct operations: package creation,
+update, and replacement.
 
-After successfully creating, replacing, or updating a package on the server, the
-new package head for that server is recorded to `.filepack/state.json` in the
-package root.
+After successfully creating, updating, or replacing a package on the server, the
+package number and new head for that server are recorded in a state entry in
+`.filepack/state.json` in the package root.
+
+`filepack upload` defaults to operating on the package number recorded in the
+destination server's state entry, unless `--number N` is used to override it.
 
 ### Package Creation
 
-Package creation assigns a new package number to an uploaded package and is the
-default when running `filepack upload` for the first time in a given directory
-to a particular server.
+Package creation assigns a new package number to the current revision. It is the
+default when uploading a root revision to a server without a state entry.
 
-Running `filepack upload` with a package the server already has, and which has
-not been updated, will return the existing package number.
-
-After modifying the package, running `filepack upload` from the same directory
-will update the package.
-
-### Package Replacement
-
-Package replacement makes an existing package number point at a new package with
-no parents, making the old package and its parents collectable by `filepack gc`,
-unless they are reachable from another head.
-
-A previously uploaded package with `NUMBER` can be replaced with:
-
-```sh
-filepack upload --server <SERVER> --replace <NUMBER>
-```
+Running `filepack upload` with a revision that is currently a head will return
+the existing package number.
 
 ### Package Update
 
-A package number may be updated to point at a new revision whose parent is the
-current head for that number with:
+A previously uploaded package may be updated with:
 
 ```sh
-filepack upload --server <SERVER> --update <NUMBER>
+filepack upload --server <SERVER>
 ```
 
-Or just `filepack upload`, if `.filepack/state.json` has an entry for the
-current server.
+The server head must be a parent of the current revision. If the destination
+server does not have a state entry, the package whose head is the parent of the
+current revision is updated.
 
-If the current package head differs from the recorded head in
-`.filepack/state.json`, for example if someone else updates the package,
-`filepack upload` will abort. If two clients race to update the same package,
-the server will accept the first and reject the second with `409 Conflict`.
+If two clients race to update the same package, the server will accept the first
+and reject the second with `409 Conflict`.
+
+### Package Replacement
+
+Package replacement makes an existing package number point at a new revision,
+making the old revision and its parents collectable by `filepack gc` if they are
+not reachable from any of the server's heads.
+
+A previously uploaded package can be replaced with:
+
+```sh
+filepack upload --server <SERVER> --replace
+```
+
+The parent revisions of the replacement must already be present on the server.
 
 ### Upload API
 
