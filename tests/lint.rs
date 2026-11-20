@@ -688,7 +688,7 @@ fn deny_windows_reserved_filename() {
 
 #[test]
 fn yaml_lints_fail_before_load() {
-  let test = Test::new()
+  Test::new()
     .touch(".DS_Store")
     .write("foo.png", PngBuilder::new().build())
     .write("metadata.yaml", "artwork: foo.png")
@@ -699,7 +699,6 @@ fn yaml_lints_fail_before_load() {
         error: 1 lint error
       ",
     )
+    .assert_absent("thumbnails")
     .failure();
-
-  assert!(!test.path().join("thumbnails").exists());
 }
