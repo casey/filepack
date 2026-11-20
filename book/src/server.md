@@ -168,10 +168,12 @@ Uploading Packages
 ------------------
 
 Packages can be uploaded to the server with
-[`filepack upload`](commands/filepack-upload.md).
+[`filepack upload`](commands/filepack-upload.md). Uploading a package uploads
+the package content, the current revision, as well as signatures over the
+current revision.
 
-`filepack upload` actually performs three distinct operations: package creation,
-update, and replacement.
+`filepack upload` actually performs four distinct operations: package creation,
+update, replacement, and preview.
 
 After successfully creating, updating, or replacing a package on the server, the
 package number and new head for that server are recorded in a state entry in
@@ -187,6 +189,9 @@ default when uploading a root revision to a server without a state entry.
 
 Running `filepack upload` with a revision that is currently a head will return
 the existing package number.
+
+Revisions with parents that do not exist on the server cannot be uploaded, to
+ensure that there are no gaps in package history.
 
 ### Package Update
 
@@ -216,6 +221,21 @@ filepack upload --server <SERVER> --replace
 ```
 
 The parent revisions of the replacement must already be present on the server.
+
+### Package Preview
+
+The contents of a package can be uploaded for preview with:
+
+```sh
+filepack upload --server <SERVER> --no-revision
+```
+
+This uploads the package content, but does not create a revision or assign a
+package number. This allows packages with parents of the current revision that
+do not exist on the destination server to be uploaded. The uploaded package can
+be previewed by visiting `/package/<FINGERPRINT>`. Packages which are uploaded
+with `--no-revision` do not have a package number and are eligible for garbage
+collection if they are not reachable by any head.
 
 ### Upload API
 
@@ -251,6 +271,10 @@ Packages and files may be downloaded from the server with
 `filepack download` verifies the hash of all files it downloads, so servers do
 not need to be trusted, as long as the client has a known-good package
 fingerprint, revision hash, or file hash.
+
+Downloading a package by revision also downloads any signatures for that
+revision uploaded to the server, and the presence of a valid signature by a
+public key or key name can be asserted with the `--key <KEY>` option.
 
 Deleting Packages
 -----------------
