@@ -227,7 +227,7 @@ fn upload_no_revision() {
 
   add_parent(&path);
 
-  let test = test
+  test
     .args(["upload", "--server", &server.address(), "--no-revision"])
     .stderr(&format!(
       "
@@ -236,9 +236,8 @@ fn upload_no_revision() {
       ",
       server.address(),
     ))
+    .assert_absent(".filepack")
     .success();
-
-  assert!(!test.path().join(".filepack").exists());
 
   server.get(format!("/package/{fingerprint}")).send();
 
@@ -653,6 +652,12 @@ fn upload_package_uploads_files() {
 fn upload_records_state() {
   let server = Test::new().serve().spawn();
 
+  Test::new()
+    .arg("create")
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
   let test = Test::new().write("foo", "bar").arg("create").success();
 
   let revision = fingerprint(&test.path().join("manifest.filepack"))
@@ -664,7 +669,7 @@ fn upload_records_state() {
     .stderr(
       "
         uploading 1 of 1 file
-        created package number 0
+        created package number 1
       ",
     )
     .success()
@@ -678,7 +683,7 @@ fn upload_records_state() {
       servers: BTreeMap::from([(
         format!("{}/", server.address()),
         ServerState {
-          number: 0,
+          number: 1,
           revision,
         },
       )]),

@@ -1,6 +1,7 @@
 use {super::*, pretty_assertions::assert_eq};
 
 pub(crate) struct Test {
+  absent: BTreeSet<String>,
   args: Vec<String>,
   current_dir: Option<String>,
   data_dir: Option<String>,
@@ -26,6 +27,11 @@ impl Test {
     for arg in args {
       self.args.push(arg.as_ref().into());
     }
+    self
+  }
+
+  pub(crate) fn assert_absent(mut self, path: &str) -> Self {
+    assert!(self.absent.insert(path.into()));
     self
   }
 
@@ -327,6 +333,10 @@ impl Test {
 
     self.stdout.check(stdout, "stdout");
 
+    for path in &self.absent {
+      assert!(!self.join(path).exists(), "path `{path}` exists");
+    }
+
     for path in &self.directories {
       assert!(self.join(path).is_dir());
     }
@@ -462,6 +472,7 @@ impl Test {
 
   fn with_tempdir(tempdir: TempDir) -> Self {
     Self {
+      absent: BTreeSet::new(),
       args: Vec::new(),
       current_dir: None,
       data_dir: None,

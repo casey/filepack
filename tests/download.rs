@@ -48,6 +48,92 @@ fn download_checks_metadata() {
 }
 
 #[test]
+fn download_does_not_record_state_for_old_revision() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .write("foo", "bar")
+    .arg("create")
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
+  let revision = fingerprint(&test.path().join("manifest.filepack"))
+    .revision()
+    .hash()
+    .to_string();
+
+  test
+    .write("foo", "baz")
+    .arg("update")
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--revision",
+      &revision,
+      "out",
+    ])
+    .assert_absent("out/.filepack")
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
+fn download_does_not_record_state_for_shared_head() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new()
+    .arg("create")
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
+  let revision = fingerprint(&test.path().join("manifest.filepack"))
+    .revision()
+    .hash()
+    .to_string();
+
+  Test::new()
+    .touch("foo")
+    .arg("create")
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
+  test
+    .args([
+      "--quiet",
+      "upload",
+      "--server",
+      &server.address(),
+      "--replace",
+      "1",
+    ])
+    .success();
+
+  Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--revision",
+      &revision,
+      "out",
+    ])
+    .assert_absent("out/.filepack")
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
 fn download_fails_if_output_already_exists() {
   let hash = Hash::bytes(b"bar");
 
@@ -358,7 +444,7 @@ fn download_package_rejects_reserved_filename() {
 
   let server = Test::new().serve().write_server_file(root).spawn();
 
-  let test = Test::new()
+  Test::new()
     .args([
       "download",
       "--server",
@@ -370,9 +456,56 @@ fn download_package_rejects_reserved_filename() {
     .stderr(
       "error: package contains reserved filename `manifest.filepack` at `manifest.filepack`\n",
     )
+    .assert_absent("out")
     .failure();
 
-  assert!(!test.path().join("out").exists());
+  server.terminate().success();
+}
+
+#[test]
+fn download_records_state() {
+  let server = Test::new().serve().spawn();
+
+  Test::new()
+    .touch("foo")
+    .arg("create")
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
+  let test = Test::new()
+    .arg("create")
+    .success()
+    .args(["--quiet", "upload", "--server", &server.address()])
+    .success();
+
+  let revision = fingerprint(&test.path().join("manifest.filepack"))
+    .revision()
+    .hash();
+
+  let test = Test::new()
+    .args([
+      "download",
+      "--server",
+      &server.address(),
+      "--revision",
+      &revision.to_string(),
+      "out",
+    ])
+    .success();
+
+  assert_eq!(
+    State::load(&test.path().join("out")).unwrap(),
+    State {
+      servers: BTreeMap::from([(
+        format!("{}/", server.address()),
+        ServerState {
+          number: 1,
+          revision,
+        },
+      )]),
+    },
+  );
 
   server.terminate().success();
 }
@@ -391,7 +524,7 @@ fn download_rejects_invalid_signature() {
     .revision(&revision, &[Hash::bytes(&signature)])
     .spawn();
 
-  let test = Test::new()
+  Test::new()
     .args([
       "download",
       "--server",
@@ -407,9 +540,8 @@ fn download_rejects_invalid_signature() {
                └─ Verification equation was not satisfied
       "
     ))
+    .assert_absent("out")
     .failure();
-
-  assert!(!test.path().join("out").exists());
 }
 
 #[test]
@@ -426,7 +558,7 @@ fn download_rejects_signature_for_different_revision() {
     .revision(&revision, &[Hash::bytes(&signature)])
     .spawn();
 
-  let test = Test::new()
+  Test::new()
     .args([
       "download",
       "--server",
@@ -440,9 +572,8 @@ fn download_rejects_signature_for_different_revision() {
       signed.hash(),
       revision.hash(),
     ))
+    .assert_absent("out")
     .failure();
-
-  assert!(!test.path().join("out").exists());
 }
 
 #[test]
@@ -465,7 +596,7 @@ fn download_requires_signature_from_key() {
     .hash()
     .to_string();
 
-  let test = test
+  test
     .args([
       "download",
       "--server",
@@ -477,9 +608,8 @@ fn download_requires_signature_from_key() {
       "out",
     ])
     .stderr("error: no signature found for key `bar`\n")
+    .assert_absent("out")
     .failure();
-
-  assert!(!test.path().join("out").exists());
 
   server.terminate().success();
 }
@@ -774,6 +904,7 @@ fn download_retrieves_unregistered_package() {
       &revision.hash().to_string(),
       "out",
     ])
+    .assert_absent("out/.filepack")
     .assert_file("out/foo", "bar")
     .success()
     .args(["verify", "out"])

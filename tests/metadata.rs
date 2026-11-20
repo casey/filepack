@@ -692,13 +692,12 @@ fn create_loads_video_placeholder() {
 
 #[test]
 fn create_no_generate_skips_thumbnails() {
-  let test = Test::new()
+  Test::new()
     .write("foo.jpg", image(1, 1, ImageFormat::Jpeg))
     .write("metadata.yaml", "artwork: foo.jpg")
     .args(["create", "--no-generate"])
+    .assert_absent("thumbnails")
     .success();
-
-  assert!(!test.path().join("thumbnails").exists());
 }
 
 #[test]
@@ -1117,7 +1116,7 @@ fn create_requires_index_html_in_web_packages() {
 
 #[test]
 fn create_requires_manifest_not_exist_before_generating_thumbnails() {
-  let test = Test::new()
+  Test::new()
     .write("foo.jpg", image(1280, 1280, ImageFormat::Jpeg))
     .write("metadata.yaml", "artwork: foo.jpg")
     .touch("manifest.filepack")
@@ -1126,9 +1125,8 @@ fn create_requires_manifest_not_exist_before_generating_thumbnails() {
       "error: manifest `manifest.filepack` already exists, use `filepack update` to update it or \
       `--force` to overwrite it\n",
     )
+    .assert_absent("thumbnails")
     .failure();
-
-  assert!(!test.path().join("thumbnails").exists());
 }
 
 #[test]
@@ -1159,14 +1157,13 @@ fn create_succeeds_with_valid_metadata() {
 
 #[test]
 fn create_validates_metadata_before_generating_thumbnails() {
-  let test = Test::new()
+  Test::new()
     .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
     .write("metadata.yaml", "artwork: foo.jpg")
     .arg("create")
     .stderr("error: artwork `foo.jpg` is 1280×640 but must be square\n")
+    .assert_absent("thumbnails")
     .failure();
-
-  assert!(!test.path().join("thumbnails").exists());
 }
 
 fn image(width: u32, height: u32, image_format: ImageFormat) -> Vec<u8> {

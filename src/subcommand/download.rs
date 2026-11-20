@@ -224,7 +224,9 @@ impl Download {
 
     let mut unknown = 0;
 
-    if let Some(response) = client.revision_opt(hash)? {
+    let response = client.revision_opt(hash)?;
+
+    if let Some(response) = &response {
       for &signature in &*response.signatures {
         let deco = client.file_bytes(signature)?;
 
@@ -260,7 +262,24 @@ impl Download {
       revision.package,
       revision.parents.as_ref(),
       signatures,
-    )
+    )?;
+
+    if let Some(response) = response
+      && let [number] = *response.numbers
+    {
+      State {
+        servers: BTreeMap::from([(
+          self.server.to_string(),
+          ServerState {
+            number,
+            revision: hash,
+          },
+        )]),
+      }
+      .save(&self.output)?;
+    }
+
+    Ok(())
   }
 
   pub(crate) fn run(self, options: Options) -> Result {
