@@ -76,6 +76,7 @@ mod serve;
 mod sign;
 mod signatures;
 mod size;
+mod state;
 mod stub_server;
 mod test;
 mod update;

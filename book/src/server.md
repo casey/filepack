@@ -179,6 +179,9 @@ After successfully creating, updating, or replacing a package on the server, the
 package number and new head for that server are recorded in a state entry in
 `.filepack/state.json` in the package root.
 
+The current package state can be printed with
+[`filepack state`](commands/filepack-state.md).
+
 `filepack upload` defaults to operating on the package number recorded in the
 destination server's state entry, unless `--number N` is used to override it.
 
