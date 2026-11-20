@@ -158,12 +158,97 @@ filepack create
 
 This writes file and directory hashes to the package manifest in
 `manifest.filepack`, and is the only required step for creating a package.
-However, keep reading for more options to use with `filepack create`.
 
 Use `--ignore` to omit files and directories from the package:
 
 ```sh
 filepack create --ignore .git
+```
+
+Fingerprint
+-----------
+
+Print the package fingerprint:
+
+```sh
+filepack fingerprint
+```
+
+The fingerprint is a string starting with `package1…` which uniquely identifies
+the content of the package. If the package changes, including any files,
+filenames, metadata, or derived assets, the fingerprint will change.
+
+Revision
+--------
+
+Print the package revision hash:
+
+```sh
+filepack revision
+```
+
+The revision hash is a string starting with `revision1…` which commits to the
+fingerprint and the previous revision hashes. In this way it commits to both the
+contents of the package and its history. If either the package fingerprint or
+the revision history changes, the revision hash will change.
+
+Update
+------
+
+After a package has been created it can be updated:
+
+```sh
+filepack update
+```
+
+Updating a package updates the manifest with a new revision reflecting any
+changes made to the package.
+
+There are two limitations of Filepack which complicate the construction of the
+new revision. The first is that Filepack does not store previous package
+revisions locally. The second is that the Filepack server only accepts uploads
+of revisions whose parents have already been uploaded.
+
+Filepack thus endeavors to avoid the situation where you have a package with the
+following history:
+
+- C: Current revision, not on server.
+- B: Parent revision, not on server.
+- A: Grandparent revision, on server.
+
+To upload C, the server requires B to already have been uploaded. However, since
+Filepack does not store previous revisions, B no longer exists locally.
+
+Filepack tracks which servers have which revisions in `.filepack/state.json` in
+the package root.
+
+To avoid creating revisions which cannot be uploaded, `filepack update` creates
+revisions with the following rules:
+
+- If the package has not changed, no new revision is created.
+
+- If the package has changed, and `state.json` shows that the current revision
+  has never been uploaded, the new revision uses the parents of the current
+  revision, replacing it and effectively rewriting the current revision.
+
+- If the package has changed and `state.json` shows that the current revision
+  has been uploaded, the new revision uses the current revision as its parent,
+  extending the chain of revisions.
+
+After creating a revision you wish to publish, it should be uploaded to all
+servers before creating the next revision.
+
+If you need to upload a revision that no longer exists locally, download it from
+a server that has it with:
+
+```sh
+filepack download --server <SERVER> --revision <REVISION> <DIRECTORY>
+```
+
+And upload it to the server that needs it with:
+
+```sh
+filepack upload --server <SERVER> <DIRECTORY>
 ```
 
 Lints
@@ -188,11 +273,8 @@ improve your packages.
 Update the package, this time with all lints enabled:
 
 ```sh
-filepack create --deny all --force
+filepack update --deny all
 ```
-
-Since the package was already created in the previous step, `--force` is
-included to overwrite the old manifest.
 
 `filepack` will fail with a hopefully informative error message telling you what
 went wrong, including the name of the lint in brackets. The lint can be fixed,
@@ -202,19 +284,6 @@ Lints may not apply to your package at all. For example, the `media-missing`
 lint complains if your package does not have `media` metadata. However, your
 package may not contain media, or may contain an unsupported media type, in
 which case there is no sensible way to satisfy the lint.
-
-Fingerprint
------------
-
-Print the package fingerprint:
-
-```sh
-filepack fingerprint
-```
-
-The fingerprint is a string starting with `package1…` which uniquely identifies
-the content of the package. If the package changes, including any files,
-filenames, metadata, or derived assets, the fingerprint will change.
 
 Signing
 -------
@@ -241,9 +310,6 @@ public key was derived.
 If you keep your private key secure, you can create and sign packages and anyone
 with your public key can verify that the package was created by you, even if
 they get the package from an untrusted third party.
-
-Please note that the Filepack server does not yet support uploading or
-downloading signatures.
 
 Generate a private key and public key, also called a key pair, named
 `master.private` and `master.public`:
@@ -283,7 +349,7 @@ Regenerate
 Regenerate the package after any changes and with all options above:
 
 ```sh
-filepack create --deny all --force --sign
+filepack update --deny all --sign
 ```
 
 Add `--allow NAME` with any lints you are disabling, and omit `--sign` if you
@@ -303,13 +369,16 @@ filepack serve --http-port 8000 --unrestricted-writes
 Upload the package:
 
 ```sh
-filepack upload --server 127.0.0.1:8000
+filepack upload --no-revision --server 127.0.0.1:8000
 ```
 
-Then visit [http://localhost:8000](http://localhost:8000) to view the uploaded
-package, check for errors, and ensure that it displays properly.
+Then visit the printed link to view the uploaded package, check for errors, and
+ensure that it displays properly.
 
 Click the `media` link on the `/package` page to see extracted media metadata.
+
+The `--no-revision` flag uploads the package by fingerprint, which does not
+require that any previous revisions exist on the destination server.
 
 Upload
 ------

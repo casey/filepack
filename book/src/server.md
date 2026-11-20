@@ -221,7 +221,7 @@ The parent revisions of the replacement must already be present on the server.
 
 Package uploads are content-addressed and bottom up.
 
-Files, directories, and revisions are uploaded using
+Files, directories, revisions, and signatures are uploaded using
 [`PUT /api/file/{hash}`](api/file-hash.md#put).
 
 Directories are verified using
@@ -233,10 +233,14 @@ The package is verified using
 [`POST /api/package/{fingerprint}`](api/package-fingerprint.md#post), which
 requires that the package root directory has already been verified.
 
-Finally, the revision is verified and the package number obtained using
+The revision is verified and the package number obtained using
 [`POST /api/revision/{revision}`](api/revision-revision.md#post), which requires
 that the package has been verified and the revision has been uploaded and is
 valid.
+
+Finally, signatures are verified using
+[`POST /api/signature/{hash}`](api/signature-hash.md#post), which requires that
+the revision has been verified and the signature has been uploaded and is valid.
 
 Downloading Packages
 --------------------
@@ -246,7 +250,7 @@ Packages and files may be downloaded from the server with
 
 `filepack download` verifies the hash of all files it downloads, so servers do
 not need to be trusted, as long as the client has a known-good package
-fingerprint or file hash.
+fingerprint, revision hash, or file hash.
 
 Deleting Packages
 -----------------
@@ -263,8 +267,8 @@ packages are still served by fingerprint and revision hash, and their files are
 not immediately removed from the server.
 
 After a package is deleted or replaced, running `filepack gc` will remove all
-packages and package files which are not reachable from the current heads or
-mounted packages.
+revisions, signatures, packages, directories, and files which are not reachable
+from the current heads or mounted packages.
 
 Previous versions of updated packages are still reachable from the parent
 revisions of the new head revisions, and will continue to be served by
