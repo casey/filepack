@@ -16,7 +16,14 @@ pub(crate) struct Download {
   )]
   file: Option<Hash>,
   #[arg(
-    conflicts_with_all = ["file", "package"],
+    group = "target",
+    help = "Download package with <FINGERPRINT>",
+    long,
+    value_name = "FINGERPRINT"
+  )]
+  fingerprint: Option<Fingerprint>,
+  #[arg(
+    conflicts_with_all = ["file", "fingerprint"],
     help = "Require signature by <KEY>",
     long = "key",
     value_name = "KEY"
@@ -28,13 +35,6 @@ pub(crate) struct Download {
     value_name = "PATH"
   )]
   output: Utf8PathBuf,
-  #[arg(
-    group = "target",
-    help = "Download package with <FINGERPRINT>",
-    long,
-    value_name = "FINGERPRINT"
-  )]
-  package: Option<Fingerprint>,
   #[arg(
     group = "target",
     help = "Download package with <REVISION>",
@@ -277,7 +277,7 @@ impl Download {
       self.download_package(
         &options,
         Client::new(&options, self.server.clone(), None)?,
-        self.package.unwrap(),
+        self.fingerprint.unwrap(),
         None,
         BTreeSet::new(),
       )
@@ -349,35 +349,35 @@ mod tests {
   }
 
   #[test]
-  fn key_conflicts_with_package() {
+  fn key_conflicts_with_fingerprint() {
     assert_argument_conflict::<Download>(
       &[
         "--server",
         "http://127.0.0.1:1",
-        "--package",
+        "--fingerprint",
         Fingerprint::EXAMPLE,
         "--key",
         "foo",
         "bar",
       ],
-      "--package <FINGERPRINT>",
+      "--fingerprint <FINGERPRINT>",
       "--key <KEY>",
     );
   }
 
   #[test]
-  fn revision_conflicts_with_package() {
+  fn revision_conflicts_with_fingerprint() {
     assert_argument_conflict::<Download>(
       &[
         "--server",
         "http://127.0.0.1:1",
-        "--package",
+        "--fingerprint",
         Fingerprint::EXAMPLE,
         "--revision",
         RevisionHash::EXAMPLE,
         "foo",
       ],
-      "--package <FINGERPRINT>",
+      "--fingerprint <FINGERPRINT>",
       "--revision <REVISION>",
     );
   }

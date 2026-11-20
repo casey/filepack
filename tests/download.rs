@@ -37,7 +37,7 @@ fn download_checks_metadata() {
       "download",
       "--server",
       &server.address(),
-      "--package",
+      "--fingerprint",
       &fingerprint.to_string(),
       "out",
     ])
@@ -159,7 +159,7 @@ fn download_package_fails_if_output_directory_already_exists() {
       "download",
       "--server",
       "http://example.com",
-      "--package",
+      "--fingerprint",
       &Fingerprint::from(Hash::bytes(&[])).to_string(),
       "out",
     ])
@@ -175,7 +175,7 @@ fn download_package_fails_if_output_file_already_exists() {
       "download",
       "--server",
       "http://example.com",
-      "--package",
+      "--fingerprint",
       &Fingerprint::from(Hash::bytes(&[])).to_string(),
       "out",
     ])
@@ -202,7 +202,7 @@ fn download_package_fails_on_directory_size_mismatch() {
       "download",
       "--server",
       &server.address(),
-      "--package",
+      "--fingerprint",
       &Fingerprint::from(root_hash).to_string(),
       "out",
     ])
@@ -251,7 +251,7 @@ fn download_package_fails_on_directory_totals_mismatch() {
       "download",
       "--server",
       &server.address(),
-      "--package",
+      "--fingerprint",
       &fingerprint.to_string(),
       "out",
     ])
@@ -281,7 +281,7 @@ fn download_package_fails_on_directory_totals_overflow() {
       "download",
       "--server",
       &server.address(),
-      "--package",
+      "--fingerprint",
       &Fingerprint::from(hash).to_string(),
       "out",
     ])
@@ -311,7 +311,7 @@ fn download_package_fails_on_hash_mismatch() {
       "download",
       "--server",
       &server.address(),
-      "--package",
+      "--fingerprint",
       &Fingerprint::from(expected).to_string(),
       "out",
     ])
@@ -340,7 +340,7 @@ fn download_package_fails_on_size_mismatch() {
       "download",
       "--server",
       &server.address(),
-      "--package",
+      "--fingerprint",
       &Fingerprint::from(hash).to_string(),
       "out",
     ])
@@ -363,7 +363,7 @@ fn download_package_rejects_reserved_filename() {
       "download",
       "--server",
       &server.address(),
-      "--package",
+      "--fingerprint",
       &Fingerprint::from(hash).to_string(),
       "out",
     ])
@@ -542,7 +542,7 @@ fn download_retrieves_package() {
       "download",
       "--server",
       &server.address(),
-      "--package",
+      "--fingerprint",
       &fingerprint.to_string(),
       "out",
     ])
@@ -607,7 +607,7 @@ fn download_retrieves_package_with_metadata() {
       "download",
       "--server",
       &server.address(),
-      "--package",
+      "--fingerprint",
       &fingerprint.to_string(),
       "out",
     ])
@@ -645,7 +645,7 @@ fn download_retrieves_package_without_revision() {
       "download",
       "--server",
       &server.address(),
-      "--package",
+      "--fingerprint",
       &fingerprint,
       "out",
     ])

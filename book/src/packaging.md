@@ -335,7 +335,7 @@ To download your package from the fictitious `example.com` server to the `foo`
 directory:
 
 ```sh
-filepack download --package <FINGERPRINT> --server example.com foo
+filepack download --fingerprint <FINGERPRINT> --server example.com foo
 ```
 
 The `filepack download` command verifies the package being downloaded against

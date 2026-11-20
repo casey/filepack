@@ -182,7 +182,7 @@ in packages with media metadata can be viewed and played.
 Download the uploaded package to a new directory with:
 
 ```sh
-filepack download --server 127.0.0.1:8000 --package <FINGERPRINT> <DIRECTORY>
+filepack download --server 127.0.0.1:8000 --fingerprint <FINGERPRINT> <DIRECTORY>
 ```
 
 Delete the package from the server with:
