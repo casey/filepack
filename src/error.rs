@@ -472,6 +472,8 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     domain: Domain,
   },
+  #[snafu(display("no package number to replace, use `--number N` to select one"))]
+  ReplaceNumberMissing { backtrace: Option<Backtrace> },
   #[snafu(display("request failed"))]
   Request {
     backtrace: Option<Backtrace>,
@@ -498,7 +500,7 @@ pub enum Error {
   #[snafu(display("revision hash mismatch"))]
   RevisionHashMismatch { backtrace: Option<Backtrace> },
   #[snafu(display(
-    "server already has this revision as package numbers {numbers}, use `--update N` to select one"
+    "server already has this revision as package numbers {numbers}, use `--number N` to select one"
   ))]
   RevisionNumberAmbiguous {
     backtrace: Option<Backtrace>,
@@ -511,7 +513,7 @@ pub enum Error {
     server: String,
   },
   #[snafu(display(
-    "parent revision {parent} is the head of packages {numbers} on `{server}`, use `--update N` to \
+    "parent revision {parent} is the head of packages {numbers} on `{server}`, use `--number N` to \
      select one"
   ))]
   RevisionParentNumberAmbiguous {

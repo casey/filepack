@@ -114,6 +114,7 @@ fn download_does_not_record_state_for_shared_head() {
       "--server",
       &server.address(),
       "--replace",
+      "--number",
       "1",
     ])
     .success();
