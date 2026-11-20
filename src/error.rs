@@ -538,12 +538,6 @@ pub enum Error {
     number: u64,
     revision: RevisionHash,
   },
-  #[snafu(display("revision {revision} has not been uploaded to {servers}"))]
-  RevisionUnpublished {
-    backtrace: Option<Backtrace>,
-    revision: RevisionHash,
-    servers: Ticked<String>,
-  },
   #[snafu(display("failed to install rustls ring crypto provider"))]
   RustlsProvider { backtrace: Option<Backtrace> },
   #[snafu(display("server failed"))]

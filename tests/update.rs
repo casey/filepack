@@ -34,49 +34,6 @@ fn draft_keeps_parents() {
 }
 
 #[test]
-fn lagging_server() {
-  let test = Test::new()
-    .create_dir("foo")
-    .args(["create", "foo"])
-    .success();
-
-  let path = test.path().join("foo/manifest.filepack");
-
-  let parent = fingerprint(&path).revision().hash();
-
-  let revision = add_parent(&path).hash();
-
-  test
-    .write(
-      "foo/.filepack/state.json",
-      serde_json::to_string(&State {
-        servers: BTreeMap::from([
-          (
-            "bar".into(),
-            ServerState {
-              number: 0,
-              revision,
-            },
-          ),
-          (
-            "baz".into(),
-            ServerState {
-              number: 0,
-              revision: parent,
-            },
-          ),
-        ]),
-      })
-      .unwrap(),
-    )
-    .args(["update", "foo"])
-    .stderr(&format!(
-      "error: revision {revision} has not been uploaded to `baz`\n"
-    ))
-    .failure();
-}
-
-#[test]
 fn manifest_not_found() {
   Test::new()
     .arg("update")

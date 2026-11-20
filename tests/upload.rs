@@ -1024,6 +1024,47 @@ fn upload_replaces_package() {
 }
 
 #[test]
+fn upload_reports_lagging_servers() {
+  let server = Test::new().serve().spawn();
+
+  let test = Test::new().write("foo", "bar").arg("create").success();
+
+  let package = fingerprint(&test.path().join("manifest.filepack"));
+
+  let revision = package.revision().hash();
+
+  test
+    .write(
+      ".filepack/state.json",
+      serde_json::to_string(&State {
+        servers: BTreeMap::from([(
+          "baz".into(),
+          ServerState {
+            number: 0,
+            revision: Revision {
+              package,
+              parents: Some(NonEmptyOrderedSet::singleton(revision)),
+            }
+            .hash(),
+          },
+        )]),
+      })
+      .unwrap(),
+    )
+    .args(["upload", "--server", &server.address()])
+    .stderr(&format!(
+      "
+        uploading 1 of 1 file
+        created package number 0
+        warning: revision {revision} has not yet been uploaded to `baz`
+      "
+    ))
+    .success();
+
+  server.terminate().success();
+}
+
+#[test]
 fn upload_updates_implicitly() {
   let server = Test::new().serve().spawn();
 
