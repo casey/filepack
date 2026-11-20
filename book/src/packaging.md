@@ -404,12 +404,14 @@ To download your package from the fictitious `example.com` server to the `foo`
 directory:
 
 ```sh
-filepack download --fingerprint <FINGERPRINT> --server example.com foo
+filepack download --revision <REVISION> --server example.com foo
 ```
 
 The `filepack download` command verifies the package being downloaded against
-the provided fingerprint, making it possible to download packages from untrusted
-servers and be assured that the downloaded contents match the fingerprint.
+the provided revision, making it possible to download packages from untrusted
+servers and be assured that the downloaded contents match the revision.
+
+Download can also download packages by fingerprint or individual files by hash.
 
 Share
 -----

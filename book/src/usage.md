@@ -24,7 +24,7 @@ directory and its subdirectories, will be written to `manifest.filepack`.
 To recreate a package in the current directory:
 
 ```sh
-filepack create --force
+filepack update
 ```
 
 Adding Package Metadata
