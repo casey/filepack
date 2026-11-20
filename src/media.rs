@@ -21,22 +21,29 @@ pub(crate) enum Media {
     #[n(1)]
     items: Vec<Item<Audio>>,
   },
-  /// Collection of image items.
+  /// Collection of document items.
   #[n(1)]
+  Document {
+    /// Metadata describing the document items.
+    #[n(1)]
+    items: Vec<Item<Document>>,
+  },
+  /// Collection of image items.
+  #[n(2)]
   Image {
     /// Metadata describing the image items.
     #[n(1)]
     items: Vec<Item<Image>>,
   },
   /// Collection of video items.
-  #[n(2)]
+  #[n(3)]
   Video {
     /// Metadata describing the video items.
     #[n(1)]
     items: Vec<Item<Video>>,
   },
   /// A web site, with `static/index.html` as its entry point.
-  #[n(3)]
+  #[n(4)]
   Web,
 }
 
@@ -63,6 +70,7 @@ impl Media {
             .value("duration", DisplayDuration(Audio::sum_durations(items))),
           items,
         ),
+        Self::Document { items } => format(builder.value("documents", items.len()), items),
         Self::Image { items } => format(builder.value("images", items.len()), items),
         Self::Video { items } => format(
           builder
@@ -77,6 +85,7 @@ impl Media {
   pub(crate) fn items(&self) -> Option<Items> {
     match self {
       Self::Audio { items } => Some(Items::Audio(items)),
+      Self::Document { items } => Some(Items::Document(items)),
       Self::Image { items } => Some(Items::Image(items)),
       Self::Video { items } => Some(Items::Video(items)),
       Self::Web => None,

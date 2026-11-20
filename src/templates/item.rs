@@ -34,7 +34,9 @@ impl Page for ItemHtml {
 
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
     match self.items() {
-      Items::Audio(_) => OpenGraphImage::artwork(&self.metadata, self.fingerprint),
+      Items::Audio(_) | Items::Document(_) => {
+        OpenGraphImage::artwork(&self.metadata, self.fingerprint)
+      }
       Items::Image(items) => Some(OpenGraphImage::thumbnail(
         &self.metadata,
         &items[self.index].content,
