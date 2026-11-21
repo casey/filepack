@@ -4,6 +4,12 @@ use super::*;
 #[deco(sorted_set, transparent, validate)]
 pub struct SortedSet<T>(Vec<T>);
 
+impl<T> SortedSet<T> {
+  pub(crate) fn new() -> Self {
+    Self::default()
+  }
+}
+
 impl<T: Ord> From<BTreeSet<T>> for SortedSet<T> {
   fn from(set: BTreeSet<T>) -> Self {
     Self(set.into_iter().collect())
