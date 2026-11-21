@@ -1,8 +1,10 @@
 use super::*;
 
-#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
+/// Local package state.
+#[derive(Debug, Default, Deserialize, Json, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct State {
+  /// State entries, by server URL.
   pub servers: BTreeMap<String, ServerState>,
 }
 

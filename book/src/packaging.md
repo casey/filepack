@@ -220,7 +220,11 @@ To upload C, the server requires B to already have been uploaded. However, since
 Filepack does not store previous revisions, B no longer exists locally.
 
 Filepack tracks which servers have which revisions in `.filepack/state.json` in
-the package root.
+the package root. The current state can be printed with:
+
+```sh
+filepack state
+```
 
 To avoid creating revisions which cannot be uploaded, `filepack update` creates
 revisions with the following rules:
@@ -391,11 +395,20 @@ server. To upload to the fictitious `example.com` server and authorize with your
 filepack upload --auth master --server example.com
 ```
 
+The package may be regenerated and a new revision published to the same package
+number by running the same upload command above.
+
+State
+-----
+
 After uploading, the uploaded package number and revision hash will be saved to
 `.filepack/state.json` in the package root.
 
-The package may be regenerated and a new revision published to the same package
-number by running the same upload command above.
+The current state can be printed with:
+
+```sh
+filepack state
+```
 
 Download
 --------
