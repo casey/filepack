@@ -220,6 +220,10 @@ pub(crate) enum ServerError {
     hash: Hash,
     source: AttestationError,
   },
+  #[snafu(display("signature not found"))]
+  SignatureNotFound,
+  #[snafu(display("{source}"))]
+  SignatureParse { source: HexError },
   #[snafu(display("signature {hash} references unverified revision {revision}"))]
   SignatureRevisionUnverified { hash: Hash, revision: RevisionHash },
   #[snafu(display("failed to get current time"))]
@@ -288,6 +292,7 @@ impl ServerError {
       | Self::RevisionParentUnexpected { .. }
       | Self::SignatureDecode { .. }
       | Self::SignatureInvalid { .. }
+      | Self::SignatureParse { .. }
       | Self::SignatureRevisionUnverified { .. }
       | Self::UnstableFeature { .. }
       | Self::UploadBodyRead { .. }
@@ -308,7 +313,8 @@ impl ServerError {
       | Self::PackageNumberNotFound { .. }
       | Self::PageNotFound
       | Self::PlaceholderNotFound { .. }
-      | Self::RevisionNotFound { .. } => StatusCode::NOT_FOUND,
+      | Self::RevisionNotFound { .. }
+      | Self::SignatureNotFound => StatusCode::NOT_FOUND,
       Self::HostNotAllowed { .. } => StatusCode::MISDIRECTED_REQUEST,
       Self::RevisionConflict { .. } => StatusCode::CONFLICT,
       Self::CrossOriginRequest | Self::WriteForbidden => StatusCode::FORBIDDEN,
