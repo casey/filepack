@@ -135,7 +135,7 @@ mod tests {
         "
           <section>
             <h2>Audio</h2>
-            <ul class=thumbnails>
+            <ul class=thumbnails role=list>
               <li>
                 <a href=/package/2>
                   <img loading=lazy src=/artwork/{fingerprint}/thumbnail>
@@ -147,7 +147,7 @@ mod tests {
           </section>
           <section>
             <h2>Web</h2>
-            <ul class=thumbnails>
+            <ul class=thumbnails role=list>
               <li>
                 <a href=/package/1>
                 </a>
@@ -157,7 +157,7 @@ mod tests {
           </section>
           <section>
             <h2>None</h2>
-            <ul class=thumbnails>
+            <ul class=thumbnails role=list>
               <li>
                 <a href=/package/0>
                 </a>

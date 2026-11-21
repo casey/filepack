@@ -24,7 +24,7 @@
 </ol>
 %%     }
 %%     Media::Image { items } => {
-<ul class=thumbnails>
+<ul class=thumbnails role=list>
 %%       for (i, image) in items.iter().enumerate() {
   <li style="--aspect-ratio: {{ image.content.oriented_dimensions().css_aspect_ratio() }}">
     <a href=/package/{{ self.identifier }}/item/{{ Ordinal(i) }}>
@@ -40,7 +40,7 @@
 </ul>
 %%     }
 %%     Media::Video { .. } => {
-<ol class=thumbnails>
+<ol class=thumbnails role=list>
 %%       for (i, (video, duration, image, dimensions)) in self.videos().enumerate() {
 %%         if let Some(dimensions) = dimensions {
   <li style="--aspect-ratio: {{ dimensions.css_aspect_ratio() }}">

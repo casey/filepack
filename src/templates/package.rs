@@ -513,7 +513,7 @@ mod tests {
               </dd>
             </div>
           </dl>
-          <ul class=thumbnails>
+          <ul class=thumbnails role=list>
             <li style="--aspect-ratio: 2 / 1">
               <a href=/package/{fingerprint}/item/1>
                 <figure>
@@ -1109,7 +1109,7 @@ mod tests {
               </dd>
             </div>
           </dl>
-          <ol class=thumbnails>
+          <ol class=thumbnails role=list>
             <li style=\"--aspect-ratio: 2 / 1\">
               <a href=/package/{fingerprint}/item/1>
                 <div class=caption>
