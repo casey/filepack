@@ -57,10 +57,11 @@ impl PackageHtml {
       .when(!self.signers.is_empty(), |builder| {
         builder.list(
           "signatures",
-          self
-            .signers
-            .iter()
-            .map(|signer| Info::Code(signer.to_string())),
+          self.signers.iter().map(|signer| Info::Link {
+            code: true,
+            text: signer.to_string(),
+            url: format!("/key/{signer}"),
+          }),
         )
       })
       .value("size", format_size(self.totals.file_size))
@@ -635,7 +636,7 @@ mod tests {
               <dd>
                 <ol role=list>
                   <li>
-                    <code>{key}</code>
+                    <a href='/key/{key}'><code>{key}</code></a>
                   </li>
                 </ol>
               </dd>

@@ -89,6 +89,8 @@ pub(crate) enum ServerError {
   HostNotAllowed { host: String },
   #[snafu(display("response invalid"))]
   InvalidResponse { source: http::Error },
+  #[snafu(display("key {key} not found"))]
+  KeyNotFound { key: PublicKey },
   #[snafu(display(
     "{noun} {index} does not exist, package {fingerprint} has {}",
     Count::new(*count, noun),
@@ -167,6 +169,8 @@ pub(crate) enum ServerError {
     fingerprint: Fingerprint,
     index: Ordinal,
   },
+  #[snafu(display("{source}"))]
+  PublicKeyParse { source: HexError },
   #[snafu(display(
     "package number {number} is at revision {head} but revision's parent is {parent}"
   ))]
@@ -274,6 +278,7 @@ impl ServerError {
       | Self::PackageMetadataFileMissing { .. }
       | Self::PackageRootUnverified { .. }
       | Self::PackageUnverified { .. }
+      | Self::PublicKeyParse { .. }
       | Self::RevisionDecode { .. }
       | Self::RevisionParentMissing { .. }
       | Self::RevisionParentNotFound { .. }
@@ -288,6 +293,7 @@ impl ServerError {
       | Self::ArtworkNotFound { .. }
       | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
+      | Self::KeyNotFound { .. }
       | Self::MediaItemDoesNotExist { .. }
       | Self::MediaType { .. }
       | Self::MediaTypeDoesNotHaveItems { .. }

@@ -8,6 +8,7 @@ pub enum Parameter {
   Integer,
   Ordinal,
   PackageIdentifier,
+  PublicKey,
   RelativePath,
   RevisionHash,
   String,

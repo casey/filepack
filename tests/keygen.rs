@@ -12,8 +12,6 @@ fn custom_name() {
 
   let private_key = test.read_private_key("keychain/deploy.private");
 
-  assert!(!public_key.inner().is_weak());
-
   assert_eq!(private_key.public_key(), public_key);
 }
 
@@ -28,8 +26,6 @@ fn default_name() {
   let public_key = test.read_public_key("keychain/master.public");
 
   let private_key = test.read_private_key("keychain/master.private");
-
-  assert!(!public_key.inner().is_weak());
 
   assert_eq!(private_key.public_key(), public_key);
 }

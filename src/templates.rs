@@ -4,8 +4,8 @@ pub use self::{directory::DirectoryHtml, package::PackageHtml};
 
 pub(crate) use self::{
   directory_table::DirectoryTableHtml, error::ErrorHtml, files::FilesHtml, history::HistoryHtml,
-  home::HomeHtml, info::InfoHtml, item::ItemHtml, media::MediaHtml, packages::PackagesHtml,
-  page::PageHtml,
+  home::HomeHtml, info::InfoHtml, item::ItemHtml, key::KeyHtml, media::MediaHtml,
+  packages::PackagesHtml, page::PageHtml,
 };
 
 mod directory;
@@ -16,6 +16,7 @@ mod history;
 mod home;
 mod info;
 mod item;
+mod key;
 mod media;
 mod package;
 mod packages;
