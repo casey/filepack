@@ -26,6 +26,7 @@ mod sign;
 mod signatures;
 mod size;
 mod state;
+mod unsign;
 mod update;
 mod upload;
 mod verify;
@@ -95,6 +96,8 @@ pub(crate) enum Subcommand {
   Size(size::Size),
   #[command(about = "Print package state")]
   State(state::State),
+  #[command(about = "Remove manifest signatures")]
+  Unsign(unsign::Unsign),
   #[command(about = "Update manifest")]
   Update(update::Update),
   #[command(about = "Upload package or file to a Filepack server")]
@@ -132,6 +135,7 @@ impl Name {
       Self::Signatures => signatures::Input::io_schema(registry),
       Self::Size => size::Input::io_schema(registry),
       Self::State => state::Input::io_schema(registry),
+      Self::Unsign => unsign::Input::io_schema(registry),
       Self::Update => update::Input::io_schema(registry),
       Self::Upload => upload::Input::io_schema(registry),
       Self::Verify => verify::Input::io_schema(registry),
@@ -166,6 +170,7 @@ impl Name {
       Self::Signatures => signatures::Output::io_schema(registry),
       Self::Size => size::Output::io_schema(registry),
       Self::State => state::Output::io_schema(registry),
+      Self::Unsign => unsign::Output::io_schema(registry),
       Self::Update => update::Output::io_schema(registry),
       Self::Upload => upload::Output::io_schema(registry),
       Self::Verify => verify::Output::io_schema(registry),
@@ -202,6 +207,7 @@ impl Subcommand {
       Self::Signatures(signatures) => signatures.run(options),
       Self::Size(size) => size.run(),
       Self::State(state) => state.run(),
+      Self::Unsign(unsign) => unsign.run(options),
       Self::Update(update) => update.run(options),
       Self::Upload(upload) => upload.run(options),
       Self::Verify(verify) => verify.run(options),

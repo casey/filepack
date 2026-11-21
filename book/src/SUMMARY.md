@@ -59,6 +59,7 @@ Summary
   - [filepack signatures](commands/filepack-signatures.md)
   - [filepack size](commands/filepack-size.md)
   - [filepack state](commands/filepack-state.md)
+  - [filepack unsign](commands/filepack-unsign.md)
   - [filepack update](commands/filepack-update.md)
   - [filepack upload](commands/filepack-upload.md)
   - [filepack verify](commands/filepack-verify.md)
