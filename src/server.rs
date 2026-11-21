@@ -122,6 +122,17 @@ impl Server {
   }
 
   pub(crate) fn gc(&self, mounts: &[Mount]) -> ServerResult<api::gc::Response> {
+    let mut response = self.gc_database(mounts)?;
+
+    let (bytes, files) = self.gc_files()?;
+
+    assert_eq!(mem::replace(&mut response.bytes, bytes), 0);
+    assert!(mem::replace(&mut response.files, files.into()).is_empty());
+
+    Ok(response)
+  }
+
+  fn gc_database(&self, mounts: &[Mount]) -> ServerResult<api::gc::Response> {
     let tx = self.database.begin_write()?;
 
     let mut marked = HashSet::new();
@@ -194,10 +205,6 @@ impl Server {
         signatures_removed.insert(entry?.1.value());
       }
 
-      for entry in signatures.iter()? {
-        marked.insert(entry?.1.value());
-      }
-
       while let Some(hash) = directory_stack.pop() {
         if !visited_directories.insert(hash) {
           continue;
@@ -228,9 +235,44 @@ impl Server {
       }
     }
 
+    tx.commit()?;
+
+    Ok(api::gc::Response {
+      bytes: 0,
+      directories: directories_removed.into(),
+      files: SortedSet::new(),
+      packages: packages_removed.into(),
+      revisions: revisions_removed.into(),
+      signatures: signatures_removed.into(),
+    })
+  }
+
+  fn gc_files(&self) -> ServerResult<(u64, BTreeSet<Hash>)> {
+    let tx = self.database.begin_write()?;
+
+    let mut marked = HashSet::new();
+
+    for entry in tx.open_table(DIRECTORIES)?.iter()? {
+      let hash = entry?.0.value();
+
+      marked.insert(hash);
+
+      for entry in self.read_directory(hash)?.entries.values() {
+        marked.insert(entry.hash);
+      }
+    }
+
+    for entry in tx.open_table(REVISIONS)?.iter()? {
+      marked.insert(entry?.0.value().into());
+    }
+
+    for entry in tx.open_table(SIGNATURES)?.iter()? {
+      marked.insert(entry?.1.value());
+    }
+
     let mut bytes = 0;
 
-    let mut files_removed = BTreeSet::new();
+    let mut files = BTreeSet::new();
 
     for hash in self.files()? {
       if marked.contains(&hash) {
@@ -244,24 +286,14 @@ impl Server {
         .context(filesystem_error::Io { path: &path })?
         .len();
 
-      files_removed.insert(hash);
-    }
-
-    for &hash in &files_removed {
-      let path = self.file_path(hash);
       fs::remove_file(&path).context(filesystem_error::Io { path })?;
+
+      files.insert(hash);
     }
 
-    tx.commit()?;
+    tx.abort()?;
 
-    Ok(api::gc::Response {
-      bytes,
-      directories: directories_removed.into(),
-      files: files_removed.into(),
-      packages: packages_removed.into(),
-      revisions: revisions_removed.into(),
-      signatures: signatures_removed.into(),
-    })
+    Ok((bytes, files))
   }
 
   pub(crate) fn has_directory(&self, hash: Hash) -> ServerResult<bool> {
