@@ -21,7 +21,7 @@ use {
   std::{
     assert_matches,
     collections::{BTreeMap, BTreeSet},
-    fs,
+    env, fs,
     io::{self, BufRead, BufReader, Cursor, Read, Write},
     net::{TcpListener, TcpStream},
     path::{MAIN_SEPARATOR_STR, Path},
@@ -43,6 +43,7 @@ use {
 
 mod archive;
 mod child;
+mod color;
 mod completions;
 mod contains;
 mod create;
@@ -144,6 +145,24 @@ fn add_unknown_signature(path: &Utf8Path) -> Vec<u8> {
   );
   manifest.save(path).unwrap();
   payload
+}
+
+fn filepack() -> Command {
+  let mut command = Command::new(env!("CARGO_BIN_EXE_filepack"));
+
+  command.env_remove("CLICOLOR_FORCE");
+  command.env_remove("FORCE_COLOR");
+  command.env_remove("NO_COLOR");
+  command.env_remove("RUST_BACKTRACE");
+  command.env_remove("RUST_LIB_BACKTRACE");
+
+  for (key, _value) in env::vars_os() {
+    if key.as_encoded_bytes().starts_with(b"FILEPACK_") {
+      command.env_remove(key);
+    }
+  }
+
+  command
 }
 
 fn fingerprint(path: &Utf8Path) -> Fingerprint {

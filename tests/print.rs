@@ -6,7 +6,7 @@ fn broken_pipe_is_ignored() {
 
   drop(reader);
 
-  let output = Command::new(env!("CARGO_BIN_EXE_filepack"))
+  let output = filepack()
     .arg("languages")
     .stdin(Stdio::null())
     .stdout(writer)

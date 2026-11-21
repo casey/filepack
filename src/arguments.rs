@@ -11,6 +11,7 @@ use {
   version,
   about = "Content-addressed packages",
   long_about = "Content-addressed packages - https://github.com/casey/filepack",
+  color = Style::color_choice(),
   styles = Styles::styled()
     .header(AnsiColor::Green.on_default() | Effects::BOLD)
     .usage(AnsiColor::Green.on_default() | Effects::BOLD)
