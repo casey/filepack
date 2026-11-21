@@ -2485,6 +2485,22 @@ fn malformed_public_key_returns_error() {
 }
 
 #[test]
+fn malformed_signature_returns_error() {
+  TestServer::new()
+    .get("/signature1INVALID")
+    .assert_error(
+      StatusCode::BAD_REQUEST,
+      ServerError::SignatureParse {
+        source: HexError::Digit {
+          digit: 'I',
+          tag: Tag::Signature,
+        },
+      },
+    )
+    .send();
+}
+
+#[test]
 fn media_audio_item_file_missing() {
   let server = TestServer::new();
 
@@ -4750,6 +4766,50 @@ fn server_errors_are_logged() {
        truncated\n",
     ),
   );
+}
+
+#[test]
+fn signature_not_found() {
+  let server = TestServer::new();
+
+  server
+    .get(format!("/{}", Attestation::EXAMPLE))
+    .assert_error(StatusCode::NOT_FOUND, ServerError::SignatureNotFound)
+    .send();
+
+  let revision = PackageBuilder::new().upload(&server).revision().hash();
+
+  let signature = server.sign(revision);
+
+  server.post(format!("/api/signature/{signature}")).send();
+
+  let signature = Signature::new(
+    PrivateKey::zero().public_key(),
+    revision,
+    ed25519_dalek::Signature::from_bytes(&[0; ed25519_dalek::SIGNATURE_LENGTH]).into(),
+  );
+
+  server
+    .get(format!("/{signature}"))
+    .assert_error(StatusCode::NOT_FOUND, ServerError::SignatureNotFound)
+    .send();
+}
+
+#[test]
+fn signature_redirects_to_package() {
+  let server = TestServer::new();
+
+  let revision = PackageBuilder::new().upload(&server).revision().hash();
+
+  let signature = server.sign(revision);
+
+  server.post(format!("/api/signature/{signature}")).send();
+
+  server
+    .get(format!("/{}", PrivateKey::zero().sign(revision)))
+    .status(StatusCode::TEMPORARY_REDIRECT)
+    .assert_header(header::LOCATION, format!("/package/{revision}"))
+    .send();
 }
 
 #[test]

@@ -18,11 +18,13 @@ pub struct Signature<T> {
   signature: Ed25519Signature,
 }
 
-impl<T: Message> Signature<T> {
-  pub(crate) fn message(&self) -> &T {
-    &self.message
+impl Attestation {
+  pub(crate) fn revision(&self) -> RevisionHash {
+    self.message
   }
+}
 
+impl<T: Message> Signature<T> {
   pub(crate) fn new(public_key: PublicKey, message: T, signature: Ed25519Signature) -> Self {
     Self {
       public_key,

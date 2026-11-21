@@ -286,6 +286,17 @@ impl Server {
     )
   }
 
+  pub(crate) fn has_signature(&self, signature: &Attestation) -> ServerResult<bool> {
+    Ok(
+      self
+        .database
+        .begin_read()?
+        .open_table(SIGNATURES)?
+        .get(&(signature.revision(), signature.public_key().to_bytes()))?
+        .is_some_and(|hash| hash.value() == Hash::bytes(&signature.encode_to_vec())),
+    )
+  }
+
   pub(crate) fn head(&self, number: u64) -> ServerResult<api::number::Response> {
     let revision = self
       .database
@@ -1158,7 +1169,7 @@ impl Server {
     let signature = Attestation::decode_from_slice(&self.read_file(hash)?)
       .context(server_error::SignatureDecode { hash })?;
 
-    let revision = *signature.message();
+    let revision = signature.revision();
 
     ensure!(
       tx.open_table(REVISIONS)?.get(&revision)?.is_some(),

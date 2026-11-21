@@ -312,6 +312,18 @@ impl Serve {
           .parse::<RevisionHash>()
           .context(server_error::RevisionParse)?;
         Ok(Redirect::permanent(&format!("/package/{revision}")))
+      } else if segment.starts_with(&Tag::Signature.prefix()) {
+        let signature = segment
+          .parse::<Attestation>()
+          .context(server_error::SignatureParse)?;
+        if block_in_place(|| server.has_signature(&signature))? {
+          Ok(Redirect::temporary(&format!(
+            "/package/{}",
+            signature.revision(),
+          )))
+        } else {
+          Err(ServerError::SignatureNotFound.into())
+        }
       } else if server_config.mount(segment).is_some() {
         Ok(Redirect::temporary(&format!("/{segment}/")))
       } else {
