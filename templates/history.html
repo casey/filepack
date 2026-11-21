@@ -1,6 +1,15 @@
 <h1>Package {{ self.identifier }} history</h1>
 <ol reversed>
-%% for revision in &self.revisions {
-  <li><a href=/package/{{ revision }}><code>{{ revision }}</code></a></li>
+%% for (revision, signers) in &self.revisions {
+  <li>
+    <a href=/package/{{ revision }}><code>{{ revision }}</code></a>
+%%   if !signers.is_empty() {
+    <ul>
+%%     for signer in signers {
+      <li>signed by <code>{{ signer }}</code></li>
+%%     }
+    </ul>
+%%   }
+  </li>
 %% }
 </ol>

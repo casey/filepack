@@ -16,6 +16,7 @@ pub struct PackageHtml {
   pub readme: Option<Hash>,
   pub revision: Option<RevisionHash>,
   pub revisions: Option<u64>,
+  pub signers: BTreeSet<PublicKey>,
   pub totals: Totals,
 }
 
@@ -51,6 +52,15 @@ impl PackageHtml {
           "history",
           Count::new(revisions, "revision").to_string(),
           format!("/package/{}/history", self.identifier),
+        )
+      })
+      .when(!self.signers.is_empty(), |builder| {
+        builder.list(
+          "signatures",
+          self
+            .signers
+            .iter()
+            .map(|signer| Info::Code(signer.to_string())),
         )
       })
       .value("size", format_size(self.totals.file_size))
@@ -567,6 +577,7 @@ mod tests {
         ],
         revision: Some(RevisionHash::EXAMPLE.parse().unwrap()),
         revisions: Some(2),
+        signers: BTreeSet::from([PublicKey::EXAMPLE.parse().unwrap()]),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -617,6 +628,16 @@ mod tests {
               <dt>history</dt>
               <dd>
                 <a href='/package/0/history'>2 revisions</a>
+              </dd>
+            </div>
+            <div>
+              <dt>signatures</dt>
+              <dd>
+                <ol role=list>
+                  <li>
+                    <code>{key}</code>
+                  </li>
+                </ol>
               </dd>
             </div>
             <div>
@@ -675,6 +696,7 @@ mod tests {
         ",
         directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
         fingerprint = Fingerprint::EXAMPLE,
+        key = PublicKey::EXAMPLE,
         merge = RevisionHash::from(Hash::bytes(b"foo")),
         revision = RevisionHash::EXAMPLE,
       )),
