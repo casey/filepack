@@ -1,6 +1,6 @@
 use {
   super::*,
-  reqwest::{blocking::RequestBuilder, redirect},
+  reqwest::{blocking::Body, redirect},
   url::Host,
 };
 
@@ -12,9 +12,7 @@ pub(crate) struct Client {
 
 impl Client {
   fn delete(&self, path: &str) -> Result<reqwest::blocking::Response> {
-    self
-      .request(self.client.delete(self.url(path)))?
-      .check_status()
+    self.request(Method::DELETE, path, None)?.check_status()
   }
 
   pub(crate) fn delete_number(&self, number: u64) -> Result {
@@ -54,9 +52,7 @@ impl Client {
   }
 
   fn get(&self, path: &str) -> Result<reqwest::blocking::Response> {
-    self
-      .request(self.client.get(self.url(path)))?
-      .check_status()
+    self.request(Method::GET, path, None)?.check_status()
   }
 
   pub(crate) fn missing_files(&self, hashes: BTreeSet<Hash>) -> Result<HashSet<Hash>> {
@@ -135,37 +131,47 @@ impl Client {
   }
 
   fn post(&self, path: &str) -> Result<reqwest::blocking::Response> {
-    self
-      .request(self.client.post(self.url(path)))?
-      .check_status()
+    self.request(Method::POST, path, None)?.check_status()
   }
 
   fn post_with_body(&self, path: &str, body: impl Encode) -> Result<reqwest::blocking::Response> {
     self
-      .request(self.client.post(self.url(path)).body(body.encode_to_vec()))?
+      .request(Method::POST, path, Some(body.encode_to_vec().into()))?
       .check_status()
   }
 
-  fn put(
-    &self,
-    path: &str,
-    body: impl Into<reqwest::blocking::Body>,
-  ) -> Result<reqwest::blocking::Response> {
+  fn put(&self, path: &str, body: impl Into<Body>) -> Result<reqwest::blocking::Response> {
     self
-      .request(self.client.put(self.url(path)).body(body.into()))?
+      .request(Method::PUT, path, Some(body.into()))?
       .check_status()
   }
 
-  pub(crate) fn put_file(&self, hash: Hash, body: reqwest::blocking::Body) -> Result {
+  pub(crate) fn put_file(&self, hash: Hash, body: Body) -> Result {
     self.put(&format!("api/file/{hash}"), body)?;
     Ok(())
   }
 
-  fn request(&self, mut builder: RequestBuilder) -> Result<reqwest::blocking::Response> {
-    if let Some(key) = &self.key {
-      let host = self.server.host_str().unwrap().to_owned();
-      builder = builder.bearer_auth(Claims::sign(key, &host)?);
+  fn request(
+    &self,
+    method: Method,
+    path: &str,
+    body: Option<Body>,
+  ) -> Result<reqwest::blocking::Response> {
+    let mut builder = self.client.request(method.clone(), self.url(path));
+
+    if let Some(body) = body {
+      builder = builder.body(body);
     }
+
+    if let Some(key) = &self.key {
+      builder = builder.bearer_auth(Claims::sign(
+        key,
+        self.server.host_str().unwrap(),
+        &method,
+        &format!("/{path}"),
+      )?);
+    }
+
     builder.send().context(error::Request)
   }
 
@@ -178,11 +184,7 @@ impl Client {
     revision: RevisionHash,
   ) -> Result<Option<api::revision::get::Response>> {
     self
-      .request(
-        self
-          .client
-          .get(self.url(&format!("api/revision/{revision}"))),
-      )?
+      .request(Method::GET, &format!("api/revision/{revision}"), None)?
       .found()?
       .map(ReqwestResponseExt::deco)
       .transpose()

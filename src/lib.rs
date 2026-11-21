@@ -196,7 +196,7 @@ use {
   axum::{
     Extension,
     body::Body,
-    http::{self, HeaderName, HeaderValue, StatusCode, header},
+    http::{self, HeaderName, HeaderValue, Method, StatusCode, header},
     response::{IntoResponse, Response},
   },
   axum_extra::{TypedHeader, headers},

@@ -4558,7 +4558,13 @@ fn redirect_omits_default_ports() {
 fn restricted_write_accepts_admin_token() {
   let admin = PrivateKey::generate();
   let hash = Hash::bytes(b"bar");
-  let token = Claims::sign(&admin, "filepack.example").unwrap();
+  let token = Claims::sign(
+    &admin,
+    "filepack.example",
+    &Method::PUT,
+    &format!("/api/file/{hash}"),
+  )
+  .unwrap();
 
   let server = TestServer::builder()
     .write_config(WriteConfig::Admin {
@@ -4608,7 +4614,13 @@ fn restricted_write_rejects_others() {
     .build();
 
   let hash = Hash::bytes(b"bar");
-  let token = Claims::sign(&other, "filepack.example").unwrap();
+  let token = Claims::sign(
+    &other,
+    "filepack.example",
+    &Method::PUT,
+    &format!("/api/file/{hash}"),
+  )
+  .unwrap();
 
   server
     .put(format!("/api/file/{hash}"))
@@ -4630,7 +4642,69 @@ fn restricted_write_rejects_wrong_domain() {
     .build();
 
   let hash = Hash::bytes(b"bar");
-  let token = Claims::sign(&admin, "bar.example").unwrap();
+  let token = Claims::sign(
+    &admin,
+    "bar.example",
+    &Method::PUT,
+    &format!("/api/file/{hash}"),
+  )
+  .unwrap();
+
+  server
+    .put(format!("/api/file/{hash}"))
+    .body("bar")
+    .token(token)
+    .status(StatusCode::UNAUTHORIZED)
+    .assert_body("invalid authorization token")
+    .send();
+}
+
+#[test]
+fn restricted_write_rejects_wrong_method() {
+  let admin = PrivateKey::generate();
+  let server = TestServer::builder()
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".parse().unwrap(),
+      key: admin.public_key(),
+    })
+    .build();
+
+  let hash = Hash::bytes(b"bar");
+  let token = Claims::sign(
+    &admin,
+    "filepack.example",
+    &Method::POST,
+    &format!("/api/file/{hash}"),
+  )
+  .unwrap();
+
+  server
+    .put(format!("/api/file/{hash}"))
+    .body("bar")
+    .token(token)
+    .status(StatusCode::UNAUTHORIZED)
+    .assert_body("invalid authorization token")
+    .send();
+}
+
+#[test]
+fn restricted_write_rejects_wrong_path() {
+  let admin = PrivateKey::generate();
+  let server = TestServer::builder()
+    .write_config(WriteConfig::Admin {
+      domain: "filepack.example".parse().unwrap(),
+      key: admin.public_key(),
+    })
+    .build();
+
+  let hash = Hash::bytes(b"bar");
+  let token = Claims::sign(
+    &admin,
+    "filepack.example",
+    &Method::PUT,
+    &format!("/api/file/{}", Hash::bytes(b"foo")),
+  )
+  .unwrap();
 
   server
     .put(format!("/api/file/{hash}"))

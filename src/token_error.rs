@@ -13,6 +13,10 @@ pub(crate) enum TokenError {
     now: u64,
     timestamp: u64,
   },
+  #[snafu(display("token has incorrect method `{method}`"))]
+  Method { method: String },
+  #[snafu(display("token has incorrect path `{path}`"))]
+  Path { path: String },
   #[snafu(display(
     "token is not yet valid: token with timestamp {timestamp} becomes valid at {start} which is after now {now}"
   ))]

@@ -120,6 +120,8 @@ mod tests {
     cases.case(
       Claims {
         domain: "foo".into(),
+        method: "bar".into(),
+        path: "baz".into(),
         timestamp: 1000,
       },
       1,
