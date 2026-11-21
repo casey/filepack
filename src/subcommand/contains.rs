@@ -7,7 +7,7 @@ pub(crate) struct Contains {
     group = "target",
     help = "Search manifest for <FILE>.",
     long,
-    value_hint = ValueHint::FilePath
+    value_hint = ValueHint::FilePath,
   )]
   file: Option<Utf8PathBuf>,
   #[arg(group = "target", help = "Search manifest for <HASH>.", long)]

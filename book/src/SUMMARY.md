@@ -41,6 +41,7 @@ Summary
   - [filepack download](commands/filepack-download.md)
   - [filepack files](commands/filepack-files.md)
   - [filepack fingerprint](commands/filepack-fingerprint.md)
+  - [filepack forget](commands/filepack-forget.md)
   - [filepack gc](commands/filepack-gc.md)
   - [filepack hash](commands/filepack-hash.md)
   - [filepack info](commands/filepack-info.md)

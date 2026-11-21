@@ -240,7 +240,9 @@ revisions with the following rules:
   extending the chain of revisions.
 
 After creating a revision you wish to publish, it should be uploaded to all
-servers before creating the next revision.
+servers before creating the next revision. `filepack upload` will print a
+warning if the current revision has not been uploaded to all servers.
+`filepack forget` can be used to silence the warning by forgetting a server.
 
 If you need to upload a revision that no longer exists locally, download it from
 a server that has it with:
@@ -408,6 +410,12 @@ The current state can be printed with:
 
 ```sh
 filepack state
+```
+
+The state entry for a server can be removed with:
+
+```sh
+filepack forget --server <SERVER>
 ```
 
 Download

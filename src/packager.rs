@@ -10,14 +10,14 @@ pub(crate) struct Packager {
     add = ArgValueCandidates::new(LintSelector::candidates),
     help = "Allow <LINT>",
     long,
-    value_name = "LINT"
+    value_name = "LINT",
   )]
   allow: Vec<LintSelector>,
   #[arg(
     add = ArgValueCandidates::new(LintSelector::candidates),
     help = "Deny <LINT>",
     long,
-    value_name = "LINT"
+    value_name = "LINT",
   )]
   deny: Vec<LintSelector>,
   #[arg(help = "Ignore <PATH>", long, value_name = "PATH")]
@@ -27,14 +27,14 @@ pub(crate) struct Packager {
   #[arg(
     help = "Use manifest at <MANIFEST>, defaults to `<ROOT>/manifest.filepack`",
     long,
-    value_hint = ValueHint::FilePath
+    value_hint = ValueHint::FilePath,
   )]
   manifest: Option<Utf8PathBuf>,
   #[arg(help = "Don't generate derived assets", long)]
   no_generate: bool,
   #[arg(
     help = "Package files in <ROOT> directory, defaults to current directory",
-    value_hint = ValueHint::DirPath
+    value_hint = ValueHint::DirPath,
   )]
   root: Option<Utf8PathBuf>,
   #[arg(help = "Sign manifest", long)]

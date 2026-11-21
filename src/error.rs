@@ -584,6 +584,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: io::Error,
   },
+  #[snafu(display("no state entry for server `{server}`"))]
+  StateEntryMissing {
+    backtrace: Option<Backtrace>,
+    server: String,
+  },
   #[snafu(display(
     "subpackage `{path}` fingerprint `{actual}` does not match `{path}/{}` fingerprint `{expected}`",
     Manifest::FILENAME,

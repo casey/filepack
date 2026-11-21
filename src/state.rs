@@ -44,6 +44,15 @@ impl State {
 
     Ok(())
   }
+
+  pub(crate) fn server_candidates() -> Vec<CompletionCandidate> {
+    Self::load(Utf8Path::new("."))
+      .unwrap_or_default()
+      .servers
+      .into_keys()
+      .map(CompletionCandidate::new)
+      .collect()
+  }
 }
 
 #[cfg(test)]
