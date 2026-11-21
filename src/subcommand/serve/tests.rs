@@ -2252,6 +2252,28 @@ fn get_package_without_metadata() {
 }
 
 #[test]
+fn hash_redirects_to_directory() {
+  let server = TestServer::new();
+
+  let hash = Hash::from(PackageBuilder::new().upload(&server));
+
+  server
+    .get(format!("/{hash}"))
+    .status(StatusCode::TEMPORARY_REDIRECT)
+    .assert_header(header::LOCATION, format!("/directory/{hash}"))
+    .send();
+}
+
+#[test]
+fn hash_redirects_to_file() {
+  TestServer::new()
+    .get(format!("/{}", Hash::EXAMPLE))
+    .status(StatusCode::TEMPORARY_REDIRECT)
+    .assert_header(header::LOCATION, format!("/file/{}", Hash::EXAMPLE))
+    .send();
+}
+
+#[test]
 fn home() {
   let server = TestServer::new();
 
@@ -2398,6 +2420,22 @@ fn malformed_fingerprint_returns_error() {
         source: HexError::Digit {
           digit: 'I',
           tag: Tag::Package,
+        },
+      },
+    )
+    .send();
+}
+
+#[test]
+fn malformed_hash_returns_error() {
+  TestServer::new()
+    .get("/hash1INVALID")
+    .assert_error(
+      StatusCode::BAD_REQUEST,
+      ServerError::HashParse {
+        source: HexError::Digit {
+          digit: 'I',
+          tag: Tag::Hash,
         },
       },
     )
@@ -3528,14 +3566,6 @@ fn named_mount_with_tag_prefix_redirects() {
       .assert_header(header::LOCATION, format!("/{name}/"))
       .send();
   }
-}
-
-#[test]
-fn non_fingerprint_tagged_hex_falls_through() {
-  TestServer::new()
-    .get(format!("/{}", Hash::EXAMPLE))
-    .assert_error(StatusCode::NOT_FOUND, ServerError::PageNotFound)
-    .send();
 }
 
 #[test]
@@ -4735,6 +4765,14 @@ fn tracks(filenames: &[&str]) -> Vec<Item<Audio>> {
     .iter()
     .map(|filename| Item::test(filename))
     .collect()
+}
+
+#[test]
+fn unsupported_tagged_hex_falls_through() {
+  TestServer::new()
+    .get(format!("/{}", DisplayPrivateKey::EXAMPLE))
+    .assert_error(StatusCode::NOT_FOUND, ServerError::PageNotFound)
+    .send();
 }
 
 #[test]

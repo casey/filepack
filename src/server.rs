@@ -264,6 +264,17 @@ impl Server {
     })
   }
 
+  pub(crate) fn has_directory(&self, hash: Hash) -> ServerResult<bool> {
+    Ok(
+      self
+        .database
+        .begin_read()?
+        .open_table(DIRECTORIES)?
+        .get(&hash)?
+        .is_some(),
+    )
+  }
+
   pub(crate) fn has_package(&self, fingerprint: Fingerprint) -> ServerResult<bool> {
     Ok(
       self
