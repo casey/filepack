@@ -163,7 +163,9 @@ impl Client {
       builder = builder.body(body);
     }
 
-    if let Some(key) = &self.key {
+    if let Some(key) = &self.key
+      && !method.is_safe()
+    {
       builder = builder.bearer_auth(Claims::sign(
         key,
         self.server.host_str().unwrap(),
@@ -258,6 +260,65 @@ mod tests {
       format!(
         "response from http://127.0.0.1:{port}/api/numbers failed with status 308 Permanent Redirect: "
       ),
+    );
+  }
+
+  #[test]
+  fn tokens_are_only_sent_with_unsafe_methods() {
+    let (_tempdir, data_dir) = tempdir();
+
+    let options = Options::parse_from(["filepack", "--data-dir", data_dir.as_str()]);
+
+    Keychain::load(&options)
+      .unwrap()
+      .generate_key(&KeyName::DEFAULT)
+      .unwrap();
+
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = listener.local_addr().unwrap().port();
+
+    let server = thread::spawn(move || {
+      (0..2)
+        .map(|_| {
+          let (mut stream, _) = listener.accept().unwrap();
+
+          let request = BufReader::new(&stream)
+            .lines()
+            .map(Result::unwrap)
+            .take_while(|line| !line.is_empty())
+            .collect::<Vec<String>>();
+
+          stream
+            .write_all(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+            .unwrap();
+
+          (
+            request[0].clone(),
+            request
+              .iter()
+              .any(|line| line.to_lowercase().starts_with("authorization:")),
+          )
+        })
+        .collect::<Vec<(String, bool)>>()
+    });
+
+    let client = Client::new(
+      &options,
+      format!("http://127.0.0.1:{port}").parse().unwrap(),
+      Some(&KeyName::DEFAULT),
+    )
+    .unwrap();
+
+    client.numbers().unwrap_err();
+
+    client.delete_number(0).unwrap_err();
+
+    assert_eq!(
+      server.join().unwrap(),
+      [
+        ("GET /api/numbers HTTP/1.1".into(), false),
+        ("DELETE /api/number/0 HTTP/1.1".into(), true),
+      ],
     );
   }
 }
