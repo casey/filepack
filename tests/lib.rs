@@ -80,6 +80,7 @@ mod size;
 mod state;
 mod stub_server;
 mod test;
+mod unsign;
 mod update;
 mod upload;
 mod verify;
