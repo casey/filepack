@@ -31,8 +31,7 @@ fn duplicate_key_literal() {
 #[test]
 fn duplicate_key_named() {
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .arg("create")
     .success()
     .args(["verify", "--key", "master", "--key", "master"])
@@ -42,7 +41,7 @@ fn duplicate_key_named() {
 
 #[test]
 fn duplicate_key_named_and_literal() {
-  let test = Test::new().arg("keygen").success().arg("create").success();
+  let test = Test::new().keygen("master").arg("create").success();
 
   let key = test.read("keychain/master.public");
 
@@ -307,8 +306,7 @@ fn missing_signature_for_literal_key() {
 #[test]
 fn missing_signature_for_named_key() {
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .arg("create")
     .success()
     .args(["verify", "--key", "master"])
@@ -320,11 +318,9 @@ fn missing_signature_for_named_key() {
 fn multiple_keys() {
   let test = Test::new()
     .data_dir("alice")
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .data_dir("bob")
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "foo"])
     .success()
@@ -348,8 +344,7 @@ fn multiple_keys() {
 fn multiple_keys_one_missing() {
   let test = Test::new()
     .data_dir("alice")
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "foo"])
     .success()
@@ -394,8 +389,7 @@ fn multiple_mismatches() {
 #[test]
 fn named_key() {
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
     .success()
@@ -529,8 +523,7 @@ fn print_includes_embedded_files() {
 #[test]
 fn quiet() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
     .success();
@@ -552,8 +545,7 @@ fn root_not_directory_error() {
 #[test]
 fn signature_revision_mismatch() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success();
@@ -595,8 +587,7 @@ fn signature_revision_mismatch() {
 #[test]
 fn signature_verification_success() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
     .success();
@@ -697,8 +688,7 @@ fn size_mismatch() {
 #[test]
 fn stored_revision_is_verified() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "foo"])
     .success();
@@ -723,8 +713,7 @@ fn stored_revision_is_verified() {
 #[test]
 fn subpackage() {
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar/baz")
     .args(["create", "--sign", "foo/bar"])
     .success()
@@ -813,8 +802,7 @@ fn subpackage_mismatch_error() {
 #[test]
 fn subpackage_stored_revision_is_verified() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar/baz")
     .args(["create", "foo/bar"])
     .success();
@@ -893,8 +881,7 @@ fn unarchive_error() {
 #[test]
 fn unknown_signatures_are_ignored() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
     .success();
@@ -918,8 +905,7 @@ fn unknown_signatures_are_ignored() {
 #[test]
 fn valid_signature_for_wrong_pubkey() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success();

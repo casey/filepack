@@ -192,8 +192,7 @@ fn upload_ignores_unrecognized_signatures() {
   let server = Test::new().serve().spawn();
 
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success();
@@ -810,8 +809,7 @@ fn upload_rejects_ambiguous_parent() {
 #[test]
 fn upload_rejects_invalid_signature() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success();
@@ -1190,8 +1188,7 @@ fn upload_uploads_signatures() {
   let server = Test::new().serve().spawn();
 
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .write("foo/bar", "baz")
     .args(["create", "--sign", "foo"])
     .success()
@@ -1204,8 +1201,7 @@ fn upload_uploads_signatures() {
       ",
     )
     .success()
-    .args(["keygen", "--name", "bar"])
-    .success()
+    .keygen("bar")
     .args(["sign", "--key", "bar", "foo"])
     .success()
     .args(["upload", "--server", &server.address(), "foo"])
@@ -1216,8 +1212,7 @@ fn upload_uploads_signatures() {
       ",
     )
     .success()
-    .args(["keygen", "--name", "baz"])
-    .success()
+    .keygen("baz")
     .args(["sign", "--key", "baz", "foo"])
     .success()
     .remove_file("foo/.filepack/state.json")

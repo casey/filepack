@@ -3,8 +3,7 @@ use super::*;
 #[test]
 fn appends_filename_if_argument_is_directory() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "foo"])
     .success();
@@ -22,8 +21,7 @@ fn appends_filename_if_argument_is_directory() {
 #[test]
 fn defaults_to_current_directory() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "foo"])
     .success();
@@ -43,11 +41,9 @@ fn defaults_to_current_directory() {
 fn existing_signatures_are_preserved() {
   let test = Test::new()
     .data_dir("a")
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .data_dir("b")
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "foo"])
     .success()
@@ -74,10 +70,8 @@ fn existing_signatures_are_preserved() {
 fn mismatched_key() {
   Test::new()
     .data_dir("foo")
-    .arg("keygen")
-    .success()
-    .arg("keygen")
-    .success()
+    .keygen("master")
+    .keygen("master")
     .rename("foo/keychain/master.private", "keychain/master.private")
     .create_dir("bar")
     .args(["create", "bar"])
@@ -90,8 +84,7 @@ fn mismatched_key() {
 #[test]
 fn named() {
   let test = Test::new()
-    .args(["keygen", "--name", "deploy"])
-    .success()
+    .keygen("deploy")
     .touch("foo/bar")
     .args(["create", "foo"])
     .success();
@@ -109,8 +102,7 @@ fn named() {
 #[test]
 fn preserves_embedded_files() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .write("pkg/metadata.yaml", "title: foo")
     .touch("pkg/bar")
     .args(["create", "pkg"])
@@ -125,8 +117,7 @@ fn preserves_embedded_files() {
 #[test]
 fn re_signing_is_idempotent() {
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "foo"])
     .success()
@@ -145,8 +136,7 @@ fn re_signing_is_idempotent() {
 #[test]
 fn stored_revision_is_signed() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "foo"])
     .success();
@@ -199,8 +189,7 @@ fn unknown_root_entries_are_preserved() {
   let hash = Hash::bytes(b"qux");
 
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .write_manifest(
       "foo/manifest.filepack",
@@ -268,10 +257,8 @@ fn unknown_root_entries_are_preserved() {
 #[test]
 fn unknown_signatures_are_preserved() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
-    .args(["keygen", "--name", "bar"])
-    .success()
+    .keygen("master")
+    .keygen("bar")
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
     .success();
@@ -290,8 +277,7 @@ fn unknown_signatures_are_preserved() {
 #[test]
 fn updates_manifest_with_signature() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "foo"])
     .success();

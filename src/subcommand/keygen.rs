@@ -12,7 +12,8 @@ pub(crate) type Output = ();
 
 impl Keygen {
   pub(crate) fn run(self, options: Options) -> Result {
-    Keychain::load(&options)?.generate_key(&self.name)
+    println!("{}", Keychain::load(&options)?.generate_key(&self.name)?);
+    Ok(())
   }
 }
 

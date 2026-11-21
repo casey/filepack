@@ -35,8 +35,7 @@ fn includes_embedded_files() {
 #[test]
 fn unknown_signatures_error() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo")
     .args(["create", "--sign"])
     .success();

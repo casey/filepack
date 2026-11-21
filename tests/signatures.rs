@@ -15,8 +15,7 @@ fn defaults_to_current_directory() {
 #[test]
 fn invalid_signature_error() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success();
@@ -74,8 +73,7 @@ fn no_signatures() {
 #[test]
 fn quiet() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
     .success();
@@ -93,8 +91,7 @@ fn quiet() {
 #[test]
 fn signature() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "foo"])
     .success()
@@ -112,8 +109,7 @@ fn signature() {
 #[test]
 fn stored_revision_is_verified() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "foo"])
     .success();
@@ -133,8 +129,7 @@ fn stored_revision_is_verified() {
 #[test]
 fn unknown_signatures_are_ignored() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
     .success();

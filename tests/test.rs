@@ -131,6 +131,14 @@ impl Test {
     Utf8Path::from_path(self.tempdir.path()).unwrap().join(path)
   }
 
+  #[track_caller]
+  pub(crate) fn keygen(self, name: &str) -> Self {
+    self
+      .args(["keygen", "--name", name])
+      .stdout_regex("public1[0-9a-f]{64}\n")
+      .success()
+  }
+
   pub(crate) fn new() -> Self {
     Self::with_tempdir(tempdir())
   }
