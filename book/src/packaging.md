@@ -404,7 +404,7 @@ State
 After uploading, the uploaded package number and revision hash will be saved to
 `.filepack/state.json` in the package root.
 
-The current package state can be printed with:
+The current state can be printed with:
 
 ```sh
 filepack state
