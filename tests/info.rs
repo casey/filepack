@@ -32,11 +32,7 @@ fn no_keys() {
 
 #[test]
 fn with_keys() {
-  let test = Test::new()
-    .arg("keygen")
-    .success()
-    .args(["keygen", "--name", "foo"])
-    .success();
+  let test = Test::new().keygen("master").keygen("foo");
 
   let master = test.read("keychain/master.public");
   let foo = test.read("keychain/foo.public");

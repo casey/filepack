@@ -6,7 +6,7 @@ pub(crate) struct Keychain {
 }
 
 impl Keychain {
-  pub(crate) fn generate_key(&mut self, name: &KeyName) -> Result {
+  pub(crate) fn generate_key(&mut self, name: &KeyName) -> Result<PublicKey> {
     if !filesystem::exists(&self.path)? {
       filesystem::create_dir_all_with_mode(&self.path, 0o700)?;
     }
@@ -39,7 +39,7 @@ impl Keychain {
 
     self.keys.insert(name.clone(), public_key);
 
-    Ok(())
+    Ok(public_key)
   }
 
   pub(crate) fn identifier_public_key(&self, identifier: &KeyIdentifier) -> Result<PublicKey> {

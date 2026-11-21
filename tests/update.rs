@@ -36,8 +36,7 @@ fn draft_keeps_parents() {
 #[test]
 fn invalid_signature_is_rejected() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success();
@@ -79,8 +78,7 @@ fn metadata_is_overwritten() {
 fn missing_signer_is_rejected() {
   let test = Test::new()
     .data_dir("bar")
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .data_dir("bar")
     .args(["create", "--sign", "foo"])
@@ -145,8 +143,7 @@ fn published_revision_is_parent() {
 #[test]
 fn sign() {
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "foo"])
     .success()
@@ -161,8 +158,7 @@ fn sign() {
 #[test]
 fn signers_resign() {
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success()
@@ -178,8 +174,7 @@ fn signers_resign() {
 #[test]
 fn unchanged_package_is_preserved() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "foo"])
     .success();
@@ -246,8 +241,7 @@ fn unknown_fields_are_rejected() {
 #[test]
 fn unknown_signatures_are_rejected() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success();

@@ -582,10 +582,8 @@ fn download_requires_signature_from_key() {
   let server = Test::new().serve().spawn();
 
   let test = Test::new()
-    .arg("keygen")
-    .success()
-    .args(["keygen", "--name", "bar"])
-    .success()
+    .keygen("master")
+    .keygen("bar")
     .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success()
@@ -844,8 +842,7 @@ fn download_retrieves_signatures() {
   let server = Test::new().serve().spawn();
 
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .write("foo/bar", "baz")
     .args(["create", "--sign", "foo"])
     .success()
@@ -976,8 +973,7 @@ fn download_verifies_signature_from_key() {
   let server = Test::new().serve().spawn();
 
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success()

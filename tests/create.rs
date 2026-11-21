@@ -352,10 +352,8 @@ fn metadata_deco_is_embedded_in_manifest_archive() {
 fn mismatched_key() {
   Test::new()
     .data_dir("foo")
-    .arg("keygen")
-    .success()
-    .arg("keygen")
-    .success()
+    .keygen("master")
+    .keygen("master")
     .rename("foo/keychain/master.private", "keychain/master.private")
     .create_dir("bar")
     .args(["create", "bar", "--sign"])
@@ -506,8 +504,7 @@ fn root_not_directory_error() {
 #[test]
 fn sign_creates_valid_signature() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
     .success()
@@ -533,8 +530,7 @@ fn sign_creates_valid_signature() {
 #[test]
 fn sign_fails_if_master_key_not_available() {
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .remove_file("keychain/master.private")
     .touch("foo/bar")
     .args(["create", "--sign", "foo"])
@@ -545,8 +541,7 @@ fn sign_fails_if_master_key_not_available() {
 #[test]
 fn sign_with_named_key() {
   let test = Test::new()
-    .args(["keygen", "--name", "deploy"])
-    .success()
+    .keygen("deploy")
     .touch("foo/bar")
     .args(["create", "--sign", "--key", "deploy", "foo"])
     .success();
@@ -762,8 +757,7 @@ fn subpackage_mismatch_error() {
 #[test]
 fn subpackage_signature_mismatch_error() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo/bar")
     .args(["create", "--sign", "foo/bar"])
     .success();

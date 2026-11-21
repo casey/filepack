@@ -3,8 +3,7 @@ use super::*;
 #[test]
 fn all() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success();
@@ -27,12 +26,9 @@ fn all() {
 #[test]
 fn keys() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
-    .args(["keygen", "--name", "bar"])
-    .success()
-    .args(["keygen", "--name", "baz"])
-    .success()
+    .keygen("master")
+    .keygen("bar")
+    .keygen("baz")
     .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success()
@@ -55,8 +51,7 @@ fn keys() {
 #[test]
 fn missing_signature() {
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "foo"])
     .success()

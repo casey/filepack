@@ -3,8 +3,7 @@ use super::*;
 #[test]
 fn default() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .arg("key")
     .stdout_regex("public1[0-9a-f]{64}\n")
     .success();
@@ -17,8 +16,7 @@ fn default() {
 #[test]
 fn master() {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .args(["key", "--key", "master"])
     .stdout_regex("public1[0-9a-f]{64}\n")
     .success();
@@ -34,8 +32,7 @@ fn master() {
 #[test]
 fn missing() {
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .args(["key", "--key", "nonexistent"])
     .stderr_regex("error: public key not found: `.*nonexistent.public`\n")
     .failure();
@@ -44,8 +41,7 @@ fn missing() {
 #[test]
 fn missing_private_key() {
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .remove_file("keychain/master.private")
     .arg("key")
     .stderr_regex("error: private key not found: `.*master.private`\n")
@@ -55,8 +51,7 @@ fn missing_private_key() {
 #[test]
 fn missing_public_key() {
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .remove_file("keychain/master.public")
     .arg("key")
     .stderr_regex("error: public key not found: `.*master.public`\n")
@@ -66,8 +61,7 @@ fn missing_public_key() {
 #[test]
 fn named() {
   let test = Test::new()
-    .args(["keygen", "--name", "deploy"])
-    .success()
+    .keygen("deploy")
     .args(["key", "--key", "deploy"])
     .stdout_regex("public1[0-9a-f]{64}\n")
     .success();

@@ -159,8 +159,7 @@ fn manifest(path: &Utf8Path) -> Manifest {
 
 fn signed_revision() -> (Revision, PublicKey, BTreeMap<u64, Vec<u8>>) {
   let test = Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .create_dir("foo")
     .args(["create", "--sign", "foo"])
     .success();

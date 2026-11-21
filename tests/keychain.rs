@@ -17,8 +17,7 @@ fn dir_permissions() {
 #[test]
 fn hidden_files_are_ignored() {
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .touch("keychain/.hidden")
     .arg("info")
     .stdout_regex(r#".*"keys": \{\n    "master":.*"#)
@@ -71,8 +70,7 @@ fn private_key_permissions() {
   }
 
   Test::new()
-    .arg("keygen")
-    .success()
+    .keygen("master")
     .chmod("keychain/master.private", 0o644)
     .touch("foo/bar")
     .args(["create", "foo"])
