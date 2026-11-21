@@ -21,7 +21,7 @@ impl Manifest {
       error::UnknownSignatures { count },
     }
 
-    println!("{}", DisplayJson::<Output>(&manifest));
+    DisplayJson::<Output>::print(&manifest)?;
 
     Ok(())
   }

@@ -2,7 +2,7 @@ use super::*;
 
 macro_rules! print {
   ($($arg:tt)*) => {
-    $crate::print::print(format_args!($($arg)*))?
+    $crate::macros::print(format_args!($($arg)*))?
   };
 }
 
@@ -13,6 +13,17 @@ macro_rules! println {
   ($($arg:tt)*) => {
     print!("{}\n", format_args!($($arg)*))
   };
+}
+
+macro_rules! warn {
+  ($($arg:tt)*) => {{
+    let style = $crate::Style::stderr();
+    eprintln!(
+      "{}: {}",
+      "warning".style(style.warning()),
+      format_args!($($arg)*).style(style.message()),
+    );
+  }};
 }
 
 pub(crate) fn print(args: fmt::Arguments) -> Result {

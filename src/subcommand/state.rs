@@ -16,7 +16,7 @@ impl State {
 
     let state = Output::load(loader.root())?;
 
-    println!("{}", DisplayJson::<Output>(&state));
+    DisplayJson::<Output>::print(&state)?;
 
     Ok(())
   }

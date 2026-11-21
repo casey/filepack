@@ -16,7 +16,7 @@ impl Files {
 
     let files = manifest.files();
 
-    println!("{}", DisplayJson::<Output>(&files));
+    DisplayJson::<Output>::print(&files)?;
 
     Ok(())
   }

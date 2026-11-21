@@ -14,7 +14,7 @@ impl Size {
   pub(crate) fn run(self) -> Result {
     let (_manifest, totals) = Loader::load(self.path.as_deref())?.unpack_with_totals()?;
 
-    println!("{}", DisplayJson::<Output>(&totals));
+    DisplayJson::<Output>::print(&totals)?;
 
     Ok(())
   }

@@ -10,7 +10,7 @@ pub(crate) fn run() -> Result {
     .map(|language| (*language, language.name().into()))
     .collect::<Output>();
 
-  println!("{}", DisplayJson::<Output>(&languages));
+  DisplayJson::<Output>::print(&languages)?;
 
   Ok(())
 }

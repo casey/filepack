@@ -36,6 +36,27 @@ impl Style {
     }
   }
 
+  pub(crate) fn json_key(self) -> Self {
+    Self {
+      inner: self.inner.blue().bold(),
+      ..self
+    }
+  }
+
+  pub(crate) fn json_null(self) -> Self {
+    Self {
+      inner: self.inner.dimmed(),
+      ..self
+    }
+  }
+
+  pub(crate) fn json_string(self) -> Self {
+    Self {
+      inner: self.inner.green(),
+      ..self
+    }
+  }
+
   pub(crate) fn lint(self) -> Self {
     Self {
       inner: self.inner.cyan(),
@@ -50,11 +71,19 @@ impl Style {
     }
   }
 
-  pub(crate) fn stderr() -> Self {
+  pub(crate) fn new(is_terminal: bool) -> Self {
     Self {
-      is_terminal: io::stderr().is_terminal(),
       inner: owo_colors::Style::default(),
+      is_terminal,
     }
+  }
+
+  pub(crate) fn stderr() -> Self {
+    Self::new(io::stderr().is_terminal())
+  }
+
+  pub(crate) fn stdout() -> Self {
+    Self::new(io::stdout().is_terminal())
   }
 
   pub(crate) fn warning(self) -> Self {

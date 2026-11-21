@@ -3,6 +3,17 @@ use {
   clap::error::{ContextKind, ContextValue, ErrorKind},
 };
 
+macro_rules! assert_matches_regex {
+  ($haystack:expr, $pattern:expr $(,)?) => {{
+    let haystack = $haystack;
+    let re = Regex::new(&format!("^(?s){}$", $pattern)).unwrap();
+    if !re.is_match(haystack.as_ref()) {
+      eprintln!("Regex did not match:");
+      pretty_assertions::assert_eq!(re.as_str(), haystack);
+    }
+  }};
+}
+
 pub(crate) const WEAK_PUBLIC_KEY: &str =
   "public10000000000000000000000000000000000000000000000000000000000000000";
 

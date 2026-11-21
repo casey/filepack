@@ -7,7 +7,7 @@ pub(crate) type Output = Reference;
 pub(crate) fn run() -> Result {
   let reference = Reference::new();
 
-  println!("{}", DisplayJson::<Output>(&reference));
+  DisplayJson::<Output>::print(&reference)?;
 
   Ok(())
 }

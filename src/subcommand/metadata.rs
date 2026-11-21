@@ -32,7 +32,7 @@ impl Metadata {
 
     let metadata = Output::decode_from_slice(&bytes).context(error::DecodeMetadataDeco { path })?;
 
-    println!("{}", DisplayJson::<Output>(&metadata));
+    DisplayJson::<Output>::print(&metadata)?;
 
     Ok(())
   }
