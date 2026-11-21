@@ -30,6 +30,13 @@ footer {
   gap: var(--space-2);
   padding: var(--space-2);
 
+  > a {
+    border-radius: var(--radius-small);
+    font-size: 0.875em;
+    padding: var(--space-half) var(--space-2);
+    text-decoration: none;
+  }
+
   hgroup {
     align-items: baseline;
     column-gap: var(--space-2);

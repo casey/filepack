@@ -10,6 +10,7 @@
 
   --radius-small: 0.25rem;
   --radius: 0.5rem;
+  --space-half: 0.125rem;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -39,6 +40,17 @@ a:not(:hover) {
 
 a:not([href]) {
   color: var(--text);
+}
+
+a[download], button {
+  border: 1px solid var(--border);
+  color: var(--muted);
+  transition: border-color var(--duration), color var(--duration);
+
+  &:hover {
+    border-color: var(--outline);
+    color: var(--text);
+  }
 }
 
 body {
@@ -225,20 +237,13 @@ body > header > nav {
   button {
     align-self: center;
     background-color: transparent;
-    border: 1px solid var(--border);
     border-radius: 50%;
-    color: var(--muted);
     cursor: pointer;
     font: inherit;
     font-size: 0.7em;
     height: 1.5em;
     padding: 0;
-    transition: color var(--duration);
     width: 1.5em;
-
-    &:hover {
-      color: var(--text);
-    }
   }
 }
 

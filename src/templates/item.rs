@@ -14,6 +14,20 @@ impl ItemHtml {
     self.metadata.creator.as_ref()
   }
 
+  fn download_link(&self) -> String {
+    let ty = match self.items() {
+      Items::Audio(_) => "audio",
+      Items::Image(_) => "image",
+      Items::Video(_) => "video",
+    };
+
+    format!(
+      "/media/{ty}/{}/item/{}",
+      self.fingerprint,
+      Ordinal(self.index),
+    )
+  }
+
   fn item(&self) -> &dyn MediaItem {
     self.items().get(self.index).unwrap()
   }
@@ -71,10 +85,16 @@ impl Page for ItemHtml {
   }
 
   fn shortcuts(&self) -> Vec<Shortcut> {
-    vec![Shortcut {
-      description: "toggle full screen",
-      keys: &['f'],
-    }]
+    vec![
+      Shortcut {
+        description: "download",
+        keys: &['d'],
+      },
+      Shortcut {
+        description: "toggle full screen",
+        keys: &['f'],
+      },
+    ]
   }
 
   fn stylesheet(&self) -> Option<&'static str> {
@@ -363,6 +383,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
+            <a download='foo.flac' href=/media/audio/{fingerprint}/item/1>Download</a>
           </footer>
         "
       ),
@@ -400,6 +421,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
+            <a download='foo.png' href=/media/image/{fingerprint}/item/1>Download</a>
           </footer>
         "
       ),
@@ -427,6 +449,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
+            <a download='foo.mp4' href=/media/video/{fingerprint}/item/1>Download</a>
           </footer>
         "
       ),
@@ -461,6 +484,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
+            <a download='foo.mp4' href=/media/video/{fingerprint}/item/1>Download</a>
           </footer>
         "
       ),
@@ -488,6 +512,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
+            <a download='foo.png' href=/media/image/{fingerprint}/item/1>Download</a>
           </footer>
         "
       ),
@@ -499,7 +524,7 @@ mod tests {
         identifier: PackageIdentifier::Number(0),
         metadata: Metadata {
           media: Some(Media::Image {
-            items: vec![Item::test("foo.png")],
+            items: vec![Item::test("foo/bar baz.png")],
           }),
           ..default()
         },
@@ -518,6 +543,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
+            <a download='bar baz.png' href=/media/image/{fingerprint}/item/1>Download</a>
           </footer>
         "
       )),
@@ -528,10 +554,16 @@ mod tests {
   fn shortcuts() {
     assert_eq!(
       ItemHtml::default().shortcuts(),
-      vec![Shortcut {
-        description: "toggle full screen",
-        keys: &['f'],
-      }],
+      vec![
+        Shortcut {
+          description: "download",
+          keys: &['d'],
+        },
+        Shortcut {
+          description: "toggle full screen",
+          keys: &['f'],
+        },
+      ],
     );
   }
 
