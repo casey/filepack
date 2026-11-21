@@ -1959,11 +1959,18 @@ fn get_package_history() {
     .assert_body(api::revision::post::Response { number: 0 }.encode_to_vec())
     .send();
 
+  let signature = server.sign(head);
+
+  server.post(format!("/api/signature/{signature}")).send();
+
   server
     .get("/package/0/history")
     .assert_page(HistoryHtml {
       identifier: PackageIdentifier::Number(0),
-      revisions: vec![head, root],
+      revisions: vec![
+        (head, BTreeSet::from([PrivateKey::zero().public_key()])),
+        (root, BTreeSet::new()),
+      ],
     })
     .send();
 
@@ -1971,7 +1978,7 @@ fn get_package_history() {
     .get(format!("/package/{root}/history"))
     .assert_page(HistoryHtml {
       identifier: PackageIdentifier::RevisionHash(root),
-      revisions: vec![root],
+      revisions: vec![(root, BTreeSet::new())],
     })
     .send();
 
@@ -2046,6 +2053,41 @@ fn get_package_not_found() {
       StatusCode::NOT_FOUND,
       ServerError::PackageFingerprintNotFound { fingerprint },
     )
+    .send();
+}
+
+#[test]
+fn get_package_signatures() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new().upload(&server);
+
+  let revision = fingerprint.revision().hash();
+
+  let signature = server.sign(revision);
+
+  server.post(format!("/api/signature/{signature}")).send();
+
+  server
+    .get("/package/0")
+    .assert_page(PackageHtml {
+      fingerprint,
+      identifier: PackageIdentifier::Number(0),
+      number: Some(0),
+      revision: Some(revision),
+      revisions: Some(1),
+      signers: BTreeSet::from([PrivateKey::zero().public_key()]),
+      ..default()
+    })
+    .send();
+
+  server
+    .get(format!("/package/{fingerprint}"))
+    .assert_page(PackageHtml {
+      fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
+      ..default()
+    })
     .send();
 }
 
@@ -5512,7 +5554,7 @@ fn verify_revision_update_merge() {
     .get("/package/0/history")
     .assert_page(HistoryHtml {
       identifier: PackageIdentifier::Number(0),
-      revisions: vec![merge, a],
+      revisions: vec![(merge, BTreeSet::new()), (a, BTreeSet::new())],
     })
     .send();
 }

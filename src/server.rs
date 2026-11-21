@@ -313,9 +313,26 @@ impl Server {
 
     let revision = revision.context(server_error::HistoryByFingerprint { fingerprint })?;
 
+    let tx = self.database.begin_read()?;
+
+    let signatures = tx.open_table(SIGNATURES)?;
+
+    let revisions = self
+      .history(revision)?
+      .into_iter()
+      .map(|revision| {
+        Ok((
+          revision,
+          Self::signatures(&signatures, revision)?
+            .into_keys()
+            .collect(),
+        ))
+      })
+      .collect::<ServerResult<Vec<(RevisionHash, BTreeSet<PublicKey>)>>>()?;
+
     Ok(HistoryHtml {
       identifier,
-      revisions: self.history(revision)?,
+      revisions,
     })
   }
 
@@ -579,6 +596,11 @@ impl Server {
 
     let tx = self.database.begin_read()?;
 
+    let signers = revision
+      .map(|revision| Self::signatures(&tx.open_table(SIGNATURES)?, revision))
+      .transpose()?
+      .map_or_default(|signatures| signatures.into_keys().collect::<BTreeSet<PublicKey>>());
+
     let numbers = tx.open_table(NUMBERS)?;
 
     let (next, prev) = number
@@ -640,6 +662,7 @@ impl Server {
       readme,
       revision,
       revisions,
+      signers,
       totals,
     })
   }
@@ -812,16 +835,28 @@ impl Server {
       .map(|number| Ok(number?.value()))
       .collect::<ServerResult<BTreeSet<u64>>>()?;
 
-    let signatures = tx
-      .open_table(SIGNATURES)?
-      .range((revision, [u8::MIN; PublicKey::LEN])..=(revision, [u8::MAX; PublicKey::LEN]))?
-      .map(|entry| Ok(entry?.1.value()))
-      .collect::<ServerResult<BTreeSet<Hash>>>()?;
+    let signatures = Self::signatures(&tx.open_table(SIGNATURES)?, revision)?
+      .into_values()
+      .collect::<BTreeSet<Hash>>();
 
     Ok(api::revision::get::Response {
       numbers: numbers.into(),
       signatures: signatures.into(),
     })
+  }
+
+  fn signatures(
+    signatures: &ReadOnlyTable<(RevisionHash, PublicKeyBytes), Hash>,
+    revision: RevisionHash,
+  ) -> ServerResult<BTreeMap<PublicKey, Hash>> {
+    signatures
+      .range((revision, [u8::MIN; PublicKey::LEN])..=(revision, [u8::MAX; PublicKey::LEN]))?
+      .map(|entry| {
+        let (key, hash) = entry?;
+        let (_revision, key) = key.value();
+        Ok((PublicKey::from_bytes(key).unwrap(), hash.value()))
+      })
+      .collect()
   }
 
   fn verified_package_file(

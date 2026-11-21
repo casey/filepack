@@ -514,6 +514,7 @@ fn upload_package_serves_package_html() {
       readme: None,
       revision: None,
       revisions: None,
+      signers: BTreeSet::new(),
       totals,
     })
     .send();
