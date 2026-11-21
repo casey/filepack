@@ -339,7 +339,7 @@ To sign a package during creation:
 filepack create --sign
 ```
 
-Or update:
+Or during an update:
 
 ```sh
 filepack update --sign
@@ -353,7 +353,7 @@ filepack key
 
 Signatures identify a package by revision hash, which commits to the package
 fingerprint. If you update the package and its fingerprint or revision changes,
-old signatures will not be valid for the new package.
+old signatures will not be valid for the new package and will be dropped.
 
 Individual signatures may be removed with:
 
