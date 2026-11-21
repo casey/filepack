@@ -204,7 +204,7 @@ use {
   blake3::Hasher,
   boilerplate::{Boilerplate, Trusted},
   camino::{Utf8Component, Utf8Path, Utf8PathBuf},
-  clap::{ArgGroup, CommandFactory, Parser, ValueEnum, ValueHint},
+  clap::{ArgGroup, ColorChoice, CommandFactory, Parser, ValueEnum, ValueHint},
   clap_complete::{ArgValueCandidates, CompleteEnv, CompletionCandidate},
   claxon::FlacReader,
   filepack_derive::{Decode, DecodeFromStr, Encode, EncodeDisplay, Json, Magic, route},
@@ -615,7 +615,7 @@ fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
 
   let stderr = journal.is_none().then(|| {
     tracing_subscriber::fmt::layer()
-      .with_ansi(io::stderr().is_terminal())
+      .with_ansi(Style::stderr().color())
       .with_writer(io::stderr)
   });
 

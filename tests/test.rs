@@ -203,7 +203,7 @@ impl Test {
   pub(crate) fn spawn(self) -> Child {
     filepack::install_default_crypto_provider().unwrap();
 
-    let mut command = Command::new(env!("CARGO_BIN_EXE_filepack"));
+    let mut command = filepack();
 
     #[cfg(windows)]
     {
@@ -517,7 +517,7 @@ impl Test {
 
     tempfile.write_all(json.as_ref().as_bytes()).unwrap();
 
-    let status = Command::new(env!("CARGO_BIN_EXE_filepack"))
+    let status = filepack()
       .args(["archive", tempfile.path().to_str().unwrap(), path])
       .current_dir(self.tempdir.path())
       .spawn()

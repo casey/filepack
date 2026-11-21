@@ -28,3 +28,11 @@ instead of standard error.
 
 Log levels, in increasing verbosity, are `off`, `error`, `warn`, `info`,
 `debug`, and `trace`.
+
+Color
+-----
+
+Colored output can be disabled by setting the `NO_COLOR` environment variable to
+a non-empty value, or enabled by setting the `FORCE_COLOR` environment variable
+to a non-empty value. Otherwise, Filepack colors output when printing to the
+terminal.

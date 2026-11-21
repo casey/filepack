@@ -2,8 +2,8 @@ use super::*;
 
 #[derive(Clone, Copy)]
 pub(crate) struct Style {
+  color: bool,
   inner: owo_colors::Style,
-  is_terminal: bool,
 }
 
 impl Style {
@@ -14,8 +14,26 @@ impl Style {
     }
   }
 
+  pub(crate) fn color(self) -> bool {
+    self.color
+  }
+
+  pub(crate) fn color_choice() -> ColorChoice {
+    fn set(key: &str) -> bool {
+      env::var_os(key).is_some_and(|value| !value.is_empty())
+    }
+
+    if set("NO_COLOR") {
+      ColorChoice::Never
+    } else if set("FORCE_COLOR") {
+      ColorChoice::Always
+    } else {
+      ColorChoice::Auto
+    }
+  }
+
   pub(crate) fn effective_style(self) -> owo_colors::Style {
-    if self.is_terminal {
+    if self.color {
       self.inner
     } else {
       owo_colors::Style::default()
@@ -71,19 +89,27 @@ impl Style {
     }
   }
 
-  pub(crate) fn new(is_terminal: bool) -> Self {
+  pub(crate) fn new(color: bool) -> Self {
     Self {
+      color,
       inner: owo_colors::Style::default(),
-      is_terminal,
     }
   }
 
   pub(crate) fn stderr() -> Self {
-    Self::new(io::stderr().is_terminal())
+    Self::stream(io::stderr())
   }
 
   pub(crate) fn stdout() -> Self {
-    Self::new(io::stdout().is_terminal())
+    Self::stream(io::stdout())
+  }
+
+  fn stream(stream: impl IsTerminal) -> Self {
+    match Self::color_choice() {
+      ColorChoice::Always => Self::new(true),
+      ColorChoice::Auto => Self::new(stream.is_terminal()),
+      ColorChoice::Never => Self::new(false),
+    }
   }
 
   pub(crate) fn warning(self) -> Self {
