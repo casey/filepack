@@ -11,8 +11,10 @@ See [API](api.md) and [Web](web.md) for documentation of the API and web routes.
 
 The server responds to requests for `/{fingerprint}`, `/{number}`, and
 `/{revision}` which redirect to [`/package/{package}`](web/package-package.md),
-and `/{key}` which redirects to [`/key/{key}`](web/key-key.md), and can be used
-as convenient shortcuts.
+`/{key}` which redirects to [`/key/{key}`](web/key-key.md), and `/{hash}` which
+redirects to [`/directory/{hash}`](web/directory-hash.md) for directories and
+[`/file/{hash}`](web/file-hash.md) otherwise, and can be used as convenient
+shortcuts.
 
 Authorization
 -------------

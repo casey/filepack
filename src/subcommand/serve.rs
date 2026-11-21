@@ -279,34 +279,47 @@ impl Serve {
     self.domain.iter().chain(&self.redirects).cloned().collect()
   }
 
-  async fn fallback(server_config: ServerConfigExtension, uri: Uri) -> Result<Redirect, PageError> {
+  async fn fallback(
+    server: ServerExtension,
+    server_config: ServerConfigExtension,
+    uri: Uri,
+  ) -> Result<Redirect, PageError> {
     if let Some(segment) = uri.path().strip_prefix('/')
       && !segment.contains('/')
     {
       if segment.starts_with(|c: char| c.is_ascii_digit()) {
         let number = parse_number::<u64>(segment).context(server_error::NumberParse)?;
-        return Ok(Redirect::permanent(&format!("/package/{number}")));
+        Ok(Redirect::permanent(&format!("/package/{number}")))
+      } else if segment.starts_with(&Tag::Hash.prefix()) {
+        let hash = segment.parse::<Hash>().context(server_error::HashParse)?;
+        if block_in_place(|| server.has_directory(hash))? {
+          Ok(Redirect::temporary(&format!("/directory/{hash}")))
+        } else {
+          Ok(Redirect::temporary(&format!("/file/{hash}")))
+        }
       } else if segment.starts_with(&Tag::Package.prefix()) {
         let fingerprint = segment
           .parse::<Fingerprint>()
           .context(server_error::FingerprintParse)?;
-        return Ok(Redirect::permanent(&format!("/package/{fingerprint}")));
+        Ok(Redirect::permanent(&format!("/package/{fingerprint}")))
       } else if segment.starts_with(&Tag::Public.prefix()) {
         let key = segment
           .parse::<PublicKey>()
           .context(server_error::PublicKeyParse)?;
-        return Ok(Redirect::permanent(&format!("/key/{key}")));
+        Ok(Redirect::permanent(&format!("/key/{key}")))
       } else if segment.starts_with(&Tag::Revision.prefix()) {
         let revision = segment
           .parse::<RevisionHash>()
           .context(server_error::RevisionParse)?;
-        return Ok(Redirect::permanent(&format!("/package/{revision}")));
+        Ok(Redirect::permanent(&format!("/package/{revision}")))
       } else if server_config.mount(segment).is_some() {
-        return Ok(Redirect::temporary(&format!("/{segment}/")));
+        Ok(Redirect::temporary(&format!("/{segment}/")))
+      } else {
+        Err(ServerError::PageNotFound.into())
       }
+    } else {
+      Err(ServerError::PageNotFound.into())
     }
-
-    Err(ServerError::PageNotFound.into())
   }
 
   async fn host_layer(

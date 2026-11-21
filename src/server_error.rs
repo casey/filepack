@@ -79,6 +79,8 @@ pub(crate) enum ServerError {
   Filesystem { source: FilesystemError },
   #[snafu(display("{source}"))]
   FingerprintParse { source: HexError },
+  #[snafu(display("{source}"))]
+  HashParse { source: HexError },
   #[snafu(display(
     "history cannot be accessed by fingerprint, browse package {fingerprint} by number or revision"
   ))]
@@ -270,6 +272,7 @@ impl ServerError {
       | Self::DirectoryTotals { .. }
       | Self::DirectoryUnverified { .. }
       | Self::FingerprintParse { .. }
+      | Self::HashParse { .. }
       | Self::HistoryByFingerprint { .. }
       | Self::HostMissing
       | Self::NumberParse { .. }
