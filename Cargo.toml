@@ -113,6 +113,7 @@ features = ["axum", "ring", "tls12", "webpki-roots"]
 [dev-dependencies]
 ed25519-dalek = { version = "3.0.0", features = ["digest", "hazmat"] }
 pretty_assertions = "1.4.1"
+pulldown-cmark = { version = "0.13.6", default-features = false }
 tower = { version = "0.5.3", features = ["util"] }
 
 [lib]

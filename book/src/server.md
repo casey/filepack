@@ -330,7 +330,7 @@ and `X-Content-Type-Options: nosniff`.
 Web packages can be mounted with:
 
 ```sh
-filepack serve --mount PACKAGE
+filepack serve --mount <PACKAGE>
 ```
 
 When mounted, `/mount/{package}/`, where `package` is a mounted package
