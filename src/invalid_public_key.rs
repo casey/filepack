@@ -32,7 +32,7 @@ mod tests {
     let public_key = PublicKey::EXAMPLE.parse::<PublicKey>().unwrap();
 
     assert_eq!(
-      InvalidPublicKey(public_key.inner().to_bytes()).to_string(),
+      InvalidPublicKey(public_key.to_bytes()).to_string(),
       public_key.to_string(),
     );
   }

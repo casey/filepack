@@ -1827,6 +1827,77 @@ fn get_directory_succeeds() {
 }
 
 #[test]
+fn get_key() {
+  let server = TestServer::new();
+
+  let foo = PackageBuilder::new().file("foo", b"foo").upload(&server);
+  let root = server.write_revision(foo, None);
+
+  let bar = PackageBuilder::new().file("bar", b"bar");
+  let bar = Fingerprint(bar.root.upload(&server));
+  server.post(format!("/api/package/{bar}")).send();
+
+  let head = server.write_revision(bar, Some(root));
+
+  server
+    .post(format!("/api/revision/{head}"))
+    .body(
+      api::revision::post::Request {
+        mode: api::revision::post::Mode::Update { number: 0 },
+      }
+      .encode_to_vec(),
+    )
+    .assert_body(api::revision::post::Response { number: 0 }.encode_to_vec())
+    .send();
+
+  let signature = server.sign(root);
+
+  server.post(format!("/api/signature/{signature}")).send();
+
+  let private_key = PrivateKey::generate();
+
+  let signature = private_key.sign(head).encode_to_vec();
+
+  server.write_file(&signature);
+
+  server
+    .post(format!("/api/signature/{}", Hash::bytes(&signature)))
+    .send();
+
+  let key = PrivateKey::zero().public_key();
+
+  server
+    .get(format!("/key/{key}"))
+    .assert_page(KeyHtml {
+      key,
+      numbers: BTreeSet::new(),
+      revisions: BTreeSet::from([root]),
+    })
+    .send();
+
+  let key = private_key.public_key();
+
+  server
+    .get(format!("/key/{key}"))
+    .assert_page(KeyHtml {
+      key,
+      numbers: BTreeSet::from([0]),
+      revisions: BTreeSet::from([head]),
+    })
+    .send();
+}
+
+#[test]
+fn get_key_not_found() {
+  let key = PublicKey::EXAMPLE.parse::<PublicKey>().unwrap();
+
+  TestServer::new()
+    .get(format!("/key/{key}"))
+    .assert_error(StatusCode::NOT_FOUND, ServerError::KeyNotFound { key })
+    .send();
+}
+
+#[test]
 fn get_package_by_number() {
   let server = TestServer::new();
 
@@ -2355,6 +2426,22 @@ fn malformed_package_identifier_returns_error() {
     .status(StatusCode::BAD_REQUEST)
     .assert_body(
       "Invalid URL: Cannot parse `package` with value `foo`: unrecognized package identifier `foo`",
+    )
+    .send();
+}
+
+#[test]
+fn malformed_public_key_returns_error() {
+  TestServer::new()
+    .get("/public1INVALID")
+    .assert_error(
+      StatusCode::BAD_REQUEST,
+      ServerError::PublicKeyParse {
+        source: HexError::Digit {
+          digit: 'I',
+          tag: Tag::Public,
+        },
+      },
     )
     .send();
 }
@@ -3446,7 +3533,7 @@ fn named_mount_with_tag_prefix_redirects() {
 #[test]
 fn non_fingerprint_tagged_hex_falls_through() {
   TestServer::new()
-    .get(format!("/{}", PublicKey::EXAMPLE))
+    .get(format!("/{}", Hash::EXAMPLE))
     .assert_error(StatusCode::NOT_FOUND, ServerError::PageNotFound)
     .send();
 }
@@ -4386,6 +4473,15 @@ fn ports() {
     Some(80),
     Some(443),
   );
+}
+
+#[test]
+fn public_key_redirects_to_key() {
+  TestServer::new()
+    .get(format!("/{}", PublicKey::EXAMPLE))
+    .status(StatusCode::PERMANENT_REDIRECT)
+    .assert_header(header::LOCATION, format!("/key/{}", PublicKey::EXAMPLE))
+    .send();
 }
 
 #[test]
@@ -5664,7 +5760,7 @@ fn verify_signature_invalid() {
   let signature = Signature::new(
     PrivateKey::zero().public_key(),
     fingerprint.revision().hash(),
-    ed25519_dalek::Signature::from_bytes(&[0; ed25519_dalek::SIGNATURE_LENGTH]),
+    ed25519_dalek::Signature::from_bytes(&[0; ed25519_dalek::SIGNATURE_LENGTH]).into(),
   )
   .encode_to_vec();
 
@@ -5704,7 +5800,8 @@ fn verify_signature_keeps_first_signature_for_key() {
       &expanded,
       revision.digest().as_bytes(),
       &key.public_key().inner(),
-    ),
+    )
+    .into(),
   )
   .encode_to_vec();
 

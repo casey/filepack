@@ -4,7 +4,7 @@ use {
     Database, MultimapTableDefinition, ReadOnlyTable, ReadableDatabase, ReadableMultimapTable,
     ReadableTable, TableDefinition,
   },
-  templates::{HistoryHtml, PackageHtml},
+  templates::{HistoryHtml, KeyHtml, PackageHtml},
 };
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
@@ -332,6 +332,40 @@ impl Server {
 
     Ok(HistoryHtml {
       identifier,
+      revisions,
+    })
+  }
+
+  pub(crate) fn key_html(&self, key: PublicKey) -> ServerResult<KeyHtml> {
+    let tx = self.database.begin_read()?;
+
+    let heads = tx.open_multimap_table(HEADS)?;
+
+    let bytes = key.to_bytes();
+
+    let mut numbers = BTreeSet::new();
+
+    let mut revisions = BTreeSet::new();
+
+    for entry in tx.open_table(SIGNATURES)?.iter()? {
+      let (revision, signer) = entry?.0.value();
+
+      if signer != bytes {
+        continue;
+      }
+
+      for number in heads.get(&revision)? {
+        numbers.insert(number?.value());
+      }
+
+      revisions.insert(revision);
+    }
+
+    ensure!(!revisions.is_empty(), server_error::KeyNotFound { key });
+
+    Ok(KeyHtml {
+      key,
+      numbers,
       revisions,
     })
   }
@@ -1127,7 +1161,7 @@ impl Server {
     {
       let mut signatures = tx.open_table(SIGNATURES)?;
 
-      let key = (revision, signature.public_key().inner().to_bytes());
+      let key = (revision, signature.public_key().to_bytes());
 
       if signatures.get(&key)?.is_none() {
         signatures.insert(&key, &hash)?;

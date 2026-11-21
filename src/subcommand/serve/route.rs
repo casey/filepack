@@ -39,6 +39,7 @@ impl Route {
       files_route(registry),
       home_route(registry),
       install_script_route(registry),
+      key_route(registry),
       media_audio_item_route(registry),
       media_image_item_route(registry),
       media_image_item_thumbnail_route(registry),
@@ -355,6 +356,18 @@ pub(crate) async fn home(
 #[route(GET, "/install.sh")]
 pub(crate) async fn install_script() -> ServerResult<StaticAsset> {
   StaticAsset::get("install.sh")
+}
+
+/// Display signatures made by `key`.
+///
+/// `key`: Public key of the signer.
+#[route(GET, "/key/{key}")]
+pub(crate) async fn key(
+  server: ServerExtension,
+  server_config: ServerConfigExtension,
+  key: Path<PublicKey>,
+) -> PageResult<KeyHtml> {
+  block_in_place(|| Ok(server.key_html(*key)?.page(server_config.url.clone())))
 }
 
 /// Serve audio `item` of package with `fingerprint`.

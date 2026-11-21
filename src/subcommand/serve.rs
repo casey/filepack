@@ -22,7 +22,8 @@ use {
     caches::DirCache,
   },
   templates::{
-    DirectoryHtml, FilesHtml, HistoryHtml, HomeHtml, ItemHtml, MediaHtml, PackageHtml, PackagesHtml,
+    DirectoryHtml, FilesHtml, HistoryHtml, HomeHtml, ItemHtml, KeyHtml, MediaHtml, PackageHtml,
+    PackagesHtml,
   },
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tower_http::set_header::SetResponseHeaderLayer,
@@ -290,6 +291,11 @@ impl Serve {
           .parse::<Fingerprint>()
           .context(server_error::FingerprintParse)?;
         return Ok(Redirect::permanent(&format!("/package/{fingerprint}")));
+      } else if segment.starts_with(&Tag::Public.prefix()) {
+        let key = segment
+          .parse::<PublicKey>()
+          .context(server_error::PublicKeyParse)?;
+        return Ok(Redirect::permanent(&format!("/key/{key}")));
       } else if segment.starts_with(&Tag::Revision.prefix()) {
         let revision = segment
           .parse::<RevisionHash>()

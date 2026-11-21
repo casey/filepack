@@ -37,7 +37,7 @@ mod tests {
             <li>
               <a href=/package/{revision}><code>{revision}</code></a>
               <ul>
-                <li>signed by <code>{key}</code></li>
+                <li>signed by <a href=/key/{key}><code>{key}</code></a></li>
               </ul>
             </li>
             <li>

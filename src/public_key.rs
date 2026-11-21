@@ -5,7 +5,7 @@ const DESCRIPTION: &str = "Ed25519 public key.
 Must use the canonical encoding and be of order ℓ, meaning that it must not be \
 a small-order point and must be torsion-free.";
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, SerializeDisplay)]
+#[derive(Clone, Copy, Debug, DeserializeFromStr, Eq, PartialEq, SerializeDisplay)]
 pub struct PublicKey(ed25519_dalek::VerifyingKey);
 
 impl PublicKey {
@@ -35,7 +35,8 @@ impl PublicKey {
     Ok(Self(key))
   }
 
-  pub fn inner(&self) -> ed25519_dalek::VerifyingKey {
+  #[cfg(test)]
+  pub(crate) fn inner(&self) -> ed25519_dalek::VerifyingKey {
     self.0
   }
 
@@ -49,6 +50,18 @@ impl PublicKey {
       .context(error::PublicKeyLoad { path })?;
 
     Ok(public_key)
+  }
+
+  pub(crate) fn to_bytes(self) -> PublicKeyBytes {
+    self.0.to_bytes()
+  }
+
+  pub(crate) fn verify(
+    self,
+    message: &[u8],
+    signature: Ed25519Signature,
+  ) -> Result<(), ed25519_dalek::SignatureError> {
+    self.0.verify_strict(message, &signature.inner())
   }
 }
 
@@ -118,6 +131,12 @@ impl json::Json for PublicKey {
       tag: Tag::Public,
     }
     .register("PublicKey", registry)
+  }
+}
+
+impl PathExtractor for PublicKey {
+  fn parameters() -> Vec<reference::Parameter> {
+    vec![reference::Parameter::PublicKey]
   }
 }
 

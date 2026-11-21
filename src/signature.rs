@@ -23,15 +23,11 @@ impl<T: Message> Signature<T> {
     &self.message
   }
 
-  pub(crate) fn new(
-    public_key: PublicKey,
-    message: T,
-    signature: ed25519_dalek::Signature,
-  ) -> Self {
+  pub(crate) fn new(public_key: PublicKey, message: T, signature: Ed25519Signature) -> Self {
     Self {
       public_key,
       message,
-      signature: signature.into(),
+      signature,
     }
   }
 
@@ -42,8 +38,7 @@ impl<T: Message> Signature<T> {
   pub fn verify(&self, policy: T::Policy<'_>) -> Result<&T, T::Error> {
     self
       .public_key
-      .inner()
-      .verify_strict(self.message.digest().as_bytes(), &self.signature.inner())
+      .verify(self.message.digest().as_bytes(), self.signature)
       .context(signature_error::Invalid {
         public_key: self.public_key,
       })?;

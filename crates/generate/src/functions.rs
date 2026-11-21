@@ -26,6 +26,7 @@ pub(crate) fn path_parameter_type(parameter: Parameter) -> &'static str {
     Parameter::PackageIdentifier => {
       "package [fingerprint](../hex/package.md), [revision hash](../hex/revision.md), or number"
     }
+    Parameter::PublicKey => "[public key](../hex/public.md)",
     Parameter::RelativePath => "relative path",
     Parameter::RevisionHash => "[revision hash](../hex/revision.md)",
     Parameter::String => "string",

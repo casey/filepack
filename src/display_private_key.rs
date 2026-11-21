@@ -13,7 +13,7 @@ impl DisplayPrivateKey {
 
   pub(crate) fn new(private_key: &PrivateKey) -> Self {
     Self([
-      private_key.public_key().inner().to_bytes(),
+      private_key.public_key().to_bytes(),
       private_key.as_secret_bytes(),
     ])
   }

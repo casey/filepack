@@ -187,6 +187,7 @@ Summary
   - [/file/\{hash\}/\{\*path\}](web/file-hash-path.md)
   - [/files](web/files.md)
   - [/install.sh](web/install-sh.md)
+  - [/key/\{key\}](web/key-key.md)
   - [/media/audio/\{fingerprint\}/item/\{item\}](web/media-audio-fingerprint-item-item.md)
   - [/media/image/\{fingerprint\}/item/\{item\}](web/media-image-fingerprint-item-item.md)
   - [/media/image/\{fingerprint\}/item/\{item\}/thumbnail](web/media-image-fingerprint-item-item-thumbnail.md)
