@@ -1,6 +1,10 @@
 use {
   super::*,
-  axum::{RequestPartsExt, extract::FromRequestParts, http::request::Parts},
+  axum::{
+    RequestPartsExt,
+    extract::{FromRequestParts, OriginalUri},
+    http::{request::Parts, uri::PathAndQuery},
+  },
   axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Bearer},
@@ -33,10 +37,14 @@ impl<S: Send + Sync> FromRequestParts<S> for Authenticated {
         }
       })?;
 
+    let Ok(uri) = parts.extract::<OriginalUri>().await;
+
     Claims::verify(
       key,
       domain,
+      &parts.method,
       now().context(server_error::Time)?,
+      uri.path_and_query().map_or("/", PathAndQuery::as_str),
       bearer.token(),
     )
     .context(server_error::AuthorizationInvalid)?;

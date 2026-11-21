@@ -32,13 +32,15 @@ The `--unrestricted-writes` flag allows write access without authorization.
 The `--admin-key` option, along with `--domain`, can be used to authorize write
 access by public key. The holder of the admin private key may authorize requests
 by including a tagged-hex [bearer token](hex/token.md) with their requests in
-the `Authorization` header. The token's domain must match the value of
-`--domain`, and the timestamp must be current.
+the `Authorization` header.
 
-Note that authorization tokens are not scoped to a particular endpoint or
-request, only by domain and time. They can be used for any purpose while valid.
-As such, `filepack` commands with `--auth` will refuse to run unless the
-connection to the server is over loopback or HTTPS.
+Bearer tokens contain a domain, which must match the server's `--domain`; a
+timestamp, which must be current; a method, which must match the method of the
+request; and a path, which must match the path and query string of the request.
+
+Although bearer tokens are scoped to domain, method, and path, they can be
+replayed while valid. As such, `filepack` commands with `--auth` will refuse to
+run unless the connection to the server is over loopback or HTTPS.
 
 Cross-Origin Requests
 ---------------------
