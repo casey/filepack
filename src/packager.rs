@@ -103,7 +103,7 @@ impl Packager {
           manifest.parents.clone()
         };
 
-        (true, Some((manifest, parents)))
+        (true, Some((manifest, parents, revision_hash)))
       }
     };
 
@@ -253,15 +253,30 @@ impl Packager {
       BTreeMap::new()
     };
 
-    let (parents, signatures) = match previous {
-      Some((previous, parents)) => {
+    let (parents, signatures, signers) = match previous {
+      Some((previous, parents, revision_hash)) => {
         if package == previous.package {
-          (previous.parents, previous.signatures)
+          (previous.parents, previous.signatures, BTreeSet::new())
         } else {
-          (parents, BTreeSet::new())
+          let count = previous.unknown_signatures();
+
+          ensure! {
+            count == 0,
+            error::ResignUnknownSignatures { count },
+          }
+
+          let signers = previous
+            .signatures()
+            .map(|signature| {
+              signature.verify(revision_hash)?;
+              Ok(signature.public_key())
+            })
+            .collect::<Result<BTreeSet<PublicKey>>>()?;
+
+          (parents, BTreeSet::new(), signers)
         }
       }
-      None => (None, BTreeSet::new()),
+      None => (None, BTreeSet::new(), BTreeSet::new()),
     };
 
     let mut manifest = Manifest {
@@ -272,7 +287,7 @@ impl Packager {
       unknown: DirectoryTree::new(),
     };
 
-    if self.sign {
+    let resigned = if self.sign || !signers.is_empty() {
       let revision_hash = Archive::pack(&manifest)
         .unwrap()
         .revision_hash(DecodeOptions::default())
@@ -280,10 +295,36 @@ impl Packager {
 
       let keychain = Keychain::load(&options)?;
 
-      manifest.sign(&keychain, &self.key, revision_hash)?;
-    }
+      let resigned = signers
+        .into_iter()
+        .map(|key| {
+          keychain
+            .name(key)
+            .cloned()
+            .context(error::ResignKeyMissing { key })
+        })
+        .collect::<Result<Vec<KeyName>>>()?;
+
+      for name in &resigned {
+        manifest.sign(&keychain, name, revision_hash)?;
+      }
+
+      if self.sign {
+        manifest.sign(&keychain, &self.key, revision_hash)?;
+      }
+
+      resigned
+    } else {
+      Vec::new()
+    };
 
     manifest.save(&manifest_path)?;
+
+    if !options.quiet {
+      for name in resigned {
+        eprintln!("re-signed with key `{name}`");
+      }
+    }
 
     Ok(())
   }

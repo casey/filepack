@@ -131,6 +131,14 @@ impl Keychain {
     Ok(Self { keys, path })
   }
 
+  pub(crate) fn name(&self, public_key: PublicKey) -> Option<&KeyName> {
+    self
+      .keys
+      .iter()
+      .find(|(_name, key)| **key == public_key)
+      .map(|(name, _key)| name)
+  }
+
   pub(crate) fn public_key(&self, name: &KeyName) -> Result<PublicKey> {
     self
       .keys

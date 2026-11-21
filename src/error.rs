@@ -484,6 +484,21 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: RelativePath,
   },
+  #[snafu(display(
+    "no private key for `{key}`, run `filepack unsign --key {key}` to remove its signature"
+  ))]
+  ResignKeyMissing {
+    backtrace: Option<Backtrace>,
+    key: PublicKey,
+  },
+  #[snafu(display(
+    "manifest contains {}, run `filepack unsign --all` to remove all signatures",
+    Count::new(*count, "unrecognized signature"),
+  ))]
+  ResignUnknownSignatures {
+    backtrace: Option<Backtrace>,
+    count: usize,
+  },
   #[snafu(display("failed to read body from response from {url}"))]
   ResponseBody {
     backtrace: Option<Backtrace>,

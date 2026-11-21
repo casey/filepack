@@ -34,6 +34,30 @@ fn draft_keeps_parents() {
 }
 
 #[test]
+fn invalid_signature_is_rejected() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create_dir("foo")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  let path = test.path().join("foo/manifest.filepack");
+
+  let signature = fingerprint(&path).revision().hash();
+
+  let revision = add_parent(&path).hash();
+
+  test
+    .touch("foo/bar")
+    .args(["update", "foo"])
+    .stderr(&format!(
+      "error: signature revision `{signature}` does not match package revision `{revision}`\n",
+    ))
+    .failure();
+}
+
+#[test]
 fn manifest_not_found() {
   Test::new()
     .arg("update")
@@ -49,6 +73,29 @@ fn metadata_is_overwritten() {
     .success()
     .arg("update")
     .success();
+}
+
+#[test]
+fn missing_signer_is_rejected() {
+  let test = Test::new()
+    .data_dir("bar")
+    .arg("keygen")
+    .success()
+    .create_dir("foo")
+    .data_dir("bar")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  let key = test.read("bar/keychain/master.public");
+
+  test
+    .touch("foo/baz")
+    .args(["update", "foo"])
+    .stderr(&format!(
+      "error: no private key for `{key}`, run `filepack unsign --key {key}` to remove its \
+       signature\n",
+    ))
+    .failure();
 }
 
 #[test]
@@ -112,7 +159,7 @@ fn sign() {
 }
 
 #[test]
-fn signatures_are_dropped() {
+fn signers_resign() {
   Test::new()
     .arg("keygen")
     .success()
@@ -121,19 +168,10 @@ fn signatures_are_dropped() {
     .success()
     .touch("foo/bar")
     .args(["update", "foo"])
-    .assert_manifest(
-      "foo/manifest.filepack",
-      json_pretty! {
-        embedded: {},
-        package: {
-          bar: {
-            hash: EMPTY_HASH,
-            size: 0
-          }
-        },
-        signatures: [],
-      },
-    )
+    .stderr("re-signed with key `master`\n")
+    .success()
+    .args(["verify", "foo", "--key", "master"])
+    .stderr("successfully verified 1 file totaling 0 bytes with 1 signature\n")
     .success();
 }
 
@@ -201,6 +239,27 @@ fn unknown_fields_are_rejected() {
         error: failed to decode manifest at `foo/manifest.filepack`
                └─ unknown field with key 18446744073709551615
       ",
+    )
+    .failure();
+}
+
+#[test]
+fn unknown_signatures_are_rejected() {
+  let test = Test::new()
+    .arg("keygen")
+    .success()
+    .create_dir("foo")
+    .args(["create", "--sign", "foo"])
+    .success();
+
+  add_unknown_signature(&test.path().join("foo/manifest.filepack"));
+
+  test
+    .touch("foo/bar")
+    .args(["update", "foo"])
+    .stderr(
+      "error: manifest contains 1 unrecognized signature, run `filepack unsign --all` to remove \
+       all signatures\n",
     )
     .failure();
 }

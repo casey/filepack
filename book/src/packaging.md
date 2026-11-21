@@ -353,7 +353,11 @@ filepack key
 
 Signatures identify a package by revision hash, which commits to the package
 fingerprint. If you update the package and its fingerprint or revision changes,
-old signatures will not be valid for the new package and will be dropped.
+old signatures will not be valid for the new package.
+
+`filepack update` will automatically sign the new revision with all keys that
+signed the old revision, or error if a key that signed the old revision is
+missing from the keychain.
 
 Individual signatures may be removed with:
 
@@ -373,11 +377,10 @@ Regenerate
 Regenerate the package after any changes and with all options above:
 
 ```sh
-filepack update --deny all --sign
+filepack update --deny all
 ```
 
-Add `--allow NAME` with any lints you are disabling, and omit `--sign` if you
-are not signing the package.
+Add `--allow NAME` to disable lints.
 
 Preview
 -------
