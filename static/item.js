@@ -1,4 +1,5 @@
 let audio = document.querySelector('audio');
+let download = document.querySelector('a[download]');
 let media = document.querySelector('img, video');
 let next = document.querySelector('link[rel=next]');
 
@@ -19,6 +20,10 @@ audio?.addEventListener('ended', () => {
 document.addEventListener('keydown', (event) => {
   if (event.altKey || event.ctrlKey || event.metaKey) {
     return;
+  }
+
+  if (event.key === 'd' && !event.repeat) {
+    download.click();
   }
 
   if (event.key === 'f' && document.fullscreenEnabled) {
