@@ -30,6 +30,28 @@ fn paths() {
 }
 
 #[test]
+fn servers() {
+  for subcommand in ["forget", "upload"] {
+    Test::new()
+      .write(
+        ".filepack/state.json",
+        json! {
+          servers: {
+            "https://foo/": {
+              number: 0,
+              revision: "revision12c7922354e5c2496ffc5e87ee0b29cc8767dc35a7c0e31e9d239014df5b44583"
+            }
+          }
+        },
+      )
+      .env("FILEPACK_COMPLETE", "fish")
+      .args(["--", "filepack", subcommand, "--server", ""])
+      .stdout("https://foo/\n")
+      .success();
+  }
+}
+
+#[test]
 fn subcommands() {
   Test::new()
     .env("FILEPACK_COMPLETE", "fish")

@@ -26,13 +26,13 @@ pub(crate) struct Download {
     conflicts_with_all = ["file", "fingerprint"],
     help = "Require signature by <KEY>",
     long = "key",
-    value_name = "KEY"
+    value_name = "KEY",
   )]
   keys: Vec<KeyIdentifier>,
   #[arg(
     help = "Download to <PATH>",
     value_hint = ValueHint::AnyPath,
-    value_name = "PATH"
+    value_name = "PATH",
   )]
   output: Utf8PathBuf,
   #[arg(

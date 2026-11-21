@@ -6,7 +6,7 @@ pub(crate) struct Options {
     long,
     help = "Store local data, including private keys, in <DATA_DIR>",
     env = "FILEPACK_DATA_DIR",
-    value_hint = ValueHint::DirPath
+    value_hint = ValueHint::DirPath,
   )]
   data_dir: Option<Utf8PathBuf>,
   #[arg(long, help = "Memory-map files for hashing")]
@@ -19,7 +19,7 @@ pub(crate) struct Options {
     env = "FILEPACK_UNSTABLE",
     help = "Enable unstable features",
     long,
-    value_parser = BoolishValueParser::new()
+    value_parser = BoolishValueParser::new(),
   )]
   pub(crate) unstable: bool,
 }

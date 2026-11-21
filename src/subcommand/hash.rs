@@ -6,7 +6,7 @@ pub(crate) struct Hash {
   assert: Option<crate::Hash>,
   #[arg(
     help = "Hash <FILE>, defaulting to standard input",
-    value_hint = ValueHint::FilePath
+    value_hint = ValueHint::FilePath,
   )]
   file: Option<Utf8PathBuf>,
 }

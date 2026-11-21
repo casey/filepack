@@ -53,6 +53,7 @@ mod download;
 mod expected;
 mod files;
 mod fingerprint;
+mod forget;
 mod gc;
 mod hash;
 mod info;

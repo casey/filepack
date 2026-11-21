@@ -8,6 +8,7 @@ mod delete;
 mod download;
 mod files;
 mod fingerprint;
+mod forget;
 mod gc;
 mod hash;
 mod info;
@@ -58,6 +59,8 @@ pub(crate) enum Subcommand {
   Files(files::Files),
   #[command(about = "Print package fingerprint")]
   Fingerprint(fingerprint::Fingerprint),
+  #[command(about = "Forget server")]
+  Forget(forget::Forget),
   #[command(about = "Delete unreferenced data on a Filepack server")]
   Gc(gc::Gc),
   #[command(about = "Print file hash")]
@@ -111,6 +114,7 @@ impl Name {
       Self::Download => download::Input::io_schema(registry),
       Self::Files => files::Input::io_schema(registry),
       Self::Fingerprint => fingerprint::Input::io_schema(registry),
+      Self::Forget => forget::Input::io_schema(registry),
       Self::Gc => gc::Input::io_schema(registry),
       Self::Hash => hash::Input::io_schema(registry),
       Self::Info => info::Input::io_schema(registry),
@@ -144,6 +148,7 @@ impl Name {
       Self::Download => download::Output::io_schema(registry),
       Self::Files => files::Output::io_schema(registry),
       Self::Fingerprint => fingerprint::Output::io_schema(registry),
+      Self::Forget => forget::Output::io_schema(registry),
       Self::Gc => gc::Output::io_schema(registry),
       Self::Hash => hash::Output::io_schema(registry),
       Self::Info => info::Output::io_schema(registry),
@@ -179,6 +184,7 @@ impl Subcommand {
       Self::Download(download) => download.run(options),
       Self::Files(files) => files.run(),
       Self::Fingerprint(fingerprint) => fingerprint.run(),
+      Self::Forget(forget) => forget.run(),
       Self::Gc(gc) => gc.run(options),
       Self::Hash(hash) => hash.run(options),
       Self::Info => info::run(options),

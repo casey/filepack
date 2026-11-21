@@ -182,6 +182,9 @@ package number and new head for that server are recorded in a state entry in
 The current package state can be printed with
 [`filepack state`](commands/filepack-state.md).
 
+The state entry for a server can be removed with
+[`filepack forget`](commands/filepack-forget.md).
+
 `filepack upload` defaults to operating on the package number recorded in the
 destination server's state entry, unless `--number N` is used to override it.
 

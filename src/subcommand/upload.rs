@@ -17,7 +17,7 @@ pub(crate) struct Upload {
     help = "Upload <PATH>, defaults to current directory for packages",
     required_if_eq("file", "true"),
     value_hint = ValueHint::AnyPath,
-    value_name = "PATH"
+    value_name = "PATH",
   )]
   input: Option<Utf8PathBuf>,
   #[arg(group = "mode", help = "Upload package without revision", long)]
@@ -26,16 +26,21 @@ pub(crate) struct Upload {
     conflicts_with_all = ["file", "no_revision"],
     help = "Upload to package number <NUMBER>",
     long,
-    value_name = "NUMBER"
+    value_name = "NUMBER",
   )]
   number: Option<u64>,
   #[arg(
     conflicts_with_all = ["file", "no_revision"],
     help = "Replace package regardless of revision history",
-    long
+    long,
   )]
   replace: bool,
-  #[arg(help = "Upload to server at <URL>", long, value_name = "URL")]
+  #[arg(
+    add = ArgValueCandidates::new(State::server_candidates),
+    help = "Upload to server at <URL>",
+    long,
+    value_name = "URL",
+  )]
   server: ServerUrl,
 }
 

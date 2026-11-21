@@ -17,7 +17,7 @@ pub(crate) struct Verify {
   #[arg(
     help = "Read manifest from <MANIFEST>, defaults to `<ROOT>/manifest.filepack`",
     long,
-    value_hint = ValueHint::FilePath
+    value_hint = ValueHint::FilePath,
   )]
   manifest: Option<Utf8PathBuf>,
   #[arg(help = "Print manifest if verification is successful", long)]
@@ -26,7 +26,7 @@ pub(crate) struct Verify {
   revision: Option<RevisionHash>,
   #[arg(
     help = "Verify files in <ROOT> directory against manifest, defaults to current directory",
-    value_hint = ValueHint::DirPath
+    value_hint = ValueHint::DirPath,
   )]
   root: Option<Utf8PathBuf>,
 }

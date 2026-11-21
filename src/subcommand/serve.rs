@@ -60,7 +60,7 @@ pub(crate) struct Serve {
     help = "Store ACME TLS certificates in <PATH>",
     long,
     value_hint = ValueHint::DirPath,
-    value_name = "PATH"
+    value_name = "PATH",
   )]
   acme_cache: Option<Utf8PathBuf>,
   #[arg(
@@ -74,7 +74,7 @@ pub(crate) struct Serve {
     env = "FILEPACK_ACME_DIRECTORY",
     help = "Request ACME TLS certificates from <DIRECTORY>",
     long,
-    value_name = "DIRECTORY"
+    value_name = "DIRECTORY",
   )]
   acme_directory: Url,
   #[arg(
