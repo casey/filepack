@@ -32,7 +32,7 @@ impl Signatures {
       eprintln!("ignored {}", Count::new(unknown, "unrecognized signature"));
     }
 
-    println!("{}", DisplayJson::<Output>(&signatures));
+    DisplayJson::<Output>::print(&signatures)?;
 
     Ok(())
   }

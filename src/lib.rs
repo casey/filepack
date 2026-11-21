@@ -102,6 +102,7 @@ use {
     item::Item,
     items::Items,
     json::Json,
+    json_formatter::JsonFormatter,
     key_identifier::KeyIdentifier,
     key_identifier_error::KeyIdentifierError,
     key_name::KeyName,
@@ -317,28 +318,11 @@ pub use self::{
   unstable_feature::UnstableFeature,
 };
 
+#[macro_use]
+mod macros;
 #[cfg(test)]
-macro_rules! assert_matches_regex {
-  ($haystack:expr, $pattern:expr $(,)?) => {{
-    let haystack = $haystack;
-    let re = Regex::new(&format!("^(?s){}$", $pattern)).unwrap();
-    if !re.is_match(haystack.as_ref()) {
-      eprintln!("Regex did not match:");
-      pretty_assertions::assert_eq!(re.as_str(), haystack);
-    }
-  }};
-}
-
-macro_rules! warn {
-  ($($arg:tt)*) => {{
-    let style = $crate::Style::stderr();
-    eprintln!(
-      "{}: {}",
-      "warning".style(style.warning()),
-      format_args!($($arg)*).style(style.message()),
-    );
-  }};
-}
+#[macro_use]
+mod test;
 
 pub mod api;
 mod application;
@@ -437,6 +421,7 @@ mod iso8601_duration;
 mod item;
 mod items;
 pub mod json;
+mod json_formatter;
 mod key_identifier;
 mod key_identifier_error;
 mod key_name;
@@ -493,8 +478,6 @@ mod path_error;
 mod path_extractor;
 mod percent_encode;
 mod png_builder;
-#[macro_use]
-mod print;
 mod private_key;
 mod private_key_error;
 mod progress_bar;
@@ -559,8 +542,6 @@ pub mod yaml;
 mod derive;
 #[cfg(test)]
 mod jpeg_builder;
-#[cfg(test)]
-mod test;
 #[cfg(test)]
 mod webm_builder;
 

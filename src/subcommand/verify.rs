@@ -222,7 +222,7 @@ revision hash mismatch: `{}`
     }
 
     if self.print {
-      println!("{}", DisplayJson::<Output>(&manifest));
+      DisplayJson::<Output>::print(&manifest)?;
     }
 
     if !options.quiet {

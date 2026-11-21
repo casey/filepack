@@ -13,7 +13,6 @@ module-item-order-groupings = [
 module-items-ordered-within-groupings = [
   "use",
   "macros",
-  "modules",
   "global_asm",
   "lower_snake_case",
 ]

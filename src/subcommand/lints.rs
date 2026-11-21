@@ -9,7 +9,7 @@ pub(crate) fn run() -> Result {
     .map(|group| (group, group.lints()))
     .collect::<Output>();
 
-  println!("{}", DisplayJson::<Output>(&groups));
+  DisplayJson::<Output>::print(&groups)?;
 
   Ok(())
 }
