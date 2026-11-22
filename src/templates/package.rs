@@ -828,6 +828,11 @@ mod tests {
       rights: Some(Rights {
         basis: Some("qux".parse().unwrap()),
         license: "unknown".parse().unwrap(),
+        links: Some(
+          vec!["http://example.com/foo".parse().unwrap()]
+            .try_into()
+            .unwrap(),
+        ),
       }),
       ..default()
     };
@@ -906,6 +911,16 @@ mod tests {
                     <dt>basis</dt>
                     <dd>
                       qux
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>links</dt>
+                    <dd>
+                      <ol role=list>
+                        <li>
+                          <a href='http://example.com/foo'>http://example.com/foo</a>
+                        </li>
+                      </ol>
                     </dd>
                   </div>
                 </dl>

@@ -283,22 +283,21 @@ mod tests {
     }
 
     for (name, field) in fields(&reference.yaml) {
-      let scalar = !matches!(
+      let needs_example = !matches!(
         reference.yaml[&field.schema],
         json::Schema::Array { .. }
           | json::Schema::Map { .. }
-          | json::Schema::NonEmptyOrderedSet { .. }
           | json::Schema::Set { .. }
           | json::Schema::Struct { .. }
           | json::Schema::TaggedEnum { .. }
           | json::Schema::UntaggedEnum { .. }
       );
 
-      if scalar && field.example.is_none() {
+      if needs_example && field.example.is_none() {
         errors.push(format!("yaml field `{name}.{}` has no example", field.name));
       }
 
-      if !scalar && field.example.is_some() {
+      if !needs_example && field.example.is_some() {
         errors.push(format!("yaml field `{name}.{}` has an example", field.name));
       }
     }

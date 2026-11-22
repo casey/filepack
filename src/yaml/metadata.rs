@@ -533,6 +533,11 @@ mod tests {
       rights: Some(Rights {
         basis: Some("foo".parse().unwrap()),
         license: License::Unknown,
+        links: Some(
+          vec!["http://example.com".parse().unwrap()]
+            .try_into()
+            .unwrap(),
+        ),
       }),
       title: Some("qux".parse().unwrap()),
       ..default()
@@ -583,6 +588,11 @@ mod tests {
         rights: Some(crate::Rights {
           basis: Some("foo".parse().unwrap()),
           license: "unknown".parse().unwrap(),
+          links: Some(
+            vec!["http://example.com".parse().unwrap()]
+              .try_into()
+              .unwrap(),
+          ),
         }),
         title: Some("qux".parse().unwrap()),
         ..default()

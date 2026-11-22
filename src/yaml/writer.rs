@@ -32,6 +32,13 @@ impl<'a> Writer<'a> {
     }
   }
 
+  fn example(field: &Field) -> &str {
+    field
+      .example
+      .as_deref()
+      .unwrap_or_else(|| panic!("field `{}` has no example", field.name))
+  }
+
   pub(crate) fn field(&mut self, field: &Field) {
     match &self.registry[&field.schema] {
       Schema::Array { element } => {
@@ -45,11 +52,17 @@ impl<'a> Writer<'a> {
 
         self.nested(|writer| writer.item(|writer| writer.fields(fields)));
       }
-      Schema::Map { .. }
-      | Schema::NonEmptyOrderedSet { .. }
-      | Schema::Set { .. }
-      | Schema::UntaggedEnum { .. } => {
+      Schema::Map { .. } | Schema::Set { .. } | Schema::UntaggedEnum { .. } => {
         unreachable!()
+      }
+      Schema::NonEmptyOrderedSet { .. } => {
+        let scalar = serde_yaml::to_string(Self::example(field)).unwrap();
+
+        self.comment(&field.description);
+
+        self.line(format_args!("{}:", field.name));
+
+        self.nested(|writer| writer.item(|writer| writer.line(scalar.trim_end())));
       }
       Schema::Struct { fields, .. } => {
         self.comment(&field.description);
@@ -70,10 +83,7 @@ impl<'a> Writer<'a> {
       | Schema::StringEnum { .. }
       | Schema::UnsignedInteger { .. }
       | Schema::Wrapper { .. } => {
-        let example = field
-          .example
-          .as_ref()
-          .unwrap_or_else(|| panic!("field `{}` has no example", field.name));
+        let example = Self::example(field);
 
         let scalar = serde_yaml::to_string(example).unwrap();
 
