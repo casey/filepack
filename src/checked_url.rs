@@ -1,7 +1,9 @@
 use super::*;
 
 /// `http://` or `https://` URL.
-#[derive(Clone, Debug, DeserializeFromStr, Encode, Json, PartialEq, SerializeDisplay)]
+#[derive(
+  Clone, Debug, DeserializeFromStr, Encode, Eq, Json, Ord, PartialEq, PartialOrd, SerializeDisplay,
+)]
 #[json(string)]
 #[deco(transparent)]
 pub(crate) struct CheckedUrl(String);

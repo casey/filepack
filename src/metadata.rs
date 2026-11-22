@@ -431,6 +431,11 @@ mod tests {
       rights: Some(Rights {
         basis: Some("foo".parse().unwrap()),
         license: "unknown".parse().unwrap(),
+        links: Some(
+          vec!["http://example.com/bar".parse().unwrap()]
+            .try_into()
+            .unwrap(),
+        ),
       }),
       thumbnails: Some(
         [(
