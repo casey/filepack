@@ -827,6 +827,7 @@ mod tests {
       readme: Some("README.md".parse().unwrap()),
       rights: Some(Rights {
         basis: Some("qux".parse().unwrap()),
+        credits: Some(vec!["bob".parse().unwrap()].try_into().unwrap()),
         license: "unknown".parse().unwrap(),
         links: Some(
           vec!["http://example.com/foo".parse().unwrap()]
@@ -905,6 +906,16 @@ mod tests {
                     <dt>license</dt>
                     <dd>
                       unknown
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>credits</dt>
+                    <dd>
+                      <ol role=list>
+                        <li>
+                          bob
+                        </li>
+                      </ol>
                     </dd>
                   </div>
                   <div>
