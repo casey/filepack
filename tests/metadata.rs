@@ -1096,7 +1096,7 @@ fn create_rejects_unknown_license() {
     .stderr(
       "
         error: failed to deserialize metadata at `metadata.yaml`
-               └─ rights.license: unknown variant `foo`, expected one of `permission`, `public-domain`, `reserved`, `unknown` at line 2 column 12
+               └─ rights.license: unknown license `foo`: expected `permission`, `public-domain`, `reserved`, `unknown`, or an SPDX license identifier at line 2 column 12
       ",
     )
     .failure();

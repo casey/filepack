@@ -94,6 +94,7 @@ url = "2.5.8"
 usized.workspace = true
 walkdir = "2.5.0"
 zune-jpeg = "0.5.15"
+spdx = "0.13.6"
 
 [dependencies.reqwest]
 version = "0.13.3"

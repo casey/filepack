@@ -268,8 +268,8 @@ mod tests {
         rights:
           license: foo
       ",
-      "rights\\.license: unknown variant `foo`, expected one of `permission`, `public-domain`, \
-       `reserved`, `unknown`",
+      "rights\\.license: unknown license `foo`: expected `permission`, `public-domain`, \
+       `reserved`, `unknown`, or an SPDX license identifier",
     );
     case(
       "
@@ -533,7 +533,7 @@ mod tests {
       rights: Some(Rights {
         basis: Some("foo".parse().unwrap()),
         credits: Some(vec!["bar".parse().unwrap()].try_into().unwrap()),
-        license: License::Unknown,
+        license: License::Keyword(license::Keyword::Unknown),
         links: Some(
           vec!["http://example.com".parse().unwrap()]
             .try_into()

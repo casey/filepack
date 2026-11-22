@@ -109,6 +109,7 @@ use {
     key_type::KeyType,
     keychain::Keychain,
     language_error::LanguageError,
+    license_error::LicenseError,
     lint_error::LintError,
     lint_selector::LintSelector,
     linter::Linter,
@@ -430,6 +431,7 @@ mod key_type;
 mod keychain;
 mod language;
 mod language_error;
+mod license_error;
 mod lint_error;
 mod lint_group;
 mod lint_selector;
