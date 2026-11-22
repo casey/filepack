@@ -33,14 +33,17 @@ pub struct Metadata {
   /// Path to a markdown file containing a readme describing the content.
   #[n(9)]
   pub readme: Option<RelativePath>,
-  /// Thumbnails generated for images in the package, keyed by the path of the original image.
+  /// Rights statement for the content.
   #[n(10)]
+  pub rights: Option<Rights>,
+  /// Thumbnails generated for images in the package, keyed by the path of the original image.
+  #[n(11)]
   pub thumbnails: Option<BTreeMap<RelativePath, Image>>,
   /// Time the content was created.
-  #[n(11)]
+  #[n(12)]
   pub time: Option<Time>,
   /// Title of the content.
-  #[n(12)]
+  #[n(13)]
   pub title: Option<Text>,
 }
 
@@ -293,6 +296,9 @@ impl Metadata {
         builder.link("homepage", homepage, homepage.to_string())
       })
       .optional("language", self.language.map(Language::name))
+      .when_some(self.rights.as_ref(), |builder, rights| {
+        builder.info("rights", rights.info())
+      })
       .when_some(
         self
           .package
@@ -422,6 +428,10 @@ mod tests {
       }),
       publisher: Some("qux".parse().unwrap()),
       readme: Some("README.md".parse().unwrap()),
+      rights: Some(Rights {
+        basis: Some("foo".parse().unwrap()),
+        license: "unknown".parse().unwrap(),
+      }),
       thumbnails: Some(
         [(
           "bar.png".parse().unwrap(),

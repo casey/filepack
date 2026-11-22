@@ -825,6 +825,10 @@ mod tests {
         title: Some("baz".parse().unwrap()),
       }),
       readme: Some("README.md".parse().unwrap()),
+      rights: Some(Rights {
+        basis: Some("qux".parse().unwrap()),
+        license: "unknown".parse().unwrap(),
+      }),
       ..default()
     };
 
@@ -886,6 +890,25 @@ mod tests {
               <dt>language</dt>
               <dd>
                 English
+              </dd>
+            </div>
+            <div>
+              <dt>rights</dt>
+              <dd>
+                <dl>
+                  <div>
+                    <dt>license</dt>
+                    <dd>
+                      unknown
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>basis</dt>
+                    <dd>
+                      qux
+                    </dd>
+                  </div>
+                </dl>
               </dd>
             </div>
             <div>

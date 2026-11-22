@@ -155,6 +155,7 @@ use {
     resource::Resource,
     resource_type::ResourceType,
     revision_hash::RevisionHash,
+    rights::Rights,
     rotation::Rotation,
     server::Server,
     server_error::ServerError,
@@ -492,6 +493,7 @@ mod resource;
 mod resource_type;
 mod revision;
 mod revision_hash;
+mod rights;
 mod rotation;
 mod server;
 mod server_error;
