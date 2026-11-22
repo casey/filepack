@@ -21,7 +21,23 @@ pub(crate) struct Rights {
 impl Rights {
   pub(crate) fn info(&self) -> Info {
     InfoBuilder::new()
-      .value("license", &self.license)
+      .with(|builder| {
+        if let Ok(License::Identifier(identifier)) = self.license.parse() {
+          builder.info(
+            "license",
+            Info::Link(
+              Link::new(&self.license)
+                .href(format!(
+                  "https://spdx.org/licenses/{}.html",
+                  identifier.name
+                ))
+                .title(identifier.full_name),
+            ),
+          )
+        } else {
+          builder.value("license", &self.license)
+        }
+      })
       .when_some(self.credits.as_ref(), |builder, credits| {
         builder.list(
           "credits",
@@ -35,11 +51,10 @@ impl Rights {
       .when_some(self.links.as_ref(), |builder, links| {
         builder.list(
           "links",
-          links.as_slice().iter().map(|link| Info::Link {
-            code: false,
-            text: link.to_string(),
-            url: link.to_string(),
-          }),
+          links
+            .as_slice()
+            .iter()
+            .map(|link| Info::Link(Link::new(link).href(link))),
         )
       })
       .build()

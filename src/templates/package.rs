@@ -40,11 +40,9 @@ impl PackageHtml {
       .when(self.parents.len() > 1, |builder| {
         builder.list(
           "merge parents",
-          self.parents[1..].iter().map(|parent| Info::Link {
-            code: true,
-            text: parent.to_string(),
-            url: format!("/package/{parent}"),
-          }),
+          self.parents[1..]
+            .iter()
+            .map(|parent| Info::Link(Link::new(parent).href(format!("/package/{parent}")).code())),
         )
       })
       .when_some(self.revisions, |builder, revisions| {
@@ -57,11 +55,10 @@ impl PackageHtml {
       .when(!self.signers.is_empty(), |builder| {
         builder.list(
           "signatures",
-          self.signers.iter().map(|signer| Info::Link {
-            code: true,
-            text: signer.to_string(),
-            url: format!("/key/{signer}"),
-          }),
+          self
+            .signers
+            .iter()
+            .map(|signer| Info::Link(Link::new(signer).href(format!("/key/{signer}")).code())),
         )
       })
       .value("size", format_size(self.totals.file_size))
@@ -436,6 +433,12 @@ mod tests {
         ],
       }),
       publisher: Some("qux".parse().unwrap()),
+      rights: Some(Rights {
+        basis: None,
+        credits: None,
+        license: "public-domain".parse().unwrap(),
+        links: None,
+      }),
       ..default()
     };
 
@@ -485,6 +488,19 @@ mod tests {
               <dt>publisher</dt>
               <dd>
                 qux
+              </dd>
+            </div>
+            <div>
+              <dt>rights</dt>
+              <dd>
+                <dl>
+                  <div>
+                    <dt>license</dt>
+                    <dd>
+                      public-domain
+                    </dd>
+                  </div>
+                </dl>
               </dd>
             </div>
             <div>
@@ -828,7 +844,7 @@ mod tests {
       rights: Some(Rights {
         basis: Some("qux".parse().unwrap()),
         credits: Some(vec!["bob".parse().unwrap()].try_into().unwrap()),
-        license: "unknown".parse().unwrap(),
+        license: "CC0-1.0".parse().unwrap(),
         links: Some(
           vec!["http://example.com/foo".parse().unwrap()]
             .try_into()
@@ -905,7 +921,7 @@ mod tests {
                   <div>
                     <dt>license</dt>
                     <dd>
-                      unknown
+                      <a href='https://spdx.org/licenses/CC0-1.0.html' title='Creative Commons Zero v1.0 Universal'>CC0-1.0</a>
                     </dd>
                   </div>
                   <div>

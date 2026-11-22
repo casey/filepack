@@ -10,14 +10,9 @@ impl InfoBuilder {
   }
 
   pub(crate) fn code_link(mut self, key: &str, text: impl Display, url: String) -> Self {
-    self.map.push((
-      key.into(),
-      Info::Link {
-        code: true,
-        text: text.to_string(),
-        url,
-      },
-    ));
+    self
+      .map
+      .push((key.into(), Info::Link(Link::new(text).href(url).code())));
     self
   }
 
@@ -27,14 +22,9 @@ impl InfoBuilder {
   }
 
   pub(crate) fn link(mut self, key: &str, text: impl Display, url: String) -> Self {
-    self.map.push((
-      key.into(),
-      Info::Link {
-        code: false,
-        text: text.to_string(),
-        url,
-      },
-    ));
+    self
+      .map
+      .push((key.into(), Info::Link(Link::new(text).href(url))));
     self
   }
 
@@ -108,19 +98,11 @@ mod tests {
         ("baz".into(), Info::Value("qux".into())),
         (
           "corge".into(),
-          Info::Link {
-            code: false,
-            text: "grault".into(),
-            url: "garply".into(),
-          },
+          Info::Link(Link::new("grault").href("garply")),
         ),
         (
           "plugh".into(),
-          Info::Link {
-            code: true,
-            text: "xyzzy".into(),
-            url: "thud".into(),
-          },
+          Info::Link(Link::new("xyzzy").href("thud").code()),
         ),
         ("waldo".into(), Info::List(vec![Info::Value("fred".into())])),
         (

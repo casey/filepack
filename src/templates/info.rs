@@ -8,27 +8,9 @@ mod tests {
   use {super::*, pretty_assertions::assert_eq};
 
   #[test]
-  fn code_link() {
-    assert_eq!(
-      InfoHtml(&Info::Link {
-        code: true,
-        text: "foo".into(),
-        url: "/bar".into(),
-      })
-      .to_string(),
-      "<a href='/bar'><code>foo</code></a>\n",
-    );
-  }
-
-  #[test]
   fn link() {
     assert_eq!(
-      InfoHtml(&Info::Link {
-        code: false,
-        text: "foo".into(),
-        url: "/bar".into(),
-      })
-      .to_string(),
+      InfoHtml(&Info::Link(Link::new("foo").href("/bar"))).to_string(),
       "<a href='/bar'>foo</a>\n",
     );
   }
