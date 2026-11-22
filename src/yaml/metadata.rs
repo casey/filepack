@@ -30,6 +30,8 @@ pub(crate) struct Metadata {
   /// Path to a markdown file containing a readme describing the content.
   #[json(example = "README.md")]
   pub(crate) readme: Option<RelativePath>,
+  /// Rights statement for the content.
+  pub(crate) rights: Option<Rights>,
   /// Time the content was created.
   #[json(example = "1929")]
   pub(crate) time: Option<Time>,
@@ -70,6 +72,7 @@ impl Metadata {
       package,
       publisher,
       readme,
+      rights,
       time,
       title,
     } = self;
@@ -115,6 +118,7 @@ impl Metadata {
       package: package.map(Into::into),
       publisher,
       readme,
+      rights: rights.map(Into::into),
       thumbnails: None,
       time,
       title,
@@ -258,6 +262,14 @@ mod tests {
           time: not-a-time
       ",
       r"package\.time: invalid time `not-a-time`",
+    );
+    case(
+      "
+        rights:
+          license: foo
+      ",
+      "rights\\.license: unknown variant `foo`, expected one of `permission`, `public-domain`, \
+       `reserved`, `unknown`",
     );
     case(
       "
@@ -518,6 +530,10 @@ mod tests {
         time: None,
         title: Some("baz".parse().unwrap()),
       }),
+      rights: Some(Rights {
+        basis: Some("foo".parse().unwrap()),
+        license: License::Unknown,
+      }),
       title: Some("qux".parse().unwrap()),
       ..default()
     }
@@ -563,6 +579,10 @@ mod tests {
           homepage: None,
           time: None,
           title: Some("baz".parse().unwrap()),
+        }),
+        rights: Some(crate::Rights {
+          basis: Some("foo".parse().unwrap()),
+          license: "unknown".parse().unwrap(),
         }),
         title: Some("qux".parse().unwrap()),
         ..default()
@@ -655,6 +675,7 @@ mod tests {
         package,
         publisher,
         readme,
+        rights,
         time,
         title,
       } = metadata;
@@ -673,6 +694,7 @@ mod tests {
       assert!(language.is_some());
       assert!(publisher.is_some());
       assert!(readme.is_some());
+      assert!(rights.is_some());
       assert!(time.is_some());
       assert!(title.is_some());
 

@@ -1083,6 +1083,26 @@ fn create_rejects_mp3_missing_track_total() {
 }
 
 #[test]
+fn create_rejects_unknown_license() {
+  Test::new()
+    .write(
+      "metadata.yaml",
+      "
+        rights:
+          license: foo
+      ",
+    )
+    .arg("create")
+    .stderr(
+      "
+        error: failed to deserialize metadata at `metadata.yaml`
+               └─ rights.license: unknown variant `foo`, expected one of `permission`, `public-domain`, `reserved`, `unknown` at line 2 column 12
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn create_rejects_web_packages_unless_unstable() {
   Test::new()
     .write(
