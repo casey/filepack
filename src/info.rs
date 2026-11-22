@@ -1,10 +1,8 @@
+use super::*;
+
 #[derive(Debug, PartialEq)]
 pub(crate) enum Info {
-  Link {
-    code: bool,
-    text: String,
-    url: String,
-  },
+  Link(Link),
   List(Vec<Info>),
   Map(Vec<(String, Info)>),
   Value(String),

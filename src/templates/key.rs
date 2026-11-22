@@ -13,19 +13,20 @@ impl KeyHtml {
       .when(!self.numbers.is_empty(), |builder| {
         builder.list(
           "packages",
-          self.numbers.iter().map(|number| Info::Link {
-            code: false,
-            text: number.to_string(),
-            url: format!("/package/{number}"),
-          }),
+          self
+            .numbers
+            .iter()
+            .map(|number| Info::Link(Link::new(number).href(format!("/package/{number}")))),
         )
       })
       .list(
         "revisions",
-        self.revisions.iter().map(|revision| Info::Link {
-          code: true,
-          text: revision.to_string(),
-          url: format!("/package/{revision}"),
+        self.revisions.iter().map(|revision| {
+          Info::Link(
+            Link::new(revision)
+              .href(format!("/package/{revision}"))
+              .code(),
+          )
         }),
       )
       .build()
