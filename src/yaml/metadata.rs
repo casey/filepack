@@ -532,6 +532,7 @@ mod tests {
       }),
       rights: Some(Rights {
         basis: Some("foo".parse().unwrap()),
+        credits: Some(vec!["bar".parse().unwrap()].try_into().unwrap()),
         license: License::Unknown,
         links: Some(
           vec!["http://example.com".parse().unwrap()]
@@ -587,6 +588,7 @@ mod tests {
         }),
         rights: Some(crate::Rights {
           basis: Some("foo".parse().unwrap()),
+          credits: Some(vec!["bar".parse().unwrap()].try_into().unwrap()),
           license: "unknown".parse().unwrap(),
           links: Some(
             vec!["http://example.com".parse().unwrap()]

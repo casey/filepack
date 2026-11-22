@@ -430,6 +430,7 @@ mod tests {
       readme: Some("README.md".parse().unwrap()),
       rights: Some(Rights {
         basis: Some("foo".parse().unwrap()),
+        credits: Some(vec!["baz".parse().unwrap()].try_into().unwrap()),
         license: "unknown".parse().unwrap(),
         links: Some(
           vec!["http://example.com/bar".parse().unwrap()]

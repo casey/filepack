@@ -4,7 +4,19 @@ use super::*;
 ///
 /// May not contain control characters, including tabs and line breaks, or
 /// leading or trailing whitespace.
-#[derive(Clone, Debug, Decode, DeserializeFromStr, Encode, Json, PartialEq, SerializeDisplay)]
+#[derive(
+  Clone,
+  Debug,
+  Decode,
+  DeserializeFromStr,
+  Encode,
+  Eq,
+  Json,
+  Ord,
+  PartialEq,
+  PartialOrd,
+  SerializeDisplay,
+)]
 #[json(string)]
 #[deco(transparent, validate)]
 pub struct Text(String);
