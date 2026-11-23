@@ -193,6 +193,31 @@ impl Linter {
       self.error(LintError::TimeMissing);
     }
 
+    if self.is_active(Lint::RightsMissing)
+      && metadata.is_none_or(|metadata| metadata.rights.is_none())
+    {
+      self.error(LintError::RightsMissing);
+    }
+
+    if self.is_active(Lint::RightsBasisMissing)
+      && let Some(rights) = metadata.and_then(|metadata| metadata.rights.as_ref())
+      && matches!(
+        rights.status,
+        rights::Status::Permission | rights::Status::PublicDomain,
+      )
+      && rights.basis.is_none()
+    {
+      self.error(LintError::RightsBasisMissing);
+    }
+
+    if self.is_active(Lint::RightsLicenseMissing)
+      && let Some(rights) = metadata.and_then(|metadata| metadata.rights.as_ref())
+      && rights.status == rights::Status::Licensed
+      && rights.license.is_none()
+    {
+      self.error(LintError::RightsLicenseMissing);
+    }
+
     if self.is_active(Lint::PackageMissing)
       && metadata.is_none_or(|metadata| metadata.package.is_none())
     {
