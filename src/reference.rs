@@ -417,10 +417,6 @@ mod tests {
   #[test]
   fn parameters() {
     for (path, route) in Reference::new().routes {
-      for endpoint in route.methods.values() {
-        assert_eq!(endpoint.parameters.len(), route.parameters.len(), "{path}");
-      }
-
       let mut parameters = route.methods.values().map(|endpoint| &endpoint.parameters);
 
       let first = parameters.next().unwrap();

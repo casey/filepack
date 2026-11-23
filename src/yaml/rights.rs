@@ -20,9 +20,9 @@ pub(crate) struct Rights {
   /// Rights status of the content.
   #[json(example = "licensed")]
   pub(crate) status: crate::rights::Status,
-  /// Path to the text of the license.
+  /// Paths to license files.
   #[json(example = "LICENSE.txt")]
-  pub(crate) text: Option<RelativePath>,
+  pub(crate) texts: Option<NonEmptyOrderedSet<RelativePath>>,
 }
 
 impl Rights {
@@ -33,19 +33,19 @@ impl Rights {
       links,
       notices,
       status,
-      text,
+      texts,
     } = self;
 
     if status == crate::rights::Status::Licensed {
       ensure! {
-        license.is_some() || text.is_some(),
+        license.is_some() || texts.is_some(),
         error::RightsLicenseMissing,
       }
 
       if let Some(license @ License::Reference(_)) = &license {
         ensure! {
-          text.is_some(),
-          error::RightsTextMissing { license: license.to_string() },
+          texts.is_some(),
+          error::RightsTextsMissing { license: license.to_string() },
         }
       }
     } else {
@@ -55,8 +55,8 @@ impl Rights {
       }
 
       ensure! {
-        text.is_none(),
-        error::RightsTextStatus { status: status.to_string() },
+        texts.is_none(),
+        error::RightsTextsStatus { status: status.to_string() },
       }
     }
 
@@ -66,7 +66,7 @@ impl Rights {
       links,
       notices,
       status,
-      text,
+      texts,
     })
   }
 }
@@ -91,7 +91,7 @@ mod tests {
           links: None,
           notices: None,
           status,
-          text: text.map(|text| text.parse().unwrap()),
+          texts: text.map(|text| vec![text.parse().unwrap()].try_into().unwrap()),
         }
         .load()
         .unwrap_err()
@@ -104,7 +104,7 @@ mod tests {
       None,
       crate::rights::Status::Licensed,
       None,
-      "status `licensed` requires `rights.license` or `rights.text`",
+      "status `licensed` requires `rights.license` or `rights.texts`",
     );
 
     case(
@@ -118,14 +118,14 @@ mod tests {
       Some("LicenseRef-foo"),
       crate::rights::Status::Licensed,
       None,
-      "license `LicenseRef-foo` requires `rights.text`",
+      "license `LicenseRef-foo` requires `rights.texts`",
     );
 
     case(
       None,
       crate::rights::Status::Unknown,
       Some("foo"),
-      "`rights.text` may not be used with status `unknown`",
+      "`rights.texts` may not be used with status `unknown`",
     );
   }
 }

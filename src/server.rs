@@ -736,13 +736,16 @@ impl Server {
       None
     };
 
-    let text = if let Some(metadata) = &metadata
+    let texts = if let Some(metadata) = &metadata
       && let Some(rights) = &metadata.rights
-      && let Some(text) = &rights.text
+      && let Some(texts) = &rights.texts
     {
-      Some(self.verified_package_file(fingerprint, text)?)
+      texts
+        .iter()
+        .map(|text| self.verified_package_file(fingerprint, text))
+        .collect::<ServerResult<Vec<Hash>>>()?
     } else {
-      None
+      Vec::new()
     };
 
     Ok(PackageHtml {
@@ -760,7 +763,7 @@ impl Server {
       revision,
       revisions,
       signers,
-      text,
+      texts,
       totals,
     })
   }

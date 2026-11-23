@@ -587,7 +587,10 @@ fn deny_package_sources_missing() {
 #[test]
 fn deny_rights_license_missing() {
   Test::new()
-    .write("filepack.yaml", "rights: {status: licensed, text: foo.txt}")
+    .write(
+      "filepack.yaml",
+      "rights: {status: licensed, texts: [foo.txt]}",
+    )
     .args(["create", "--deny", "rights-license-missing"])
     .stderr(
       "

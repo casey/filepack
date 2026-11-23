@@ -547,7 +547,7 @@ mod tests {
         ),
         notices: Some(vec!["bar".parse().unwrap()].try_into().unwrap()),
         status: crate::rights::Status::Licensed,
-        text: Some("LICENSE.txt".parse().unwrap()),
+        texts: Some(vec!["LICENSE.txt".parse().unwrap()].try_into().unwrap()),
       }),
       title: Some("qux".parse().unwrap()),
       ..default()
@@ -610,7 +610,7 @@ mod tests {
           ),
           notices: Some(vec!["bar".parse().unwrap()].try_into().unwrap()),
           status: crate::rights::Status::Licensed,
-          text: Some("LICENSE.txt".parse().unwrap()),
+          texts: Some(vec!["LICENSE.txt".parse().unwrap()].try_into().unwrap()),
         }),
         title: Some("qux".parse().unwrap()),
         ..default()

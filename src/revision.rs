@@ -17,10 +17,7 @@ impl Revision {
   }
 
   pub(crate) fn parents(&self) -> &[RevisionHash] {
-    self
-      .parents
-      .as_ref()
-      .map_or_default(NonEmptyOrderedSet::as_slice)
+    self.parents.as_deref().unwrap_or_default()
   }
 }
 

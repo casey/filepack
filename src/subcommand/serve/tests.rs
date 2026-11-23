@@ -2199,7 +2199,7 @@ fn get_package_with_metadata() {
       links: None,
       notices: None,
       status: rights::Status::Licensed,
-      text: Some("LICENSE.txt".parse().unwrap()),
+      texts: Some(vec!["LICENSE.txt".parse().unwrap()].try_into().unwrap()),
     }),
     thumbnails: None,
     time: None,
@@ -2230,7 +2230,7 @@ fn get_package_with_metadata() {
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
       readme: Some(Hash::bytes(readme)),
-      text: Some(Hash::bytes(license)),
+      texts: vec![Hash::bytes(license)],
       totals: Totals {
         directories: 0,
         directory_size: 0,

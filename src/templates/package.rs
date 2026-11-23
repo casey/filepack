@@ -17,7 +17,7 @@ pub struct PackageHtml {
   pub revision: Option<RevisionHash>,
   pub revisions: Option<u64>,
   pub signers: BTreeSet<PublicKey>,
-  pub text: Option<Hash>,
+  pub texts: Vec<Hash>,
   pub totals: Totals,
 }
 
@@ -92,7 +92,7 @@ impl PackageHtml {
           self.identifier,
           self.readme,
           self.colophon,
-          self.text,
+          &self.texts,
         )
       })
       .build()
@@ -206,7 +206,7 @@ mod tests {
         links: None,
         notices: None,
         status: rights::Status::Licensed,
-        text: Some("foo/LICENSE.txt".parse().unwrap()),
+        texts: Some(vec!["foo/LICENSE.txt".parse().unwrap()].try_into().unwrap()),
       }),
       ..default()
     };
@@ -217,7 +217,7 @@ mod tests {
         identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
         number: Some(0),
-        text: Some(Hash::EXAMPLE.parse().unwrap()),
+        texts: vec![Hash::EXAMPLE.parse().unwrap()],
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -271,9 +271,13 @@ mod tests {
                     </dd>
                   </div>
                   <div>
-                    <dt>text</dt>
+                    <dt>texts</dt>
                     <dd>
-                      <a href='/file/{hash}/LICENSE.txt'>foo/LICENSE.txt</a>
+                      <ol role=list>
+                        <li>
+                          <a href='/file/{hash}/LICENSE.txt'>foo/LICENSE.txt</a>
+                        </li>
+                      </ol>
                     </dd>
                   </div>
                 </dl>
@@ -496,7 +500,7 @@ mod tests {
         links: None,
         notices: None,
         status: rights::Status::PublicDomain,
-        text: None,
+        texts: None,
       }),
       ..default()
     };
@@ -915,7 +919,7 @@ mod tests {
         ),
         notices: Some(vec!["bob".parse().unwrap()].try_into().unwrap()),
         status: rights::Status::Licensed,
-        text: None,
+        texts: None,
       }),
       ..default()
     };

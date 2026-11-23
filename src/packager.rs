@@ -159,7 +159,8 @@ impl Packager {
           .and_then(|metadata| metadata.lints.as_ref())
           .and_then(|lints| lints.expect.as_ref())
           .into_iter()
-          .flat_map(|expect| expect.as_slice().iter().copied()),
+          .flatten()
+          .copied(),
       ),
     )?;
 

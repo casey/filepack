@@ -165,9 +165,9 @@ impl Metadata {
     }
 
     if let Some(rights) = &self.rights
-      && let Some(text) = &rights.text
+      && let Some(texts) = &rights.texts
     {
-      files.push(text.clone());
+      files.extend_from_slice(texts);
     }
 
     if let Some(media) = &self.media {
@@ -297,7 +297,7 @@ impl Metadata {
     identifier: PackageIdentifier,
     readme: Option<Hash>,
     colophon: Option<Hash>,
-    text: Option<Hash>,
+    texts: &[Hash],
   ) -> InfoBuilder {
     builder
       .optional("title", self.title.as_ref())
@@ -316,7 +316,7 @@ impl Metadata {
       })
       .optional("language", self.language.map(Language::name))
       .when_some(self.rights.as_ref(), |builder, rights| {
-        builder.info("rights", rights.info(text))
+        builder.info("rights", rights.info(texts))
       })
       .when_some(
         self
@@ -358,9 +358,11 @@ impl Metadata {
     }
 
     if let Some(rights) = &self.rights
-      && let Some(text) = &rights.text
+      && let Some(texts) = &rights.texts
     {
-      Self::check_text(text)?;
+      for text in texts {
+        Self::check_text(text)?;
+      }
     }
 
     if let Some(artwork) = &self.artwork {
@@ -465,7 +467,7 @@ mod tests {
         ),
         notices: Some(vec!["baz".parse().unwrap()].try_into().unwrap()),
         status: rights::Status::Unknown,
-        text: None,
+        texts: None,
       }),
       thumbnails: Some(
         [(
@@ -806,7 +808,7 @@ mod tests {
           PackageIdentifier::Number(0),
           None,
           None,
-          None,
+          &[],
         )
         .build(),
       Info::Map(Vec::new()),
@@ -858,7 +860,7 @@ mod tests {
           links: None,
           notices: None,
           status: rights::Status::Licensed,
-          text: Some("LICENSE.txt".parse().unwrap()),
+          texts: Some(vec!["LICENSE.txt".parse().unwrap()].try_into().unwrap()),
         }),
         ..default()
       },
@@ -900,7 +902,7 @@ mod tests {
           links: None,
           notices: None,
           status: rights::Status::Licensed,
-          text: Some("LICENSE".parse().unwrap()),
+          texts: Some(vec!["LICENSE".parse().unwrap()].try_into().unwrap()),
         }),
         ..default()
       }

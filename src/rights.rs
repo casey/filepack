@@ -23,13 +23,13 @@ pub(crate) struct Rights {
   /// Rights status of the content.
   #[n(5)]
   pub(crate) status: Status,
-  /// Path to the text of the license.
+  /// Paths to license files.
   #[n(6)]
-  pub(crate) text: Option<RelativePath>,
+  pub(crate) texts: Option<NonEmptyOrderedSet<RelativePath>>,
 }
 
 impl Rights {
-  pub(crate) fn info(&self, text: Option<Hash>) -> Info {
+  pub(crate) fn info(&self, texts: &[Hash]) -> Info {
     InfoBuilder::new()
       .value("status", self.status.display())
       .when_some(self.license.as_ref(), |builder, license| {
@@ -49,19 +49,18 @@ impl Rights {
           builder.value("license", license)
         }
       })
-      .when_some(self.text.as_ref(), |builder, path| {
-        builder.link(
-          "text",
-          Link::new(path).href(file_href(text.unwrap(), path.filename())),
+      .when_some(self.texts.as_ref(), |builder, paths| {
+        builder.list(
+          "texts",
+          paths.iter().zip_eq(texts).map(|(path, hash)| {
+            Info::Link(Link::new(path).href(file_href(*hash, path.filename())))
+          }),
         )
       })
       .when_some(self.notices.as_ref(), |builder, notices| {
         builder.list(
           "notices",
-          notices
-            .as_slice()
-            .iter()
-            .map(|notice| Info::Value(notice.to_string())),
+          notices.iter().map(|notice| Info::Value(notice.to_string())),
         )
       })
       .optional("basis", self.basis.as_ref())
@@ -69,7 +68,6 @@ impl Rights {
         builder.list(
           "links",
           links
-            .as_slice()
             .iter()
             .map(|link| Info::Link(Link::new(link).href(link))),
         )
@@ -94,7 +92,7 @@ mod tests {
       ),
       notices: Some(vec!["bar".parse().unwrap()].try_into().unwrap()),
       status: Status::Licensed,
-      text: Some("qux".parse().unwrap()),
+      texts: Some(vec!["qux".parse().unwrap()].try_into().unwrap()),
     });
   }
 }

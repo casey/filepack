@@ -15,7 +15,7 @@
 
 | parameter | type | description |
 |-----------|------|-------------|
-%%     for (index, (parameter, kind)) in self.route.parameters.iter().zip(&endpoint.parameters).enumerate() {
+%%     for (index, (parameter, kind)) in self.route.parameters.iter().zip_eq(&endpoint.parameters).enumerate() {
 %%       if self.route.wildcard && index + 1 == self.route.parameters.len() {
 {{ Row((format!("`*{}`", parameter.name), path_parameter_type(*kind), &parameter.description)) }}
 %%       } else {

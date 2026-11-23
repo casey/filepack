@@ -201,10 +201,7 @@ impl Upload {
 
     let revision = loader.revision_hash()?;
 
-    let parents = manifest
-      .parents
-      .as_ref()
-      .map_or_default(NonEmptyOrderedSet::as_slice);
+    let parents = manifest.parents.as_deref().unwrap_or_default();
 
     for signature in manifest.signatures() {
       signature.verify(revision)?;
