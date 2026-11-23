@@ -188,7 +188,7 @@ mod tests {
       rights: Some(Rights {
         basis: None,
         credits: None,
-        license: None,
+        license: Some("LicenseRef-foo".parse().unwrap()),
         links: None,
         status: rights::Status::Licensed,
         text: Some("foo/LICENSE.txt".parse().unwrap()),
@@ -247,6 +247,12 @@ mod tests {
                     <dt>status</dt>
                     <dd>
                       licensed
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>license</dt>
+                    <dd>
+                      LicenseRef-foo
                     </dd>
                   </div>
                   <div>

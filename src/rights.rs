@@ -33,7 +33,7 @@ impl Rights {
     InfoBuilder::new()
       .value("status", self.status)
       .when_some(self.license.as_ref(), |builder, license| {
-        if let Ok(License(identifier)) = license.parse() {
+        if let Ok(License::Identifier(identifier)) = license.parse() {
           builder.info(
             "license",
             Info::Link(
