@@ -40,7 +40,7 @@ mod tests {
   };
 
   #[test]
-  fn book_commands_are_valid() {
+  fn book_code_blocks_are_valid() {
     let root = Utf8Path::new(env!("CARGO_MANIFEST_DIR"));
 
     let mut paths = root
@@ -54,28 +54,35 @@ mod tests {
     paths.push(root.join("README.md"));
 
     let mut commands = Vec::new();
+    let mut templates = Vec::new();
 
     for path in paths {
       let markdown = fs::read_to_string(&path).unwrap();
 
-      let mut block = None::<String>;
+      let mut block = None::<(String, String)>;
 
       for event in pulldown_cmark::Parser::new(&markdown) {
         match event {
-          Event::Start(pulldown_cmark::Tag::CodeBlock(CodeBlockKind::Fenced(language)))
-            if &*language == "sh" =>
-          {
-            block = Some(String::new());
+          Event::Start(pulldown_cmark::Tag::CodeBlock(CodeBlockKind::Fenced(language))) => {
+            block = Some((language.into_string(), String::new()));
           }
           Event::Text(text) => {
-            if let Some(block) = &mut block {
+            if let Some((_, block)) = &mut block {
               block.push_str(&text);
             }
           }
           Event::End(TagEnd::CodeBlock) => {
-            for line in block.take().unwrap_or_default().lines() {
-              if line == "filepack" || line.starts_with("filepack ") {
-                commands.push((path.clone(), line.to_owned()));
+            if let Some((language, block)) = block.take() {
+              match language.as_str() {
+                "sh" => {
+                  for line in block.lines() {
+                    if line == "filepack" || line.starts_with("filepack ") {
+                      commands.push((path.clone(), line.to_owned()));
+                    }
+                  }
+                }
+                "yaml" => templates.push((path.clone(), block)),
+                _ => {}
               }
             }
           }
@@ -85,6 +92,7 @@ mod tests {
     }
 
     assert!(!commands.is_empty());
+    assert!(!templates.is_empty());
 
     for (path, command) in commands {
       let arguments = command
@@ -111,6 +119,12 @@ mod tests {
         && err.kind() != ErrorKind::DisplayHelp
       {
         panic!("invalid command `{command}` in `{path}`: {err}");
+      }
+    }
+
+    for (path, template) in templates {
+      if let Err(err) = serde_yaml::from_str::<yaml::Metadata>(&template.replace(": ...", ":")) {
+        panic!("invalid template in `{path}`: {err}");
       }
     }
   }
