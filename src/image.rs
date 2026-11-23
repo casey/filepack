@@ -268,14 +268,14 @@ impl Image {
     format!("{}/{}", Self::THUMBNAIL_DIR, self.path.stem())
   }
 
-  fn title(title: Option<String>, path: &Utf8Path) -> Result<Option<Text>> {
+  fn title(title: Option<String>, path: &Utf8Path) -> Result<Option<Line>> {
     let Some(title) = title else {
       return Ok(None);
     };
 
     Ok(Some(
       title
-        .parse::<Text>()
+        .parse::<Line>()
         .context(error::ImageTitleInvalid { path })?,
     ))
   }
@@ -497,7 +497,7 @@ mod tests {
     }
 
     #[track_caller]
-    fn title(filename: &str, bytes: &[u8]) -> Result<Option<Text>> {
+    fn title(filename: &str, bytes: &[u8]) -> Result<Option<Line>> {
       let (_tempdir, root) = tempdir();
 
       std::fs::write(root.join(filename), bytes).unwrap();

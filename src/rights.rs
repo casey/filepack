@@ -10,16 +10,16 @@ mod status;
 pub(crate) struct Rights {
   /// Reason the content is believed to have the stated status.
   #[n(1)]
-  pub(crate) basis: Option<Text>,
+  pub(crate) basis: Option<Line>,
   /// License of the content.
   #[n(2)]
-  pub(crate) license: Option<Text>,
+  pub(crate) license: Option<Line>,
   /// Links supporting the rights statement.
   #[n(3)]
   pub(crate) links: Option<NonEmptyOrderedSet<CheckedUrl>>,
   /// Notices required to accompany the content.
   #[n(4)]
-  pub(crate) notices: Option<NonEmptyOrderedSet<Text>>,
+  pub(crate) notices: Option<NonEmptyOrderedSet<Line>>,
   /// Rights status of the content.
   #[n(5)]
   pub(crate) status: Status,

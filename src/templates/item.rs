@@ -10,7 +10,7 @@ pub(crate) struct ItemHtml {
 }
 
 impl ItemHtml {
-  fn creator(&self) -> Option<&Text> {
+  fn creator(&self) -> Option<&Line> {
     self.metadata.creator.as_ref()
   }
 
@@ -36,7 +36,7 @@ impl ItemHtml {
     self.metadata.media.as_ref().unwrap().items().unwrap()
   }
 
-  fn title(&self) -> Option<&Text> {
+  fn title(&self) -> Option<&Line> {
     self.metadata.title.as_ref()
   }
 }

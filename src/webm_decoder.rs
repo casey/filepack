@@ -185,7 +185,7 @@ impl WebmDecoder {
     Self::metadata(file).context(error::Video { path })
   }
 
-  fn title(info: &matroska_demuxer::Info) -> Result<Option<Text>, VideoError> {
+  fn title(info: &matroska_demuxer::Info) -> Result<Option<Line>, VideoError> {
     let tag = "Title";
 
     let Some(title) = info.title() else {
@@ -194,7 +194,7 @@ impl WebmDecoder {
 
     Ok(Some(
       title
-        .parse::<Text>()
+        .parse::<Line>()
         .context(video_error::TagInvalid { tag })?,
     ))
   }
