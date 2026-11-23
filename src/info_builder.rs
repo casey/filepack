@@ -9,22 +9,13 @@ impl InfoBuilder {
     Info::Map(self.map)
   }
 
-  pub(crate) fn code_link(mut self, key: &str, text: impl Display, url: String) -> Self {
-    self
-      .map
-      .push((key.into(), Info::Link(Link::new(text).href(url).code())));
-    self
-  }
-
   pub(crate) fn info(mut self, key: &str, info: Info) -> Self {
     self.map.push((key.into(), info));
     self
   }
 
-  pub(crate) fn link(mut self, key: &str, text: impl Display, url: String) -> Self {
-    self
-      .map
-      .push((key.into(), Info::Link(Link::new(text).href(url))));
+  pub(crate) fn link(mut self, key: &str, link: Link) -> Self {
+    self.map.push((key.into(), Info::Link(link)));
     self
   }
 
@@ -79,8 +70,7 @@ mod tests {
         .value("foo", "bar")
         .optional("baz", Some("qux"))
         .optional("quux", None::<&str>)
-        .link("corge", "grault", "garply".into())
-        .code_link("plugh", "xyzzy", "thud".into())
+        .link("corge", Link::new("grault").href("garply"))
         .list("waldo", [Info::Value("fred".into())])
         .info(
           "spam",
@@ -99,10 +89,6 @@ mod tests {
         (
           "corge".into(),
           Info::Link(Link::new("grault").href("garply")),
-        ),
-        (
-          "plugh".into(),
-          Info::Link(Link::new("xyzzy").href("thud").code()),
         ),
         ("waldo".into(), Info::List(vec![Info::Value("fred".into())])),
         (

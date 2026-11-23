@@ -55,7 +55,10 @@ impl Media {
     }
 
     builder
-      .link("media", self.name(), format!("/package/{identifier}/media"))
+      .link(
+        "media",
+        Link::new(self.name()).href(format!("/package/{identifier}/media")),
+      )
       .with(|builder| match self {
         Self::Audio { items } => format(
           builder

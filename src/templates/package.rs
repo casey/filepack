@@ -25,18 +25,30 @@ impl PackageHtml {
   fn info(&self) -> Info {
     InfoBuilder::new()
       .when_some(self.number, |builder, number| {
-        builder.link("number", number, format!("/package/{number}"))
+        builder.link(
+          "number",
+          Link::new(number).href(format!("/package/{number}")),
+        )
       })
       .when_some(self.revision, |builder, revision| {
-        builder.code_link("revision", revision, format!("/package/{revision}"))
+        builder.link(
+          "revision",
+          Link::new(revision)
+            .href(format!("/package/{revision}"))
+            .code(),
+        )
       })
-      .code_link(
+      .link(
         "fingerprint",
-        self.fingerprint,
-        format!("/package/{}", self.fingerprint),
+        Link::new(self.fingerprint)
+          .href(format!("/package/{}", self.fingerprint))
+          .code(),
       )
       .when_some(self.parents.first(), |builder, parent| {
-        builder.code_link("parent", parent, format!("/package/{parent}"))
+        builder.link(
+          "parent",
+          Link::new(parent).href(format!("/package/{parent}")).code(),
+        )
       })
       .when(self.parents.len() > 1, |builder| {
         builder.list(
@@ -49,8 +61,8 @@ impl PackageHtml {
       .when_some(self.revisions, |builder, revisions| {
         builder.link(
           "history",
-          Count::new(revisions, "revision").to_string(),
-          format!("/package/{}/history", self.identifier),
+          Link::new(Count::new(revisions, "revision"))
+            .href(format!("/package/{}/history", self.identifier)),
         )
       })
       .when(!self.signers.is_empty(), |builder| {
@@ -65,11 +77,14 @@ impl PackageHtml {
       .value("size", format_size(self.totals.file_size))
       .link(
         "files",
-        Count::new(self.totals.files, "file").to_string(),
-        format!("/directory/{}", Hash::from(self.fingerprint)),
+        Link::new(Count::new(self.totals.files, "file"))
+          .href(format!("/directory/{}", Hash::from(self.fingerprint))),
       )
       .when(self.mounted, |builder| {
-        builder.link("mount", "view", format!("/mount/{}/", self.identifier))
+        builder.link(
+          "mount",
+          Link::new("view").href(format!("/mount/{}/", self.identifier)),
+        )
       })
       .when_some(self.metadata.as_ref(), |builder, metadata| {
         metadata.info(

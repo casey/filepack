@@ -37,12 +37,11 @@ impl PackageMetadata {
       .when_some(self.colophon.as_ref(), |builder, path| {
         builder.link(
           "colophon",
-          "view",
-          file_href(colophon.unwrap(), path.filename()),
+          Link::new("view").href(file_href(colophon.unwrap(), path.filename())),
         )
       })
       .when_some(self.homepage.as_ref(), |builder, homepage| {
-        builder.link("homepage", homepage, homepage.to_string())
+        builder.link("homepage", Link::new(homepage).href(homepage))
       })
       .when_some(self.sources.as_ref(), |builder, sources| {
         builder.list(

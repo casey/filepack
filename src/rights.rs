@@ -50,7 +50,10 @@ impl Rights {
         }
       })
       .when_some(self.text.as_ref(), |builder, path| {
-        builder.link("text", path, file_href(text.unwrap(), path.filename()))
+        builder.link(
+          "text",
+          Link::new(path).href(file_href(text.unwrap(), path.filename())),
+        )
       })
       .when_some(self.credits.as_ref(), |builder, credits| {
         builder.list(
