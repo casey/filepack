@@ -585,28 +585,6 @@ fn deny_package_sources_missing() {
 }
 
 #[test]
-fn deny_rights_basis_missing() {
-  Test::new()
-    .write("metadata.yaml", "rights: {status: public-domain}")
-    .args(["create", "--deny", "rights-basis-missing"])
-    .stderr(
-      "
-        error: metadata rights missing basis [rights-basis-missing]
-        error: 1 lint error
-      ",
-    )
-    .failure();
-}
-
-#[test]
-fn deny_rights_basis_missing_ignores_unknown() {
-  Test::new()
-    .write("metadata.yaml", "rights: {status: unknown}")
-    .args(["create", "--deny", "rights-basis-missing"])
-    .success();
-}
-
-#[test]
 fn deny_rights_license_missing() {
   Test::new()
     .write("metadata.yaml", "rights: {status: licensed, text: foo.txt}")
@@ -632,6 +610,64 @@ fn deny_rights_missing() {
       ",
     )
     .failure();
+}
+
+#[test]
+fn deny_rights_support_missing() {
+  Test::new()
+    .write("metadata.yaml", "rights: {status: public-domain}")
+    .args(["create", "--deny", "rights-support-missing"])
+    .stderr(
+      "
+        error: metadata rights missing basis, links, or sources [rights-support-missing]
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
+fn deny_rights_support_missing_ignores_basis() {
+  Test::new()
+    .write(
+      "metadata.yaml",
+      "rights: {status: public-domain, basis: foo}",
+    )
+    .args(["create", "--deny", "rights-support-missing"])
+    .success();
+}
+
+#[test]
+fn deny_rights_support_missing_ignores_links() {
+  Test::new()
+    .write(
+      "metadata.yaml",
+      "rights: {status: public-domain, links: ['http://example.com']}",
+    )
+    .args(["create", "--deny", "rights-support-missing"])
+    .success();
+}
+
+#[test]
+fn deny_rights_support_missing_ignores_sources() {
+  Test::new()
+    .write(
+      "metadata.yaml",
+      "
+        package: {sources: ['http://example.com']}
+        rights: {status: public-domain}
+      ",
+    )
+    .args(["create", "--deny", "rights-support-missing"])
+    .success();
+}
+
+#[test]
+fn deny_rights_support_missing_ignores_unknown() {
+  Test::new()
+    .write("metadata.yaml", "rights: {status: unknown}")
+    .args(["create", "--deny", "rights-support-missing"])
+    .success();
 }
 
 #[test]

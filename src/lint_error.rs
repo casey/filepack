@@ -67,15 +67,16 @@ pub(crate) enum LintError {
   /// Path components are at most 255 bytes.
   #[snafu(display("path component longer than 255 bytes"))]
   PathComponentTooLong,
-  /// Permission and public domain rights statements have a basis.
-  #[snafu(display("metadata rights missing basis"))]
-  RightsBasisMissing,
   /// Licensed rights statements have a license identifier.
   #[snafu(display("metadata rights missing license"))]
   RightsLicenseMissing,
   /// Metadata has a rights statement.
   #[snafu(display("metadata missing rights"))]
   RightsMissing,
+  /// Permission and public domain rights statements have a basis, links, or
+  /// sources.
+  #[snafu(display("metadata rights missing basis, links, or sources"))]
+  RightsSupportMissing,
   /// Metadata has a time.
   #[snafu(display("metadata missing time"))]
   TimeMissing,
