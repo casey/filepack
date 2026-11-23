@@ -21,3 +21,9 @@ pub(crate) enum Status {
   #[n(4)]
   Unknown,
 }
+
+impl Status {
+  pub(crate) fn display(self) -> String {
+    self.to_string().replace('-', " ")
+  }
+}

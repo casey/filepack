@@ -556,7 +556,7 @@ mod tests {
                   <div>
                     <dt>status</dt>
                     <dd>
-                      public-domain
+                      public domain
                     </dd>
                   </div>
                 </dl>
