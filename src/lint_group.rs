@@ -71,6 +71,7 @@ impl LintGroup {
         MixedFormats,
         PackageCreatorMissing,
         PackageMissing,
+        PackageSourcesMissing,
         RightsBasisMissing,
         RightsLicenseMissing,
         RightsMissing,

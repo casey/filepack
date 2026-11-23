@@ -62,6 +62,9 @@ pub(crate) enum LintError {
   /// Metadata has a package.
   #[snafu(display("metadata missing package"))]
   PackageMissing,
+  /// Package metadata has sources.
+  #[snafu(display("metadata package missing sources"))]
+  PackageSourcesMissing,
   /// Path components are at most 255 bytes.
   #[snafu(display("path component longer than 255 bytes"))]
   PathComponentTooLong,
