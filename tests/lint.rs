@@ -571,6 +571,20 @@ fn deny_package_missing() {
 }
 
 #[test]
+fn deny_package_sources_missing() {
+  Test::new()
+    .write("metadata.yaml", "package: {}")
+    .args(["create", "--deny", "package-sources-missing"])
+    .stderr(
+      "
+        error: metadata package missing sources [package-sources-missing]
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn deny_rights_basis_missing() {
   Test::new()
     .write("metadata.yaml", "rights: {status: public-domain}")

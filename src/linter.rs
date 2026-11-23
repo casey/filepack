@@ -235,6 +235,17 @@ impl Linter {
       self.error(LintError::PackageCreatorMissing);
     }
 
+    if self.is_active(Lint::PackageSourcesMissing)
+      && metadata.is_none_or(|metadata| {
+        metadata
+          .package
+          .as_ref()
+          .is_none_or(|package| package.sources.is_none())
+      })
+    {
+      self.error(LintError::PackageSourcesMissing);
+    }
+
     if self.is_active(Lint::MediaMissing)
       && metadata.is_none_or(|metadata| metadata.media.is_none())
     {
