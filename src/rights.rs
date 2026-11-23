@@ -31,7 +31,7 @@ pub(crate) struct Rights {
 impl Rights {
   pub(crate) fn info(&self, text: Option<Hash>) -> Info {
     InfoBuilder::new()
-      .value("status", self.status)
+      .value("status", self.status.display())
       .when_some(self.license.as_ref(), |builder, license| {
         if let Ok(License::Identifier(identifier)) = license.parse() {
           builder.info(
