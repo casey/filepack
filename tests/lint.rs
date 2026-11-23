@@ -571,6 +571,56 @@ fn deny_package_missing() {
 }
 
 #[test]
+fn deny_rights_basis_missing() {
+  Test::new()
+    .write("metadata.yaml", "rights: {status: public-domain}")
+    .args(["create", "--deny", "rights-basis-missing"])
+    .stderr(
+      "
+        error: metadata rights missing basis [rights-basis-missing]
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
+fn deny_rights_basis_missing_ignores_unknown() {
+  Test::new()
+    .write("metadata.yaml", "rights: {status: unknown}")
+    .args(["create", "--deny", "rights-basis-missing"])
+    .success();
+}
+
+#[test]
+fn deny_rights_license_missing() {
+  Test::new()
+    .write("metadata.yaml", "rights: {status: licensed, text: foo.txt}")
+    .args(["create", "--deny", "rights-license-missing"])
+    .stderr(
+      "
+        error: metadata rights missing license [rights-license-missing]
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
+fn deny_rights_missing() {
+  Test::new()
+    .write("metadata.yaml", "title: foo")
+    .args(["create", "--deny", "rights-missing"])
+    .stderr(
+      "
+        error: metadata missing rights [rights-missing]
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
 fn deny_time_missing() {
   Test::new()
     .write("metadata.yaml", "title: foo")
