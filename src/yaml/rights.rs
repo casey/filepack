@@ -8,15 +8,15 @@ pub(crate) struct Rights {
   /// Reason the content is believed to have the stated status.
   #[json(example = "Published in 1929.")]
   pub(crate) basis: Option<Text>,
-  /// Credit lines to display with the content.
-  #[json(example = "Courtesy of the New York Public Library")]
-  pub(crate) credits: Option<NonEmptyOrderedSet<Text>>,
   /// License of the content.
   #[json(example = "CC-BY-4.0")]
   pub(crate) license: Option<License>,
   /// Links supporting the rights statement.
   #[json(example = "https://tobin-society.org/spirit-guide/copyright")]
   pub(crate) links: Option<NonEmptyOrderedSet<CheckedUrl>>,
+  /// Notices required to accompany the content.
+  #[json(example = "Courtesy of the New York Public Library")]
+  pub(crate) notices: Option<NonEmptyOrderedSet<Text>>,
   /// Rights status of the content.
   #[json(example = "licensed")]
   pub(crate) status: crate::rights::Status,
@@ -29,9 +29,9 @@ impl Rights {
   pub(crate) fn load(self) -> Result<crate::Rights> {
     let Self {
       basis,
-      credits,
       license,
       links,
+      notices,
       status,
       text,
     } = self;
@@ -62,9 +62,9 @@ impl Rights {
 
     Ok(crate::Rights {
       basis,
-      credits,
       license: license.map(|license| license.to_string().parse().unwrap()),
       links,
+      notices,
       status,
       text,
     })
@@ -87,9 +87,9 @@ mod tests {
       assert_eq!(
         Rights {
           basis: None,
-          credits: None,
           license: license.map(|license| license.parse().unwrap()),
           links: None,
+          notices: None,
           status,
           text: text.map(|text| text.parse().unwrap()),
         }

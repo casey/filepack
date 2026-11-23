@@ -11,15 +11,15 @@ pub(crate) struct Rights {
   /// Reason the content is believed to have the stated status.
   #[n(1)]
   pub(crate) basis: Option<Text>,
-  /// Credit lines to display with the content.
-  #[n(2)]
-  pub(crate) credits: Option<NonEmptyOrderedSet<Text>>,
   /// License of the content.
-  #[n(3)]
+  #[n(2)]
   pub(crate) license: Option<Text>,
   /// Links supporting the rights statement.
-  #[n(4)]
+  #[n(3)]
   pub(crate) links: Option<NonEmptyOrderedSet<CheckedUrl>>,
+  /// Notices required to accompany the content.
+  #[n(4)]
+  pub(crate) notices: Option<NonEmptyOrderedSet<Text>>,
   /// Rights status of the content.
   #[n(5)]
   pub(crate) status: Status,
@@ -55,13 +55,13 @@ impl Rights {
           Link::new(path).href(file_href(text.unwrap(), path.filename())),
         )
       })
-      .when_some(self.credits.as_ref(), |builder, credits| {
+      .when_some(self.notices.as_ref(), |builder, notices| {
         builder.list(
-          "credits",
-          credits
+          "notices",
+          notices
             .as_slice()
             .iter()
-            .map(|credit| Info::Value(credit.to_string())),
+            .map(|notice| Info::Value(notice.to_string())),
         )
       })
       .optional("basis", self.basis.as_ref())
@@ -86,13 +86,13 @@ mod tests {
   fn encoding() {
     assert_encoding(Rights {
       basis: Some("foo".parse().unwrap()),
-      credits: Some(vec!["bar".parse().unwrap()].try_into().unwrap()),
       license: Some("baz".parse().unwrap()),
       links: Some(
         vec!["http://example.com".parse().unwrap()]
           .try_into()
           .unwrap(),
       ),
+      notices: Some(vec!["bar".parse().unwrap()].try_into().unwrap()),
       status: Status::Licensed,
       text: Some("qux".parse().unwrap()),
     });

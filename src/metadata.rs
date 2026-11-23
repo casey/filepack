@@ -457,13 +457,13 @@ mod tests {
       readme: Some("README.md".parse().unwrap()),
       rights: Some(Rights {
         basis: Some("foo".parse().unwrap()),
-        credits: Some(vec!["baz".parse().unwrap()].try_into().unwrap()),
         license: None,
         links: Some(
           vec!["http://example.com/bar".parse().unwrap()]
             .try_into()
             .unwrap(),
         ),
+        notices: Some(vec!["baz".parse().unwrap()].try_into().unwrap()),
         status: rights::Status::Unknown,
         text: None,
       }),
@@ -854,9 +854,9 @@ mod tests {
       Metadata {
         rights: Some(Rights {
           basis: None,
-          credits: None,
           license: None,
           links: None,
+          notices: None,
           status: rights::Status::Licensed,
           text: Some("LICENSE.txt".parse().unwrap()),
         }),
@@ -896,9 +896,9 @@ mod tests {
       Metadata {
         rights: Some(Rights {
           basis: None,
-          credits: None,
           license: None,
           links: None,
+          notices: None,
           status: rights::Status::Licensed,
           text: Some("LICENSE".parse().unwrap()),
         }),

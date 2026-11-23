@@ -202,9 +202,9 @@ mod tests {
       }),
       rights: Some(Rights {
         basis: None,
-        credits: None,
         license: Some("LicenseRef-foo".parse().unwrap()),
         links: None,
+        notices: None,
         status: rights::Status::Licensed,
         text: Some("foo/LICENSE.txt".parse().unwrap()),
       }),
@@ -492,9 +492,9 @@ mod tests {
       publisher: Some("qux".parse().unwrap()),
       rights: Some(Rights {
         basis: None,
-        credits: None,
         license: None,
         links: None,
+        notices: None,
         status: rights::Status::PublicDomain,
         text: None,
       }),
@@ -907,13 +907,13 @@ mod tests {
       readme: Some("README.md".parse().unwrap()),
       rights: Some(Rights {
         basis: Some("qux".parse().unwrap()),
-        credits: Some(vec!["bob".parse().unwrap()].try_into().unwrap()),
         license: Some("CC0-1.0".parse().unwrap()),
         links: Some(
           vec!["http://example.com/foo".parse().unwrap()]
             .try_into()
             .unwrap(),
         ),
+        notices: Some(vec!["bob".parse().unwrap()].try_into().unwrap()),
         status: rights::Status::Licensed,
         text: None,
       }),
@@ -997,7 +997,7 @@ mod tests {
                     </dd>
                   </div>
                   <div>
-                    <dt>credits</dt>
+                    <dt>notices</dt>
                     <dd>
                       <ol role=list>
                         <li>

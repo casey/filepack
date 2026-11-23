@@ -2195,9 +2195,9 @@ fn get_package_with_metadata() {
     readme: Some("README.md".parse().unwrap()),
     rights: Some(Rights {
       basis: None,
-      credits: None,
       license: None,
       links: None,
+      notices: None,
       status: rights::Status::Licensed,
       text: Some("LICENSE.txt".parse().unwrap()),
     }),
