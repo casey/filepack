@@ -431,12 +431,13 @@ mod tests {
       rights: Some(Rights {
         basis: Some("foo".parse().unwrap()),
         credits: Some(vec!["baz".parse().unwrap()].try_into().unwrap()),
-        license: "unknown".parse().unwrap(),
+        license: None,
         links: Some(
           vec!["http://example.com/bar".parse().unwrap()]
             .try_into()
             .unwrap(),
         ),
+        status: rights::Status::Unknown,
       }),
       thumbnails: Some(
         [(

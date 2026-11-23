@@ -1,5 +1,9 @@
 use super::*;
 
+pub(crate) use self::status::Status;
+
+mod status;
+
 /// Rights statement for a package's content.
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, Json, PartialEq, Serialize)]
@@ -12,21 +16,25 @@ pub(crate) struct Rights {
   pub(crate) credits: Option<NonEmptyOrderedSet<Text>>,
   /// License of the content.
   #[n(3)]
-  pub(crate) license: Text,
+  pub(crate) license: Option<Text>,
   /// Links supporting the basis.
   #[n(4)]
   pub(crate) links: Option<NonEmptyOrderedSet<CheckedUrl>>,
+  /// Rights status of the content.
+  #[n(5)]
+  pub(crate) status: Status,
 }
 
 impl Rights {
   pub(crate) fn info(&self) -> Info {
     InfoBuilder::new()
-      .with(|builder| {
-        if let Ok(License::Identifier(identifier)) = self.license.parse() {
+      .value("status", self.status)
+      .when_some(self.license.as_ref(), |builder, license| {
+        if let Ok(License(identifier)) = license.parse() {
           builder.info(
             "license",
             Info::Link(
-              Link::new(&self.license)
+              Link::new(license)
                 .href(format!(
                   "https://spdx.org/licenses/{}.html",
                   identifier.name
@@ -35,7 +43,7 @@ impl Rights {
             ),
           )
         } else {
-          builder.value("license", &self.license)
+          builder.value("license", license)
         }
       })
       .when_some(self.credits.as_ref(), |builder, credits| {
@@ -70,12 +78,13 @@ mod tests {
     assert_encoding(Rights {
       basis: Some("foo".parse().unwrap()),
       credits: Some(vec!["bar".parse().unwrap()].try_into().unwrap()),
-      license: "unknown".parse().unwrap(),
+      license: Some("baz".parse().unwrap()),
       links: Some(
         vec!["http://example.com".parse().unwrap()]
           .try_into()
           .unwrap(),
       ),
+      status: Status::Licensed,
     });
   }
 }

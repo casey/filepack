@@ -553,6 +553,13 @@ pub enum Error {
     number: u64,
     revision: RevisionHash,
   },
+  #[snafu(display("status `licensed` requires `rights.license`"))]
+  RightsLicenseMissing { backtrace: Option<Backtrace> },
+  #[snafu(display("`rights.license` may not be used with status `{status}`"))]
+  RightsLicenseStatus {
+    backtrace: Option<Backtrace>,
+    status: String,
+  },
   #[snafu(display("failed to install rustls ring crypto provider"))]
   RustlsProvider { backtrace: Option<Backtrace> },
   #[snafu(display("server failed"))]

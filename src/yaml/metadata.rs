@@ -118,7 +118,7 @@ impl Metadata {
       package: package.map(Into::into),
       publisher,
       readme,
-      rights: rights.map(Into::into),
+      rights: rights.map(Rights::load).transpose()?,
       thumbnails: None,
       time,
       title,
@@ -268,8 +268,7 @@ mod tests {
         rights:
           license: foo
       ",
-      "rights\\.license: unknown license `foo`: expected `permission`, `public-domain`, \
-       `reserved`, `unknown`, or an SPDX license identifier",
+      "rights\\.license: unknown SPDX license identifier `foo`",
     );
     case(
       "
@@ -533,12 +532,13 @@ mod tests {
       rights: Some(Rights {
         basis: Some("foo".parse().unwrap()),
         credits: Some(vec!["bar".parse().unwrap()].try_into().unwrap()),
-        license: License::Keyword(license::Keyword::Unknown),
+        license: Some("CC0-1.0".parse().unwrap()),
         links: Some(
           vec!["http://example.com".parse().unwrap()]
             .try_into()
             .unwrap(),
         ),
+        status: crate::rights::Status::Licensed,
       }),
       title: Some("qux".parse().unwrap()),
       ..default()
@@ -589,12 +589,13 @@ mod tests {
         rights: Some(crate::Rights {
           basis: Some("foo".parse().unwrap()),
           credits: Some(vec!["bar".parse().unwrap()].try_into().unwrap()),
-          license: "unknown".parse().unwrap(),
+          license: Some("CC0-1.0".parse().unwrap()),
           links: Some(
             vec!["http://example.com".parse().unwrap()]
               .try_into()
               .unwrap(),
           ),
+          status: crate::rights::Status::Licensed,
         }),
         title: Some("qux".parse().unwrap()),
         ..default()

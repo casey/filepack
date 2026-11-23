@@ -436,8 +436,9 @@ mod tests {
       rights: Some(Rights {
         basis: None,
         credits: None,
-        license: "public-domain".parse().unwrap(),
+        license: None,
         links: None,
+        status: rights::Status::PublicDomain,
       }),
       ..default()
     };
@@ -495,7 +496,7 @@ mod tests {
               <dd>
                 <dl>
                   <div>
-                    <dt>license</dt>
+                    <dt>status</dt>
                     <dd>
                       public-domain
                     </dd>
@@ -844,12 +845,13 @@ mod tests {
       rights: Some(Rights {
         basis: Some("qux".parse().unwrap()),
         credits: Some(vec!["bob".parse().unwrap()].try_into().unwrap()),
-        license: "CC0-1.0".parse().unwrap(),
+        license: Some("CC0-1.0".parse().unwrap()),
         links: Some(
           vec!["http://example.com/foo".parse().unwrap()]
             .try_into()
             .unwrap(),
         ),
+        status: rights::Status::Licensed,
       }),
       ..default()
     };
@@ -918,6 +920,12 @@ mod tests {
               <dt>rights</dt>
               <dd>
                 <dl>
+                  <div>
+                    <dt>status</dt>
+                    <dd>
+                      licensed
+                    </dd>
+                  </div>
                   <div>
                     <dt>license</dt>
                     <dd>

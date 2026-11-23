@@ -5,9 +5,6 @@ use super::*;
 pub(crate) enum LicenseError {
   #[snafu(display("SPDX license identifier `{license}` is deprecated"))]
   Deprecated { license: String },
-  #[snafu(display(
-    "unknown license `{license}`: expected `permission`, `public-domain`, `reserved`, `unknown`, \
-     or an SPDX license identifier"
-  ))]
+  #[snafu(display("unknown SPDX license identifier `{license}`"))]
   Unknown { license: String },
 }
