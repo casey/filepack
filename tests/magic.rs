@@ -7,7 +7,7 @@ fn filepack_magic_is_recognized_by_file_command() {
   }
 
   let test = Test::new()
-    .write("metadata.yaml", "title: Foo")
+    .write("filepack.yaml", "title: Foo")
     .arg("create")
     .success();
 

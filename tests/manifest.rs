@@ -23,7 +23,7 @@ fn defaults_to_current_directory() {
 #[test]
 fn includes_embedded_files() {
   Test::new()
-    .write("metadata.yaml", "title: foo")
+    .write("filepack.yaml", "title: foo")
     .touch("bar")
     .arg("create")
     .success()

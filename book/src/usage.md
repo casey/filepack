@@ -34,10 +34,10 @@ Packages may optionally contain metadata in `metadata.filemeta`. This metadata
 describes the contents of the package, the package itself, and the media content
 of the package.
 
-Metadata may be added by creating a metadata template in `metadata.yaml`:
+Metadata may be added by creating a metadata template in `filepack.yaml`:
 
 ```sh
-echo "title: Fifty-three More Things to do in Zero Gravity" > metadata.yaml
+echo "title: Fifty-three More Things to do in Zero Gravity" > filepack.yaml
 ```
 
 Create a package and write the metadata to `metadata.filemeta`:

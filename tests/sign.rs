@@ -103,7 +103,7 @@ fn named() {
 fn preserves_embedded_files() {
   let test = Test::new()
     .keygen("master")
-    .write("pkg/metadata.yaml", "title: foo")
+    .write("pkg/filepack.yaml", "title: foo")
     .touch("pkg/bar")
     .args(["create", "pkg"])
     .success()

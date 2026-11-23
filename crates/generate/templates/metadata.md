@@ -6,10 +6,10 @@ Filepack packages may contain metadata describing the package in
 human readable or writable.
 
 When authoring a package with `filepack create`, a metadata template named
-`metadata.yaml` may be included, in which case it will be converted to deco and
+`filepack.yaml` may be included, in which case it will be converted to deco and
 saved to `metadata.filemeta`.
 
-See the schema of `metadata.yaml` in [Metadata](yaml/metadata.md), and an
+See the schema of `filepack.yaml` in [Metadata](yaml/metadata.md), and an
 example below.
 
 The `media` field may optionally contain metadata describing the package media.

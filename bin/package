@@ -42,7 +42,7 @@ cp -r \
   README.md \
   completions \
   filepack.1 \
-  metadata.yaml \
+  filepack.yaml \
   dist
 
 echo "Creating Filepack manifest..."

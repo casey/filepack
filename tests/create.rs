@@ -34,7 +34,7 @@ fn case_variant_error() {
 
   case("MANIFEST.FILEPACK", "manifest.filepack");
   case("METADATA.FILEMETA", "metadata.filemeta");
-  case("METADATA.YAML", "metadata.yaml");
+  case("FILEPACK.YAML", "filepack.yaml");
   case(".FILEPACK", ".filepack");
 }
 
@@ -42,7 +42,7 @@ fn case_variant_error() {
 fn create_rejects_invalid_artwork() {
   Test::new()
     .write("cover.png", "foo")
-    .write("metadata.yaml", "artwork: cover.png")
+    .write("filepack.yaml", "artwork: cover.png")
     .arg("create")
     .stderr_regex("error: failed to decode PNG image `cover\\.png`\n.*")
     .failure();
@@ -288,7 +288,7 @@ fn ignore_multiple() {
 #[test]
 fn magic_bytes() {
   let test = Test::new()
-    .write("metadata.yaml", "title: Foo")
+    .write("filepack.yaml", "title: Foo")
     .arg("create")
     .success();
 
@@ -320,7 +320,7 @@ fn manifest_already_exists_error() {
 #[test]
 fn manifest_already_exists_error_precedes_metadata_error() {
   Test::new()
-    .write("metadata.yaml", "title: Foo")
+    .write("filepack.yaml", "title: Foo")
     .arg("create")
     .success()
     .arg("create")
@@ -334,7 +334,7 @@ fn manifest_already_exists_error_precedes_metadata_error() {
 #[test]
 fn metadata_deco_is_embedded_in_manifest_archive() {
   let test = Test::new()
-    .write("metadata.yaml", "title: Foo")
+    .write("filepack.yaml", "title: Foo")
     .arg("create")
     .success();
 
@@ -719,7 +719,7 @@ fn subpackage_metadata_error() {
   let test = Test::new()
     .touch("foo/README.md")
     .write(
-      "foo/metadata.yaml",
+      "foo/filepack.yaml",
       "
         title: Foo
         readme: README.md
@@ -832,11 +832,11 @@ fn with_manifest_path() {
 fn with_metadata() {
   Test::new()
     .touch("bar")
-    .write("metadata.yaml", "title: Foo")
+    .write("filepack.yaml", "title: Foo")
     .arg("create")
     .success()
     .arg("manifest")
-    .stdout_regex(r#".*"metadata\.filemeta".*"metadata\.yaml".*"#)
+    .stdout_regex(r#".*"filepack\.yaml".*"metadata\.filemeta".*"#)
     .success()
     .arg("verify")
     .stderr("successfully verified 3 files totaling 35 bytes\n")

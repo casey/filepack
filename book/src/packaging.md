@@ -55,7 +55,7 @@ directory".
 Metadata
 --------
 
-Create the `metadata.yaml` metadata template in the package root. See
+Create the `filepack.yaml` metadata template in the package root. See
 [Metadata](metadata.md) for an example metadata template.
 
 Metadata is optional, so this step can be skipped. However, metadata is often
@@ -94,7 +94,7 @@ different precision.
 Media
 -----
 
-The `media` field of `metadata.yaml` contains media-specific metadata. The
+The `media` field of `filepack.yaml` contains media-specific metadata. The
 `type` field declares what type of media it is, and for media like audio or
 images, the `items` field lists the media files in the package. Adding `media`
 metadata enables features like preview and playback in the Filepack server, and

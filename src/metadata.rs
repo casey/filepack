@@ -49,7 +49,7 @@ pub struct Metadata {
 
 impl Metadata {
   pub(crate) const DECO_FILENAME: &'static str = "metadata.filemeta";
-  pub(crate) const YAML_FILENAME: &'static str = "metadata.yaml";
+  pub(crate) const YAML_FILENAME: &'static str = "filepack.yaml";
 
   fn check_colophon(colophon: &RelativePath) -> Result {
     ensure! {

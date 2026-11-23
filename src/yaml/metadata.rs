@@ -1,6 +1,6 @@
 use super::*;
 
-/// Metadata describing a package's content, read from `metadata.yaml`.
+/// Metadata describing a package's content, read from `filepack.yaml`.
 #[skip_serializing_none]
 #[derive(Debug, Default, Deserialize, PartialEq, Json)]
 #[serde(deny_unknown_fields)]

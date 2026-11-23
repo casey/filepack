@@ -2,7 +2,7 @@ YAML
 ====
 
 Filepack uses YAML for hand-authored files, namely
-[`metadata.yaml`](metadata.md).
+[`filepack.yaml`](metadata.md).
 
 This chapter includes the schemas of all types with YAML representations.
 

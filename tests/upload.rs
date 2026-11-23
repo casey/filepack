@@ -457,7 +457,7 @@ fn upload_package_serves_package_html() {
 
   let test = Test::new()
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         title: Foo
         description: Bar

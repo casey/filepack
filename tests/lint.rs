@@ -44,7 +44,7 @@ fn deny_artwork_missing() {
     let mut test = Test::new();
 
     if let Some(metadata) = metadata {
-      test = test.write("metadata.yaml", metadata);
+      test = test.write("filepack.yaml", metadata);
     }
 
     test
@@ -69,7 +69,7 @@ fn deny_audio_embedded_artwork_aspect_ratio() {
     let test = Test::new()
       .write(path, data)
       .write(
-        "metadata.yaml",
+        "filepack.yaml",
         format!(
           "
             creator: baz
@@ -163,7 +163,7 @@ fn deny_audio_embedded_artwork_missing() {
     let test = Test::new()
       .write(path, data)
       .write(
-        "metadata.yaml",
+        "filepack.yaml",
         format!(
           "
             creator: baz
@@ -284,7 +284,7 @@ fn deny_compatibility_ignores_junk() {
 #[test]
 fn deny_creator_missing() {
   Test::new()
-    .write("metadata.yaml", "title: foo")
+    .write("filepack.yaml", "title: foo")
     .args(["create", "--deny", "creator-missing"])
     .stderr(
       "
@@ -299,7 +299,7 @@ fn deny_creator_missing() {
 fn deny_derived_assets_missing() {
   Test::new()
     .write("foo.png", PngBuilder::new().build())
-    .write("metadata.yaml", "artwork: foo.png")
+    .write("filepack.yaml", "artwork: foo.png")
     .args(["create", "--deny", "derived-assets-missing", "--no-generate"])
     .stderr(
       "
@@ -313,7 +313,7 @@ fn deny_derived_assets_missing() {
 #[test]
 fn deny_derived_assets_missing_ignores_metadata_without_assets() {
   Test::new()
-    .write("metadata.yaml", "title: foo")
+    .write("filepack.yaml", "title: foo")
     .args([
       "create",
       "--deny",
@@ -383,7 +383,7 @@ fn deny_item_title_missing() {
     .write("foo.png", PngBuilder::new().build())
     .write("bar.png", PngBuilder::new().text("Title", "baz").build())
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: image
@@ -427,7 +427,7 @@ fn deny_junk_ignores_compatibility() {
 fn deny_media_items_missing() {
   Test::new()
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: audio
@@ -446,7 +446,7 @@ fn deny_media_items_missing() {
   Test::new()
     .unstable()
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: web
@@ -460,7 +460,7 @@ fn deny_media_items_missing() {
 #[test]
 fn deny_media_missing() {
   Test::new()
-    .write("metadata.yaml", "title: foo")
+    .write("filepack.yaml", "title: foo")
     .args(["create", "--deny", "media-missing"])
     .stderr(
       "
@@ -495,7 +495,7 @@ fn deny_mixed_formats() {
     .write("foo.png", PngBuilder::new().build())
     .write("bar.jpg", jpeg.into_inner())
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: image
@@ -545,7 +545,7 @@ fn deny_multiple() {
 #[test]
 fn deny_package_creator_missing() {
   Test::new()
-    .write("metadata.yaml", "package: {}")
+    .write("filepack.yaml", "package: {}")
     .args(["create", "--deny", "package-creator-missing"])
     .stderr(
       "
@@ -559,7 +559,7 @@ fn deny_package_creator_missing() {
 #[test]
 fn deny_package_missing() {
   Test::new()
-    .write("metadata.yaml", "title: foo")
+    .write("filepack.yaml", "title: foo")
     .args(["create", "--deny", "package-missing"])
     .stderr(
       "
@@ -573,7 +573,7 @@ fn deny_package_missing() {
 #[test]
 fn deny_package_sources_missing() {
   Test::new()
-    .write("metadata.yaml", "package: {}")
+    .write("filepack.yaml", "package: {}")
     .args(["create", "--deny", "package-sources-missing"])
     .stderr(
       "
@@ -587,7 +587,7 @@ fn deny_package_sources_missing() {
 #[test]
 fn deny_rights_license_missing() {
   Test::new()
-    .write("metadata.yaml", "rights: {status: licensed, text: foo.txt}")
+    .write("filepack.yaml", "rights: {status: licensed, text: foo.txt}")
     .args(["create", "--deny", "rights-license-missing"])
     .stderr(
       "
@@ -601,7 +601,7 @@ fn deny_rights_license_missing() {
 #[test]
 fn deny_rights_missing() {
   Test::new()
-    .write("metadata.yaml", "title: foo")
+    .write("filepack.yaml", "title: foo")
     .args(["create", "--deny", "rights-missing"])
     .stderr(
       "
@@ -615,7 +615,7 @@ fn deny_rights_missing() {
 #[test]
 fn deny_rights_support_missing() {
   Test::new()
-    .write("metadata.yaml", "rights: {status: public-domain}")
+    .write("filepack.yaml", "rights: {status: public-domain}")
     .args(["create", "--deny", "rights-support-missing"])
     .stderr(
       "
@@ -630,7 +630,7 @@ fn deny_rights_support_missing() {
 fn deny_rights_support_missing_ignores_basis() {
   Test::new()
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "rights: {status: public-domain, basis: foo}",
     )
     .args(["create", "--deny", "rights-support-missing"])
@@ -641,7 +641,7 @@ fn deny_rights_support_missing_ignores_basis() {
 fn deny_rights_support_missing_ignores_links() {
   Test::new()
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "rights: {status: public-domain, links: ['http://example.com']}",
     )
     .args(["create", "--deny", "rights-support-missing"])
@@ -652,7 +652,7 @@ fn deny_rights_support_missing_ignores_links() {
 fn deny_rights_support_missing_ignores_sources() {
   Test::new()
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         package: {sources: ['http://example.com']}
         rights: {status: public-domain}
@@ -665,7 +665,7 @@ fn deny_rights_support_missing_ignores_sources() {
 #[test]
 fn deny_rights_support_missing_ignores_unknown() {
   Test::new()
-    .write("metadata.yaml", "rights: {status: unknown}")
+    .write("filepack.yaml", "rights: {status: unknown}")
     .args(["create", "--deny", "rights-support-missing"])
     .success();
 }
@@ -673,7 +673,7 @@ fn deny_rights_support_missing_ignores_unknown() {
 #[test]
 fn deny_time_missing() {
   Test::new()
-    .write("metadata.yaml", "title: foo")
+    .write("filepack.yaml", "title: foo")
     .args(["create", "--deny", "time-missing"])
     .stderr(
       "
@@ -687,7 +687,7 @@ fn deny_time_missing() {
 #[test]
 fn deny_title_missing() {
   Test::new()
-    .write("metadata.yaml", "creator: foo")
+    .write("filepack.yaml", "creator: foo")
     .args(["create", "--deny", "title-missing"])
     .stderr(
       "
@@ -723,7 +723,7 @@ fn deny_video_placeholder_dimension_mismatch() {
     .write("foo.mp4", Mp4Builder::new().video_track(2, 1).build())
     .write("bar.png", placeholder.into_inner())
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: video
@@ -748,7 +748,7 @@ fn deny_video_placeholder_missing() {
   Test::new()
     .write("foo.mp4", Mp4Builder::new().video_track(2, 1).build())
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: video
@@ -803,7 +803,7 @@ fn expect_allowed_lint() {
 #[test]
 fn expect_fulfilled() {
   Test::new()
-    .write("metadata.yaml", "title: foo")
+    .write("filepack.yaml", "title: foo")
     .args(["create", "--expect", "creator-missing"])
     .success();
 }
@@ -811,7 +811,7 @@ fn expect_fulfilled() {
 #[test]
 fn expect_in_metadata() {
   Test::new()
-    .write("metadata.yaml", "lints: {expect: [creator-missing]}")
+    .write("filepack.yaml", "lints: {expect: [creator-missing]}")
     .arg("create")
     .success();
 }
@@ -819,7 +819,7 @@ fn expect_in_metadata() {
 #[test]
 fn expect_overrides_group_allow() {
   Test::new()
-    .write("metadata.yaml", "creator: foo")
+    .write("filepack.yaml", "creator: foo")
     .args([
       "create",
       "--allow",
@@ -839,7 +839,7 @@ fn expect_overrides_group_allow() {
 #[test]
 fn expect_unfulfilled() {
   Test::new()
-    .write("metadata.yaml", "creator: foo")
+    .write("filepack.yaml", "creator: foo")
     .args(["create", "--expect", "creator-missing"])
     .stderr(
       "
@@ -869,7 +869,7 @@ fn yaml_lints_fail_before_load() {
   Test::new()
     .touch(".DS_Store")
     .write("foo.png", PngBuilder::new().build())
-    .write("metadata.yaml", "artwork: foo.png")
+    .write("filepack.yaml", "artwork: foo.png")
     .args(["create", "--deny", "title-missing", "--deny", "junk"])
     .stderr(
       "
