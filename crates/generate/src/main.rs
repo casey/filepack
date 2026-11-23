@@ -25,7 +25,7 @@ use {
     collections::{BTreeMap, BTreeSet},
     env,
     fmt::{self, Display, Formatter},
-    fs, iter,
+    fs, iter, process,
   },
   strum::Display,
 };
@@ -43,6 +43,15 @@ fn main() {
         env::remove_var(key);
       }
     }
+  }
+
+  if Utf8Path::new(".git").exists() {
+    let status = process::Command::new("git")
+      .args(["clean", "-d", "--force", "--quiet", "-X", "book/src"])
+      .status()
+      .unwrap();
+
+    assert!(status.success());
   }
 
   let reference = Reference::new();
