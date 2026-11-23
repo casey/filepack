@@ -31,9 +31,9 @@ pub(crate) struct PackageMetadata {
   pub(crate) title: Option<Line>,
 }
 
-impl From<PackageMetadata> for crate::PackageMetadata {
-  fn from(package: PackageMetadata) -> Self {
-    let PackageMetadata {
+impl PackageMetadata {
+  pub(crate) fn load(self) -> Result<crate::PackageMetadata> {
+    let Self {
       colophon,
       creator,
       description,
@@ -41,16 +41,16 @@ impl From<PackageMetadata> for crate::PackageMetadata {
       sources,
       time,
       title,
-    } = package;
+    } = self;
 
-    Self {
-      colophon,
+    Ok(crate::PackageMetadata {
+      colophon: colophon.map(Text::new).transpose()?,
       creator,
       description,
       homepage,
       sources,
       time,
       title,
-    }
+    })
   }
 }

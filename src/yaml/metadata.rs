@@ -118,9 +118,9 @@ impl Metadata {
       homepage,
       language,
       media,
-      package: package.map(Into::into),
+      package: package.map(PackageMetadata::load).transpose()?,
       publisher,
-      readme,
+      readme: readme.map(Text::new).transpose()?,
       rights: rights.map(Rights::load).transpose()?,
       thumbnails: None,
       time,
@@ -588,7 +588,7 @@ mod tests {
           }],
         }),
         package: Some(crate::PackageMetadata {
-          colophon: Some("COLOPHON.md".parse().unwrap()),
+          colophon: Some(Text::new("COLOPHON.md".parse().unwrap()).unwrap()),
           creator: None,
           description: None,
           homepage: None,
@@ -610,7 +610,11 @@ mod tests {
           ),
           notices: Some(vec!["bar".parse().unwrap()].try_into().unwrap()),
           status: crate::rights::Status::Licensed,
-          texts: Some(vec!["LICENSE.txt".parse().unwrap()].try_into().unwrap()),
+          texts: Some(
+            vec![Text::new("LICENSE.txt".parse().unwrap()).unwrap()]
+              .try_into()
+              .unwrap(),
+          ),
         }),
         title: Some("qux".parse().unwrap()),
         ..default()
@@ -681,6 +685,45 @@ mod tests {
         ..default()
       },
       "invalid path `foo.avi`: path must end in `.mp4` or `.webm`",
+    );
+
+    case(
+      Metadata {
+        package: Some(PackageMetadata {
+          colophon: Some("foo".parse().unwrap()),
+          creator: None,
+          description: None,
+          homepage: None,
+          sources: None,
+          time: None,
+          title: None,
+        }),
+        ..default()
+      },
+      "invalid path `foo`: path must end in `.md` or `.txt`",
+    );
+
+    case(
+      Metadata {
+        readme: Some("foo".parse().unwrap()),
+        ..default()
+      },
+      "invalid path `foo`: path must end in `.md` or `.txt`",
+    );
+
+    case(
+      Metadata {
+        rights: Some(Rights {
+          basis: None,
+          license: None,
+          links: None,
+          notices: None,
+          status: crate::rights::Status::Licensed,
+          texts: Some(vec!["foo".parse().unwrap()].try_into().unwrap()),
+        }),
+        ..default()
+      },
+      "invalid path `foo`: path must end in `.md` or `.txt`",
     );
   }
 

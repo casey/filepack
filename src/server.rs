@@ -723,7 +723,7 @@ impl Server {
       && let Some(package) = &metadata.package
       && let Some(colophon) = &package.colophon
     {
-      Some(self.verified_package_file(fingerprint, colophon)?)
+      Some(self.verified_package_file(fingerprint, &colophon.path)?)
     } else {
       None
     };
@@ -731,7 +731,7 @@ impl Server {
     let readme = if let Some(metadata) = &metadata
       && let Some(readme) = &metadata.readme
     {
-      Some(self.verified_package_file(fingerprint, readme)?)
+      Some(self.verified_package_file(fingerprint, &readme.path)?)
     } else {
       None
     };
@@ -742,7 +742,7 @@ impl Server {
     {
       texts
         .iter()
-        .map(|text| self.verified_package_file(fingerprint, text))
+        .map(|text| self.verified_package_file(fingerprint, &text.path))
         .collect::<ServerResult<Vec<Hash>>>()?
     } else {
       Vec::new()

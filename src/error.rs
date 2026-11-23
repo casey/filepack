@@ -53,11 +53,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     source: reqwest::Error,
   },
-  #[snafu(display("colophon `{colophon}` must end in `.md`"))]
-  ColophonExtension {
-    backtrace: Option<Backtrace>,
-    colophon: RelativePath,
-  },
   #[snafu(display("failed to get current directory"))]
   CurrentDir {
     backtrace: Option<Backtrace>,
@@ -461,11 +456,6 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
-  #[snafu(display("readme `{readme}` must end in `.md`"))]
-  ReadmeExtension {
-    backtrace: Option<Backtrace>,
-    readme: RelativePath,
-  },
   #[snafu(display("failed to write listening port to `{address}`"))]
   ReadyAddress {
     address: SocketAddr,
@@ -564,11 +554,6 @@ pub enum Error {
   RightsLicenseStatus {
     backtrace: Option<Backtrace>,
     status: String,
-  },
-  #[snafu(display("license text `{text}` must end in `.md` or `.txt`"))]
-  RightsTextExtension {
-    backtrace: Option<Backtrace>,
-    text: RelativePath,
   },
   #[snafu(display("license `{license}` requires `rights.texts`"))]
   RightsTextsMissing {

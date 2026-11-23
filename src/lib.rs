@@ -177,6 +177,8 @@ use {
     subcommand::Subcommand,
     subcommand::serve::route::Route,
     templates::{ErrorHtml, PageHtml},
+    text::Text,
+    text_format::TextFormat,
     ticked::Ticked,
     time::Time,
     time_error::TimeError,
@@ -523,6 +525,8 @@ mod style;
 mod subcommand;
 mod tag;
 pub mod templates;
+mod text;
+mod text_format;
 mod ticked;
 mod time;
 mod time_error;

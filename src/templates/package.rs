@@ -206,7 +206,11 @@ mod tests {
         links: None,
         notices: None,
         status: rights::Status::Licensed,
-        texts: Some(vec!["foo/LICENSE.txt".parse().unwrap()].try_into().unwrap()),
+        texts: Some(
+          vec![Text::new("foo/LICENSE.txt".parse().unwrap()).unwrap()]
+            .try_into()
+            .unwrap(),
+        ),
       }),
       ..default()
     };
@@ -896,7 +900,7 @@ mod tests {
     let metadata = Metadata {
       language: Some("en".parse().unwrap()),
       package: Some(PackageMetadata {
-        colophon: Some("COLOPHON.md".parse().unwrap()),
+        colophon: Some(Text::new("COLOPHON.md".parse().unwrap()).unwrap()),
         creator: Some("foo".parse().unwrap()),
         description: Some("bar".parse().unwrap()),
         homepage: Some("http://example.com".parse().unwrap()),
@@ -908,7 +912,7 @@ mod tests {
         time: Some("2024-01-01".parse().unwrap()),
         title: Some("baz".parse().unwrap()),
       }),
-      readme: Some("README.md".parse().unwrap()),
+      readme: Some(Text::new("README.md".parse().unwrap()).unwrap()),
       rights: Some(Rights {
         basis: Some("qux".parse().unwrap()),
         license: Some("CC0-1.0".parse().unwrap()),
