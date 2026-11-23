@@ -11,10 +11,10 @@ pub struct Metadata {
   pub artwork: Option<Image>,
   /// Primary person or group who created the content.
   #[n(2)]
-  pub creator: Option<Text>,
+  pub creator: Option<Line>,
   /// Single-line description of the content.
   #[n(3)]
-  pub description: Option<Text>,
+  pub description: Option<Line>,
   /// Official homepage of the content.
   #[n(4)]
   pub homepage: Option<CheckedUrl>,
@@ -29,7 +29,7 @@ pub struct Metadata {
   pub package: Option<PackageMetadata>,
   /// Primary publisher of the content.
   #[n(8)]
-  pub publisher: Option<Text>,
+  pub publisher: Option<Line>,
   /// Path to a markdown file containing a readme describing the content.
   #[n(9)]
   pub readme: Option<RelativePath>,
@@ -44,7 +44,7 @@ pub struct Metadata {
   pub time: Option<Time>,
   /// Title of the content.
   #[n(13)]
-  pub title: Option<Text>,
+  pub title: Option<Line>,
 }
 
 impl Metadata {

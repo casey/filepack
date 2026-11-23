@@ -111,6 +111,8 @@ use {
     language_error::LanguageError,
     license::License,
     license_error::LicenseError,
+    line::Line,
+    line_error::LineError,
     link::Link,
     lint_error::LintError,
     lint_selector::LintSelector,
@@ -175,8 +177,6 @@ use {
     subcommand::Subcommand,
     subcommand::serve::route::Route,
     templates::{ErrorHtml, PageHtml},
-    text::Text,
-    text_error::TextError,
     ticked::Ticked,
     time::Time,
     time_error::TimeError,
@@ -437,6 +437,8 @@ mod language;
 mod language_error;
 mod license;
 mod license_error;
+mod line;
+mod line_error;
 mod link;
 mod lint_error;
 mod lint_group;
@@ -521,8 +523,6 @@ mod style;
 mod subcommand;
 mod tag;
 pub mod templates;
-mod text;
-mod text_error;
 mod ticked;
 mod time;
 mod time_error;

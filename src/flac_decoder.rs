@@ -152,7 +152,7 @@ impl<'a> FlacDecoder<'a> {
     Audio::tag(self.reader.get_tag(tag), tag)
   }
 
-  fn text_tag(&self, tag: &'static str) -> Result<Text, AudioError> {
+  fn text_tag(&self, tag: &'static str) -> Result<Line, AudioError> {
     self
       .tag(tag)?
       .parse()
@@ -300,7 +300,7 @@ mod tests {
           .tag("TITLE", "foo\tbar")
       ),
       AudioError::TagInvalid {
-        source: TextError::Control { character: '\t' },
+        source: LineError::Control { character: '\t' },
         tag: "TITLE",
       },
     );

@@ -297,7 +297,7 @@ impl<'a> Mp3Decoder<'a> {
     )
   }
 
-  fn text_tag(tag: &id3::Tag, id: &'static str) -> Result<Text, AudioError> {
+  fn text_tag(tag: &id3::Tag, id: &'static str) -> Result<Line, AudioError> {
     Self::tag(tag, id)?
       .parse()
       .context(audio_error::TagInvalid { tag: id })
@@ -409,7 +409,7 @@ mod tests {
           .frames(1)
       ),
       AudioError::TagInvalid {
-        source: TextError::Control { character: '\t' },
+        source: LineError::Control { character: '\t' },
         tag: "TIT2",
       },
     );

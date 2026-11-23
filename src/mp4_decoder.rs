@@ -242,7 +242,7 @@ impl Mp4Decoder {
     Self::metadata(file, size).context(error::Video { path })
   }
 
-  fn title(moov: &Moov) -> Result<Option<Text>, VideoError> {
+  fn title(moov: &Moov) -> Result<Option<Line>, VideoError> {
     let Some(ilst) = moov.ilst() else {
       return Ok(None);
     };
@@ -261,7 +261,7 @@ impl Mp4Decoder {
 
     Ok(Some(
       title
-        .parse::<Text>()
+        .parse::<Line>()
         .context(video_error::TagInvalid { tag })?,
     ))
   }
@@ -648,7 +648,7 @@ mod tests {
 
     error(
       Mp4Builder::new().video_track(2, 1).name(b""),
-      "invalid `©nam` tag: text may not be empty",
+      "invalid `©nam` tag: line may not be empty",
     );
 
     error(
@@ -658,7 +658,7 @@ mod tests {
 
     error(
       Mp4Builder::new().video_track(2, 1).name("\0"),
-      "invalid `©nam` tag: text may not contain control character `\\u{0}`",
+      "invalid `©nam` tag: line may not contain control character `\\u{0}`",
     );
 
     assert_eq!(

@@ -43,7 +43,7 @@ pub enum AudioError {
   },
   #[snafu(display("invalid `{tag}` tag"))]
   TagInvalid {
-    source: TextError,
+    source: LineError,
     tag: &'static str,
   },
   #[snafu(display("missing `{tag}` tag"))]

@@ -10,10 +10,10 @@ pub(crate) struct Metadata {
   pub(crate) artwork: Option<RelativePath>,
   /// Primary person or group who created the content.
   #[json(example = "John Horace Tobin")]
-  pub(crate) creator: Option<Text>,
+  pub(crate) creator: Option<Line>,
   /// Single-line description of the content.
   #[json(example = "A compilation of supernatural occurrences, entities, and facts.")]
-  pub(crate) description: Option<Text>,
+  pub(crate) description: Option<Line>,
   /// Official homepage of the content.
   #[json(example = "https://tobin-society.org/spirit-guide")]
   pub(crate) homepage: Option<CheckedUrl>,
@@ -28,7 +28,7 @@ pub(crate) struct Metadata {
   pub(crate) package: Option<PackageMetadata>,
   /// Primary publisher of the content.
   #[json(example = "Miskatonic University Press")]
-  pub(crate) publisher: Option<Text>,
+  pub(crate) publisher: Option<Line>,
   /// Path to a markdown file containing a readme describing the content.
   #[json(example = "README.md")]
   pub(crate) readme: Option<RelativePath>,
@@ -39,7 +39,7 @@ pub(crate) struct Metadata {
   pub(crate) time: Option<Time>,
   /// Title of the content.
   #[json(example = "Tobin's Spirit Guide")]
-  pub(crate) title: Option<Text>,
+  pub(crate) title: Option<Line>,
 }
 
 impl Metadata {
@@ -286,13 +286,13 @@ mod tests {
         title: Foo
         description: \"foo\\tbar\"
       ",
-      r"description: text may not contain control character `\\t`",
+      r"description: line may not contain control character `\\t`",
     );
     case(
       "
         title: \"foo\\nbar\"
       ",
-      r"title: text may not contain control character `\\n`",
+      r"title: line may not contain control character `\\n`",
     );
     case(
       "
@@ -300,7 +300,7 @@ mod tests {
         package:
           creator: \"foo\\nbar\"
       ",
-      r"package\.creator: text may not contain control character `\\n`",
+      r"package\.creator: line may not contain control character `\\n`",
     );
     case(
       "
@@ -308,7 +308,7 @@ mod tests {
         package:
           description: \"foo\\tbar\"
       ",
-      r"package\.description: text may not contain control character `\\t`",
+      r"package\.description: line may not contain control character `\\t`",
     );
     case(
       "

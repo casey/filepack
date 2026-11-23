@@ -127,7 +127,7 @@ impl M4aDecoder {
     Self::metadata(&data).context(error::Audio { path })
   }
 
-  fn text_tag(ilst: Option<&Ilst>, tag: &'static str) -> Result<Text, AudioError> {
+  fn text_tag(ilst: Option<&Ilst>, tag: &'static str) -> Result<Line, AudioError> {
     let values = match ilst {
       Some(ilst) => ilst
         .text(Fourcc::new(tag))
@@ -422,7 +422,7 @@ mod tests {
           .audio_track(0x40)
       ),
       AudioError::TagInvalid {
-        source: TextError::Control { character: '\t' },
+        source: LineError::Control { character: '\t' },
         tag: "©nam",
       },
     );

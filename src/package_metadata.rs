@@ -9,10 +9,10 @@ pub(crate) struct PackageMetadata {
   pub(crate) colophon: Option<RelativePath>,
   /// Primary person or group who created the package.
   #[n(2)]
-  pub(crate) creator: Option<Text>,
+  pub(crate) creator: Option<Line>,
   /// Single-line description of the package.
   #[n(3)]
-  pub(crate) description: Option<Text>,
+  pub(crate) description: Option<Line>,
   /// Official homepage of the package.
   #[n(4)]
   pub(crate) homepage: Option<CheckedUrl>,
@@ -24,7 +24,7 @@ pub(crate) struct PackageMetadata {
   pub(crate) time: Option<Time>,
   /// Title of the package.
   #[n(7)]
-  pub(crate) title: Option<Text>,
+  pub(crate) title: Option<Line>,
 }
 
 impl PackageMetadata {

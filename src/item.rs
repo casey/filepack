@@ -9,7 +9,7 @@ pub(crate) struct Item<T> {
   pub(crate) content: T,
   /// Title of the item.
   #[n(2)]
-  pub(crate) title: Option<Text>,
+  pub(crate) title: Option<Line>,
 }
 
 impl<T: Content> Item<T> {
@@ -66,7 +66,7 @@ impl<T: Content> MediaItem for Item<T> {
     self.content.resource_type()
   }
 
-  fn title(&self) -> Option<&Text> {
+  fn title(&self) -> Option<&Line> {
     self.title.as_ref()
   }
 }

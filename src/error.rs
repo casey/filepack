@@ -35,9 +35,9 @@ pub enum Error {
     "track `{path}` {tag} tag `{actual}` does not match metadata {field} `{expected}`"
   ))]
   AudioTagMismatch {
-    actual: Text,
+    actual: Line,
     backtrace: Option<Backtrace>,
-    expected: Text,
+    expected: Line,
     field: &'static str,
     path: RelativePath,
     tag: &'static str,
@@ -279,7 +279,7 @@ pub enum Error {
   ImageTitleInvalid {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
-    source: TextError,
+    source: LineError,
   },
   #[snafu(display("multiple titles in image `{path}`"))]
   ImageTitleMultiple {

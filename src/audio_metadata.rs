@@ -2,8 +2,8 @@ use super::*;
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct AudioMetadata {
-  pub(crate) album: Text,
-  pub(crate) artist: Text,
+  pub(crate) album: Line,
+  pub(crate) artist: Line,
   pub(crate) channels: u64,
   pub(crate) codec: AudioCodec,
   pub(crate) disc: u64,
@@ -12,7 +12,7 @@ pub(crate) struct AudioMetadata {
   pub(crate) sample_rate: u64,
   pub(crate) samples: u64,
   pub(crate) size: u64,
-  pub(crate) title: Text,
+  pub(crate) title: Line,
   pub(crate) track: u64,
   pub(crate) tracks: u64,
 }
@@ -103,7 +103,7 @@ impl AudioMetadata {
     Ok(())
   }
 
-  pub(crate) fn check_tags(&self, path: &RelativePath, creator: &Text, title: &Text) -> Result {
+  pub(crate) fn check_tags(&self, path: &RelativePath, creator: &Line, title: &Line) -> Result {
     for (tag, field, actual, expected) in [
       ("artist", "creator", &self.artist, creator),
       ("album", "title", &self.album, title),

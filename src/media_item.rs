@@ -11,5 +11,5 @@ pub(crate) trait MediaItem {
 
   fn resource_type(&self) -> ResourceType;
 
-  fn title(&self) -> Option<&Text>;
+  fn title(&self) -> Option<&Line>;
 }

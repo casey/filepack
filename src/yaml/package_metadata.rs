@@ -10,13 +10,13 @@ pub(crate) struct PackageMetadata {
   pub(crate) colophon: Option<RelativePath>,
   /// Primary person or group who created the package.
   #[json(example = "Egon Spengler")]
-  pub(crate) creator: Option<Text>,
+  pub(crate) creator: Option<Line>,
   /// Single-line description of the package.
   #[json(
     example = "First edition on loan from NYPL Main Branch research stacks. Captured via Microtek \
                MS-300A flatbed scanner."
   )]
-  pub(crate) description: Option<Text>,
+  pub(crate) description: Option<Line>,
   /// Official homepage of the package.
   #[json(example = "https://ghost-busters.net/~egon")]
   pub(crate) homepage: Option<CheckedUrl>,
@@ -28,7 +28,7 @@ pub(crate) struct PackageMetadata {
   pub(crate) time: Option<Time>,
   /// Title of the package.
   #[json(example = "Tobin's Spirit Guide - First Edition")]
-  pub(crate) title: Option<Text>,
+  pub(crate) title: Option<Line>,
 }
 
 impl From<PackageMetadata> for crate::PackageMetadata {

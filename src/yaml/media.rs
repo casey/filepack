@@ -37,8 +37,8 @@ impl Media {
     self,
     root: &Utf8Path,
     bar: &ProgressBar,
-    creator: Option<&Text>,
-    title: Option<&Text>,
+    creator: Option<&Line>,
+    title: Option<&Line>,
   ) -> Result<crate::Media> {
     Ok(match self {
       Self::Audio { items } => {

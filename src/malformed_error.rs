@@ -26,6 +26,8 @@ pub enum MalformedError {
   IntegerLength,
   #[snafu(display("map keys out of order"))]
   KeyOrder,
+  #[snafu(display("failed to parse line"))]
+  Line { source: LineError },
   #[snafu(display(
     "expected magic bytes `{}` but found `{}{}`",
     expected.escape_ascii(),
@@ -54,8 +56,6 @@ pub enum MalformedError {
   PublicKey { source: PublicKeyError },
   #[snafu(display("reserved byte {value}"))]
   Reserved { value: u8 },
-  #[snafu(display("failed to parse text"))]
-  Text { source: TextError },
   #[snafu(display("invalid totals"))]
   Totals { source: TotalsError },
   #[snafu(display("trailing bytes"))]
