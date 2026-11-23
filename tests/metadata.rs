@@ -5,7 +5,7 @@ fn create_allows_extra_files_in_web_packages() {
   Test::new()
     .unstable()
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: web
@@ -24,7 +24,7 @@ fn create_allows_nested_paths() {
     .write("foo/bar.md", "baz")
     .write("foo/baz.png", image(2, 1, ImageFormat::Png))
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         readme: foo/bar.md
         media:
@@ -74,7 +74,7 @@ fn create_checks_audio_discs() {
           .build(),
       )
       .write(
-        "metadata.yaml",
+        "filepack.yaml",
         format!(
           "
             creator: baz
@@ -114,7 +114,7 @@ fn create_checks_audio_discs() {
 fn create_checks_metadata() {
   Test::new()
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         title: Foo
         readme: README.md
@@ -130,7 +130,7 @@ fn create_does_not_write_metadata_deco_on_failure() {
   Test::new()
     .unstable()
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: web
@@ -156,7 +156,7 @@ fn create_does_not_write_metadata_deco_on_failure() {
 fn create_extracts_artwork_dimensions() {
   Test::new()
     .write("cover.png", image(2, 2, ImageFormat::Png))
-    .write("metadata.yaml", "artwork: cover.png")
+    .write("filepack.yaml", "artwork: cover.png")
     .arg("create")
     .success()
     .arg("metadata")
@@ -189,7 +189,7 @@ fn create_extracts_image_dimensions() {
   Test::new()
     .write("foo.png", image(2, 1, ImageFormat::Png))
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: image
@@ -239,7 +239,7 @@ fn create_extracts_image_title() {
   Test::new()
     .write("foo.png", PngBuilder::new().text("Title", "bar").build())
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: image
@@ -298,7 +298,7 @@ fn create_extracts_m4a_track_tags() {
         .build(),
     )
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         creator: baz
         title: qux
@@ -358,7 +358,7 @@ fn create_extracts_track_tags() {
         .build(),
     )
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         creator: baz
         title: qux
@@ -424,7 +424,7 @@ fn create_extracts_video_metadata() {
         .build(),
     )
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: video
@@ -494,7 +494,7 @@ fn create_force_overwrites_thumbnails() {
   Test::new()
     .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: image
@@ -516,7 +516,7 @@ fn create_generates_thumbnails() {
     .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
     .write("bar/baz.png", image_alpha(1280, 640, 128, ImageFormat::Png))
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: image
@@ -619,7 +619,7 @@ fn create_loads_video_placeholder() {
     .write("foo.mp4", Mp4Builder::new().video_track(2, 1).build())
     .write("bar.png", image(2, 1, ImageFormat::Png))
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: video
@@ -694,7 +694,7 @@ fn create_loads_video_placeholder() {
 fn create_no_generate_skips_thumbnails() {
   Test::new()
     .write("foo.jpg", image(1, 1, ImageFormat::Jpeg))
-    .write("metadata.yaml", "artwork: foo.jpg")
+    .write("filepack.yaml", "artwork: foo.jpg")
     .args(["create", "--no-generate"])
     .assert_absent("thumbnails")
     .success();
@@ -719,7 +719,7 @@ fn create_rejects_audio_metadata() {
       )
       .write("cover.png", PngBuilder::new().build())
       .write(
-        "metadata.yaml",
+        "filepack.yaml",
         format!(
           "{metadata}\nartwork: cover.png\nmedia:\n  type: audio\n  items:\n    - path: foo.flac\n"
         ),
@@ -755,7 +755,7 @@ fn create_rejects_existing_thumbnails() {
   Test::new()
     .write("foo.jpg", image(2, 1, ImageFormat::Jpeg))
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: image
@@ -788,7 +788,7 @@ fn create_rejects_extra_files_in_media_packages() {
         .build(),
     )
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         creator: baz
         title: qux
@@ -816,7 +816,7 @@ fn create_rejects_extra_files_in_web_packages() {
   Test::new()
     .unstable()
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: web
@@ -849,7 +849,7 @@ fn create_rejects_flac_missing_track_total() {
         .build(),
     )
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         creator: baz
         title: qux
@@ -885,7 +885,7 @@ fn create_rejects_invalid_track_positions() {
         .build(),
     )
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         creator: baz
         title: qux
@@ -910,7 +910,7 @@ fn create_rejects_invalid_tracks() {
   Test::new()
     .write("foo.flac", "barbar")
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         creator: baz
         title: qux
@@ -936,7 +936,7 @@ fn create_rejects_invalid_videos() {
   Test::new()
     .write("foo.mp4", "barbar")
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: video
@@ -971,7 +971,7 @@ fn create_rejects_m4a_missing_disc_total() {
         .build(),
     )
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         creator: baz
         title: qux
@@ -1007,7 +1007,7 @@ fn create_rejects_m4a_with_unsupported_codec() {
         .build(),
     )
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         creator: baz
         title: qux
@@ -1033,7 +1033,7 @@ fn create_rejects_metadata_deco_without_yaml() {
   Test::new()
     .touch("README.md")
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         title: Foo
         readme: README.md
@@ -1041,7 +1041,7 @@ fn create_rejects_metadata_deco_without_yaml() {
     )
     .arg("create")
     .success()
-    .remove_file("metadata.yaml")
+    .remove_file("filepack.yaml")
     .args(["create", "--force"])
     .stderr("error: metadata `metadata.filemeta` already exists\n")
     .failure();
@@ -1062,7 +1062,7 @@ fn create_rejects_mp3_missing_track_total() {
         .build(),
     )
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         creator: baz
         title: qux
@@ -1086,7 +1086,7 @@ fn create_rejects_mp3_missing_track_total() {
 fn create_rejects_unknown_license() {
   Test::new()
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         rights:
           license: foo
@@ -1095,7 +1095,7 @@ fn create_rejects_unknown_license() {
     .arg("create")
     .stderr(
       "
-        error: failed to deserialize metadata at `metadata.yaml`
+        error: failed to deserialize metadata at `filepack.yaml`
                └─ rights.license: unknown SPDX license identifier `foo` at line 2 column 12
       ",
     )
@@ -1106,7 +1106,7 @@ fn create_rejects_unknown_license() {
 fn create_rejects_web_packages_unless_unstable() {
   Test::new()
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: web
@@ -1123,7 +1123,7 @@ fn create_requires_index_html_in_web_packages() {
   Test::new()
     .unstable()
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         media:
           type: web
@@ -1138,7 +1138,7 @@ fn create_requires_index_html_in_web_packages() {
 fn create_requires_manifest_not_exist_before_generating_thumbnails() {
   Test::new()
     .write("foo.jpg", image(1280, 1280, ImageFormat::Jpeg))
-    .write("metadata.yaml", "artwork: foo.jpg")
+    .write("filepack.yaml", "artwork: foo.jpg")
     .touch("manifest.filepack")
     .arg("create")
     .stderr(
@@ -1157,7 +1157,7 @@ fn create_succeeds_with_valid_metadata() {
     .touch("README.md")
     .touch("COLOPHON.md")
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         title: Foo
         time: 2024-01-01
@@ -1179,7 +1179,7 @@ fn create_succeeds_with_valid_metadata() {
 fn create_validates_metadata_before_generating_thumbnails() {
   Test::new()
     .write("foo.jpg", image(1280, 640, ImageFormat::Jpeg))
-    .write("metadata.yaml", "artwork: foo.jpg")
+    .write("filepack.yaml", "artwork: foo.jpg")
     .arg("create")
     .stderr("error: artwork `foo.jpg` is 1280×640 but must be square\n")
     .assert_absent("thumbnails")
@@ -1205,7 +1205,7 @@ fn image_alpha(width: u32, height: u32, alpha: u8, image_format: ImageFormat) ->
 #[test]
 fn metadata_deco_already_exists() {
   Test::new()
-    .write("metadata.yaml", "title: Foo")
+    .write("filepack.yaml", "title: Foo")
     .touch("metadata.filemeta")
     .arg("create")
     .stderr("error: metadata `metadata.filemeta` already exists, use `--force` to overwrite it\n")
@@ -1215,7 +1215,7 @@ fn metadata_deco_already_exists() {
 #[test]
 fn metadata_deco_force() {
   Test::new()
-    .write("metadata.yaml", "title: Foo")
+    .write("filepack.yaml", "title: Foo")
     .touch("metadata.filemeta")
     .args(["create", "--force"])
     .success()
@@ -1240,7 +1240,7 @@ fn metadata_subcommand_case_variant_error() {
 #[test]
 fn metadata_subcommand_defaults_to_current_directory() {
   Test::new()
-    .write("metadata.yaml", "title: Foo")
+    .write("filepack.yaml", "title: Foo")
     .arg("create")
     .success()
     .arg("metadata")
@@ -1257,7 +1257,7 @@ fn metadata_subcommand_defaults_to_current_directory() {
 #[test]
 fn metadata_subcommand_path_is_directory() {
   Test::new()
-    .write("pkg/metadata.yaml", "title: Foo")
+    .write("pkg/filepack.yaml", "title: Foo")
     .args(["create", "pkg"])
     .success()
     .args(["metadata", "pkg"])
@@ -1274,7 +1274,7 @@ fn metadata_subcommand_path_is_directory() {
 #[test]
 fn metadata_subcommand_path_is_file() {
   Test::new()
-    .write("pkg/metadata.yaml", "title: Foo")
+    .write("pkg/filepack.yaml", "title: Foo")
     .args(["create", "pkg"])
     .success()
     .args(["metadata", "pkg/metadata.filemeta"])

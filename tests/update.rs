@@ -67,7 +67,7 @@ fn manifest_not_found() {
 #[test]
 fn metadata_is_overwritten() {
   Test::new()
-    .write("metadata.yaml", "title: Foo")
+    .write("filepack.yaml", "title: Foo")
     .arg("create")
     .success()
     .arg("update")

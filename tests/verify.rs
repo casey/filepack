@@ -510,7 +510,7 @@ fn print() {
 #[test]
 fn print_includes_embedded_files() {
   Test::new()
-    .write("metadata.yaml", "title: foo")
+    .write("filepack.yaml", "title: foo")
     .touch("bar")
     .arg("create")
     .success()
@@ -735,7 +735,7 @@ fn subpackage_metadata_error() {
   let test = Test::new()
     .touch("foo/README.md")
     .write(
-      "foo/metadata.yaml",
+      "foo/filepack.yaml",
       "
         title: Foo
         readme: README.md
@@ -928,7 +928,7 @@ fn verify_checks_metadata() {
   let test = Test::new()
     .touch("README.md")
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         title: Foo
         readme: README.md
@@ -943,7 +943,7 @@ fn verify_checks_metadata() {
 
   test
     .remove_file("README.md")
-    .remove_file("metadata.yaml")
+    .remove_file("filepack.yaml")
     .write_manifest(
       "manifest.filepack",
       json! {

@@ -55,16 +55,17 @@ directory".
 Metadata
 --------
 
-Create the `metadata.yaml` metadata template in the package root. See
-[Metadata](metadata.md) for an example metadata template.
-
-Metadata is optional, so this step can be skipped. However, metadata is often
-useful, if only for your own organization and records, so consider creating it,
-even if the package is only for your own use.
-
-Metadata from the metadata template, as well as media items, is read on package
-creation and written to `metadata.filemeta`, the authoritative source of package
+Metadata is generated from a template named `filepack.yaml`, as well as
+automatically extracted from files it references. This metadata is converted to
+deco and saved to `metadata.filemeta`, the authoritative source of package
 metadata.
+
+Create `filepack.yaml` in the package root. See [Metadata](metadata.md) for an
+example metadata template.
+
+Metadata is optional, so creating `filepack.yaml` can be skipped. However,
+metadata is often useful, if only for your own organization and records, so
+consider creating it, even if the package is only for your own use.
 
 By default, the metadata template is included in the package, so that package
 metadata can be easily updated and regenerated. Treat it as having the same
@@ -94,7 +95,7 @@ different precision.
 Media
 -----
 
-The `media` field of `metadata.yaml` contains media-specific metadata. The
+The `media` field of `filepack.yaml` contains media-specific metadata. The
 `type` field declares what type of media it is, and for media like audio or
 images, the `items` field lists the media files in the package. Adding `media`
 metadata enables features like preview and playback in the Filepack server, and
@@ -270,8 +271,11 @@ filepack lints
 ```
 
 Related lints are collected into named lint groups, such as `all`, which
-includes all lints. Lints are enabled with `--deny NAME`, where `NAME` is the
-name of a lint or lint group, and disabled with `--allow NAME`.
+includes all lints. Individual lints and lint groups may be enabled with
+`--deny NAME` and disabled with `--allow NAME`. Individual lints may also be
+expected with `--expect NAME`, which allows the lint if it is triggered and
+produces an error if it is not. Using `--expect` instead of `--allow` helps you
+keep your allowed lints accurate.
 
 Enabling all lints is a great way to learn about Filepack features and how to
 improve your packages.
@@ -290,6 +294,14 @@ Lints may not apply to your package at all. For example, the `media-missing`
 lint complains if your package does not have `media` metadata. However, your
 package may not contain media, or may contain an unsupported media type, in
 which case there is no sensible way to satisfy the lint.
+
+Expected lints may be configured in `filepack.yaml` under `lints.expect`:
+
+```yaml
+lints:
+  expect:
+  - media-missing
+```
 
 Signing
 -------

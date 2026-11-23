@@ -5,7 +5,7 @@ fn download_checks_metadata() {
   let test = Test::new()
     .touch("README.md")
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         title: Foo
         readme: README.md
@@ -709,7 +709,7 @@ fn download_retrieves_package_with_metadata() {
     .write("cover.png", artwork.into_inner())
     .write("README.md", "baz")
     .write(
-      "metadata.yaml",
+      "filepack.yaml",
       "
         title: Foo
         artwork: cover.png

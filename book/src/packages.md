@@ -85,7 +85,7 @@ Filepack uses three other serialization formats, aside from deco:
   for display of things like hashes, keys, and signatures.
 
 - [YAML](yaml.md), a human-readable and writable text format, used for
-  hand-authored files, namely `metadata.yaml`, the template from which a
+  hand-authored files, namely `filepack.yaml`, the template from which a
   package's `metadata.filemeta` is generated.
 
 - [JSON](json.md), a simple text format, used for command input and output, and
@@ -193,12 +193,12 @@ Filepack packages may contain a file named `metadata.filemeta` describing the
 package and its contents. If present, `metadata.filemeta` is also embedded in
 the `manifest.filepack` archive.
 
-Metadata is authored by creating a file named `metadata.yaml` in the root of a
-new package. `filepack create` then loads `metadata.yaml` if present, checks for
+Metadata is authored by creating a file named `filepack.yaml` in the root of a
+new package. `filepack create` then loads `filepack.yaml` if present, checks for
 validity and unknown fields, and writes the deco serialization to
 `metadata.filemeta` in the package root.
 
-`metadata.yaml` is retained as a human-readable reference and for amending
+`filepack.yaml` is retained as a human-readable reference and for amending
 metadata, but `metadata.filemeta` is the authoritative source of metadata. For
 consumption by scripts and tools, `filepack metadata` prints the contents of
 `metadata.filemeta` as JSON.
@@ -218,7 +218,7 @@ selection of example packages, covering a variety of media types. All metadata
 served by the demo server, including package artwork, video placeholders,
 thumbnail images, and media information, is sourced from package metadata.
 
-See [Metadata](metadata.md) for an example `metadata.yaml` file, the template
+See [Metadata](metadata.md) for an example `filepack.yaml` file, the template
 used to generate package metadata, as well as links to the deco and YAML
 metadata schemas.
 
