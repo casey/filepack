@@ -751,6 +751,84 @@ fn deny_windows_reserved_filename() {
 }
 
 #[test]
+fn expect_allowed_lint() {
+  Test::new()
+    .args([
+      "create",
+      "--allow",
+      "creator-missing",
+      "--expect",
+      "creator-missing",
+    ])
+    .stderr("error: lint `creator-missing` cannot be both allowed and expected\n")
+    .failure();
+}
+
+#[test]
+fn expect_fulfilled() {
+  Test::new()
+    .write("metadata.yaml", "title: foo")
+    .args(["create", "--expect", "creator-missing"])
+    .success();
+}
+
+#[test]
+fn expect_in_metadata() {
+  Test::new()
+    .write("metadata.yaml", "lints: {expect: [creator-missing]}")
+    .arg("create")
+    .success();
+}
+
+#[test]
+fn expect_overrides_group_allow() {
+  Test::new()
+    .write("metadata.yaml", "creator: foo")
+    .args([
+      "create",
+      "--allow",
+      "metadata",
+      "--expect",
+      "creator-missing",
+    ])
+    .stderr(
+      "
+        error: unfulfilled lint expectation [creator-missing]
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
+fn expect_unfulfilled() {
+  Test::new()
+    .write("metadata.yaml", "creator: foo")
+    .args(["create", "--expect", "creator-missing"])
+    .stderr(
+      "
+        error: unfulfilled lint expectation [creator-missing]
+        error: 1 lint error
+      ",
+    )
+    .failure();
+}
+
+#[test]
+fn expect_unknown_lint() {
+  Test::new()
+    .args(["create", "--expect", "foo"])
+    .stderr(
+      "
+        error: invalid value 'foo' for '--expect <LINT>': unknown lint `foo`
+
+        For more information, try '--help'.
+      ",
+    )
+    .status(2);
+}
+
+#[test]
 fn yaml_lints_fail_before_load() {
   Test::new()
     .touch(".DS_Store")

@@ -333,6 +333,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     count: u64,
   },
+  #[snafu(display("lint `{lint}` cannot be both allowed and expected"))]
+  LintAllowedAndExpected {
+    backtrace: Option<Backtrace>,
+    lint: crate::Lint,
+  },
   #[snafu(display("failed to convert tokio socket into standard socket"))]
   ListenerIntoStandard {
     backtrace: Option<Backtrace>,

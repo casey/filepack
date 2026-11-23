@@ -7,7 +7,6 @@ use super::*;
     Deserialize,
     Display,
     EnumIter,
-    EnumString,
     IntoStaticStr,
     Json,
     Ord,
@@ -107,4 +106,26 @@ pub(crate) enum LintError {
   /// Filenames do not end with a space, which Windows does not allow.
   #[snafu(display("Windows does not allow filenames that end with a space"))]
   WindowsTrailingSpace,
+}
+
+impl Lint {
+  pub(crate) fn candidates() -> Vec<CompletionCandidate> {
+    Self::schema()
+      .values()
+      .iter()
+      .map(|value| {
+        CompletionCandidate::new(value.value.clone()).help(Some(value.description.clone().into()))
+      })
+      .collect()
+  }
+}
+
+impl FromStr for Lint {
+  type Err = String;
+
+  fn from_str(name: &str) -> Result<Self, Self::Err> {
+    Self::iter()
+      .find(|lint| <&str>::from(lint) == name)
+      .ok_or_else(|| format!("unknown lint `{name}`"))
+  }
 }

@@ -213,6 +213,8 @@ Summary
   - [Image](yaml/image.md)
   - [Language](yaml/language.md)
   - [License](yaml/license.md)
+  - [Lint](yaml/lint.md)
+  - [Lints](yaml/lints.md)
   - [Media](yaml/media.md)
   - [Metadata](yaml/metadata.md)
   - [PackageMetadata](yaml/package-metadata.md)

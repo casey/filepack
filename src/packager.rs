@@ -20,6 +20,13 @@ pub(crate) struct Packager {
     value_name = "LINT",
   )]
   deny: Vec<LintSelector>,
+  #[arg(
+    add = ArgValueCandidates::new(Lint::candidates),
+    help = "Expect <LINT>",
+    long,
+    value_name = "LINT",
+  )]
+  expect: Vec<Lint>,
   #[arg(help = "Ignore <PATH>", long, value_name = "PATH")]
   ignore: Vec<RelativePath>,
   #[arg(default_value_t = KeyName::DEFAULT, help = "Sign with <KEY>", long, requires = "sign")]
@@ -144,6 +151,17 @@ impl Packager {
     linter.deny(&self.deny);
 
     linter.allow(&self.allow);
+
+    linter.expect(
+      self.expect.iter().copied().chain(
+        metadata
+          .as_ref()
+          .and_then(|metadata| metadata.lints.as_ref())
+          .and_then(|lints| lints.expect.as_ref())
+          .into_iter()
+          .flat_map(|expect| expect.as_slice().iter().copied()),
+      ),
+    )?;
 
     linter.lint_metadata(metadata.as_ref(), !self.no_generate);
 
