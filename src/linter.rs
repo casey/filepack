@@ -3,8 +3,11 @@ use super::*;
 #[derive(Default)]
 pub(crate) struct Linter {
   active: BTreeSet<Lint>,
+  allowed: BTreeSet<Lint>,
   case_conflicts: HashMap<String, Vec<RelativePath>>,
   errors: u64,
+  expected: BTreeSet<Lint>,
+  triggered: BTreeSet<Lint>,
 }
 
 impl Linter {
@@ -14,6 +17,10 @@ impl Linter {
 
   pub(crate) fn allow(&mut self, selectors: &[LintSelector]) {
     for selector in selectors {
+      if let LintSelector::Lint(lint) = selector {
+        self.allowed.insert(*lint);
+      }
+
       for lint in selector.lints() {
         self.active.remove(&lint);
       }
@@ -36,7 +43,17 @@ impl Linter {
     }
   }
 
-  pub(crate) fn done(self) -> Result {
+  pub(crate) fn done(mut self) -> Result {
+    let unfulfilled = self
+      .expected
+      .difference(&self.triggered)
+      .copied()
+      .collect::<Vec<Lint>>();
+
+    for lint in unfulfilled {
+      self.report("unfulfilled lint expectation", lint, &[]);
+    }
+
     self.check()
   }
 
@@ -48,21 +65,25 @@ impl Linter {
     self.error_paths(lint, slice::from_ref(path));
   }
 
-  pub(crate) fn error_paths(&mut self, lint: LintError, paths: &[RelativePath]) {
-    let style = Style::stderr();
-    eprintln!(
-      "{}: {} {}",
-      "error".style(style.error()),
-      lint.style(style.message()),
-      format_args!("[{}]", Lint::from(&lint)).style(style.lint()),
-    );
-    for (i, path) in paths.iter().enumerate() {
-      eprintln!(
-        "       {}─ `{path}`",
-        if i < paths.len() - 1 { '├' } else { '└' }
-      );
+  pub(crate) fn error_paths(&mut self, error: LintError, paths: &[RelativePath]) {
+    let lint = Lint::from(&error);
+    if self.expected.contains(&lint) {
+      self.triggered.insert(lint);
+    } else {
+      self.report(error, lint, paths);
     }
-    self.errors += 1;
+  }
+
+  pub(crate) fn expect(&mut self, lints: impl IntoIterator<Item = Lint>) -> Result {
+    for lint in lints {
+      ensure! {
+        !self.allowed.contains(&lint),
+        error::LintAllowedAndExpected { lint },
+      }
+      self.active.insert(lint);
+      self.expected.insert(lint);
+    }
+    Ok(())
   }
 
   pub(crate) fn is_active(&self, lint: Lint) -> bool {
@@ -304,5 +325,22 @@ impl Linter {
 
   pub(crate) fn new() -> Self {
     Self::default()
+  }
+
+  fn report(&mut self, message: impl Display, lint: Lint, paths: &[RelativePath]) {
+    let style = Style::stderr();
+    eprintln!(
+      "{}: {} {}",
+      "error".style(style.error()),
+      message.style(style.message()),
+      format_args!("[{lint}]").style(style.lint()),
+    );
+    for (i, path) in paths.iter().enumerate() {
+      eprintln!(
+        "       {}─ `{path}`",
+        if i < paths.len() - 1 { '├' } else { '└' }
+      );
+    }
+    self.errors += 1;
   }
 }

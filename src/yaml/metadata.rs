@@ -20,6 +20,8 @@ pub(crate) struct Metadata {
   /// Two-letter ISO 639-1 code of the content's primary language.
   #[json(example = "en")]
   pub(crate) language: Option<Language>,
+  /// Lint configuration.
+  pub(crate) lints: Option<Lints>,
   /// Metadata describing the media content of the package.
   pub(crate) media: Option<Media>,
   /// Metadata describing the package itself, as opposed to its content.
@@ -68,6 +70,7 @@ impl Metadata {
       description,
       homepage,
       language,
+      lints: _,
       media,
       package,
       publisher,
@@ -696,6 +699,7 @@ mod tests {
         description,
         homepage,
         language,
+        lints,
         media,
         package,
         publisher,
@@ -717,6 +721,7 @@ mod tests {
       assert!(description.is_some());
       assert!(homepage.is_some());
       assert!(language.is_some());
+      assert!(lints.is_some());
       assert!(publisher.is_some());
       assert!(readme.is_some());
       assert!(rights.is_some());
