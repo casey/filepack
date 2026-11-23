@@ -20,6 +20,9 @@ pub(crate) struct PackageMetadata {
   /// Official homepage of the package.
   #[json(example = "https://ghost-busters.net/~egon")]
   pub(crate) homepage: Option<CheckedUrl>,
+  /// URLs where the package's content was obtained.
+  #[json(example = "https://www.nypl.org/research/research-catalog/bib/b17337164")]
+  pub(crate) sources: Option<NonEmptyOrderedSet<CheckedUrl>>,
   /// Time the package was created.
   #[json(example = "1984-07-08")]
   pub(crate) time: Option<Time>,
@@ -35,6 +38,7 @@ impl From<PackageMetadata> for crate::PackageMetadata {
       creator,
       description,
       homepage,
+      sources,
       time,
       title,
     } = package;
@@ -44,6 +48,7 @@ impl From<PackageMetadata> for crate::PackageMetadata {
       creator,
       description,
       homepage,
+      sources,
       time,
       title,
     }
