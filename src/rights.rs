@@ -23,7 +23,7 @@ pub(crate) struct Rights {
   /// Rights status of the content.
   #[n(5)]
   pub(crate) status: Status,
-  /// Paths to license texts.
+  /// Paths to license files.
   #[n(6)]
   pub(crate) texts: Option<NonEmptyOrderedSet<RelativePath>>,
 }
