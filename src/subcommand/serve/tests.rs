@@ -2183,7 +2183,7 @@ fn get_package_with_metadata() {
     language: None,
     media: None,
     package: Some(PackageMetadata {
-      colophon: Some("COLOPHON.md".parse().unwrap()),
+      colophon: Some(Text::new("COLOPHON.md".parse().unwrap()).unwrap()),
       creator: None,
       description: None,
       homepage: None,
@@ -2192,14 +2192,18 @@ fn get_package_with_metadata() {
       title: None,
     }),
     publisher: None,
-    readme: Some("README.md".parse().unwrap()),
+    readme: Some(Text::new("README.md".parse().unwrap()).unwrap()),
     rights: Some(Rights {
       basis: None,
       license: None,
       links: None,
       notices: None,
       status: rights::Status::Licensed,
-      texts: Some(vec!["LICENSE.txt".parse().unwrap()].try_into().unwrap()),
+      texts: Some(
+        vec![Text::new("LICENSE.txt".parse().unwrap()).unwrap()]
+          .try_into()
+          .unwrap(),
+      ),
     }),
     thumbnails: None,
     time: None,

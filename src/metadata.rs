@@ -30,9 +30,9 @@ pub struct Metadata {
   /// Primary publisher of the content.
   #[n(8)]
   pub publisher: Option<Line>,
-  /// Path to a markdown file containing a readme describing the content.
+  /// Readme describing the content.
   #[n(9)]
-  pub readme: Option<RelativePath>,
+  pub readme: Option<Text>,
   /// Rights statement for the content.
   #[n(10)]
   pub rights: Option<Rights>,
@@ -50,17 +50,6 @@ pub struct Metadata {
 impl Metadata {
   pub(crate) const DECO_FILENAME: &'static str = "metadata.filemeta";
   pub(crate) const YAML_FILENAME: &'static str = "filepack.yaml";
-
-  fn check_colophon(colophon: &RelativePath) -> Result {
-    ensure! {
-      colophon.extension().is_some_and(|extension| extension == "md"),
-      error::ColophonExtension {
-        colophon,
-      },
-    }
-
-    Ok(())
-  }
 
   pub(crate) fn check_extras(
     &self,
@@ -123,30 +112,6 @@ impl Metadata {
     Ok(())
   }
 
-  fn check_readme(readme: &RelativePath) -> Result {
-    ensure! {
-      readme.extension().is_some_and(|extension| extension == "md"),
-      error::ReadmeExtension {
-        readme,
-      },
-    }
-
-    Ok(())
-  }
-
-  fn check_text(text: &RelativePath) -> Result {
-    ensure! {
-      text
-        .extension()
-        .is_some_and(|extension| matches!(extension, "md" | "txt")),
-      error::RightsTextExtension {
-        text,
-      },
-    }
-
-    Ok(())
-  }
-
   pub(crate) fn files(&self) -> Vec<RelativePath> {
     let mut files = Vec::new();
 
@@ -157,17 +122,17 @@ impl Metadata {
     if let Some(package) = &self.package
       && let Some(colophon) = &package.colophon
     {
-      files.push(colophon.clone());
+      files.push(colophon.path.clone());
     }
 
     if let Some(readme) = &self.readme {
-      files.push(readme.clone());
+      files.push(readme.path.clone());
     }
 
     if let Some(rights) = &self.rights
       && let Some(texts) = &rights.texts
     {
-      files.extend_from_slice(texts);
+      files.extend(texts.iter().map(|text| text.path.clone()));
     }
 
     if let Some(media) = &self.media {
@@ -305,10 +270,10 @@ impl Metadata {
       .optional("publisher", self.publisher.as_ref())
       .optional("time", self.time.as_ref())
       .optional("description", self.description.as_ref())
-      .when_some(self.readme.as_ref(), |builder, path| {
+      .when_some(self.readme.as_ref(), |builder, text| {
         builder.link(
           "readme",
-          Link::new("view").href(file_href(readme.unwrap(), path.filename())),
+          Link::new("view").href(file_href(readme.unwrap(), text.path.filename())),
         )
       })
       .when_some(self.homepage.as_ref(), |builder, homepage| {
@@ -347,24 +312,6 @@ impl Metadata {
   }
 
   pub(crate) fn validate(&self, root: &Utf8Path) -> Result {
-    if let Some(readme) = &self.readme {
-      Self::check_readme(readme)?;
-    }
-
-    if let Some(package) = &self.package
-      && let Some(colophon) = &package.colophon
-    {
-      Self::check_colophon(colophon)?;
-    }
-
-    if let Some(rights) = &self.rights
-      && let Some(texts) = &rights.texts
-    {
-      for text in texts {
-        Self::check_text(text)?;
-      }
-    }
-
     if let Some(artwork) = &self.artwork {
       ensure! {
         artwork.dimensions.width == artwork.dimensions.height,
@@ -385,7 +332,7 @@ mod tests {
 
   fn colophon_package(colophon: &str) -> PackageMetadata {
     PackageMetadata {
-      colophon: Some(colophon.parse().unwrap()),
+      colophon: Some(Text::new(colophon.parse().unwrap()).unwrap()),
       creator: None,
       description: None,
       homepage: None,
@@ -447,7 +394,7 @@ mod tests {
         }],
       }),
       package: Some(PackageMetadata {
-        colophon: Some("COLOPHON.md".parse().unwrap()),
+        colophon: Some(Text::new("COLOPHON.md".parse().unwrap()).unwrap()),
         creator: Some("baz".parse().unwrap()),
         description: Some("qux".parse().unwrap()),
         homepage: Some("http://example.com/foo".parse().unwrap()),
@@ -456,7 +403,7 @@ mod tests {
         title: Some("foo-bar".parse().unwrap()),
       }),
       publisher: Some("qux".parse().unwrap()),
-      readme: Some("README.md".parse().unwrap()),
+      readme: Some(Text::new("README.md".parse().unwrap()).unwrap()),
       rights: Some(Rights {
         basis: Some("foo".parse().unwrap()),
         license: None,
@@ -838,7 +785,7 @@ mod tests {
 
     case(
       Metadata {
-        readme: Some("README.md".parse().unwrap()),
+        readme: Some(Text::new("README.md".parse().unwrap()).unwrap()),
         ..default()
       },
       "README.md",
@@ -860,56 +807,15 @@ mod tests {
           links: None,
           notices: None,
           status: rights::Status::Licensed,
-          texts: Some(vec!["LICENSE.txt".parse().unwrap()].try_into().unwrap()),
+          texts: Some(
+            vec![Text::new("LICENSE.txt".parse().unwrap()).unwrap()]
+              .try_into()
+              .unwrap(),
+          ),
         }),
         ..default()
       },
       "LICENSE.txt",
-    );
-  }
-
-  #[test]
-  fn validate_rejects_invalid_readme_extension() {
-    let (_tempdir, root) = tempdir();
-
-    assert_eq!(
-      Metadata {
-        readme: Some("README.txt".parse().unwrap()),
-        ..default()
-      }
-      .validate(&root)
-      .unwrap_err()
-      .to_string(),
-      "readme `README.txt` must end in `.md`",
-    );
-
-    assert_eq!(
-      Metadata {
-        package: Some(colophon_package("COLOPHON.txt")),
-        ..default()
-      }
-      .validate(&root)
-      .unwrap_err()
-      .to_string(),
-      "colophon `COLOPHON.txt` must end in `.md`",
-    );
-
-    assert_eq!(
-      Metadata {
-        rights: Some(Rights {
-          basis: None,
-          license: None,
-          links: None,
-          notices: None,
-          status: rights::Status::Licensed,
-          texts: Some(vec!["LICENSE".parse().unwrap()].try_into().unwrap()),
-        }),
-        ..default()
-      }
-      .validate(&root)
-      .unwrap_err()
-      .to_string(),
-      "license text `LICENSE` must end in `.md` or `.txt`",
     );
   }
 }

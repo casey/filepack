@@ -4,9 +4,9 @@ use super::*;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, Encode, Decode, Json, PartialEq, Serialize)]
 pub(crate) struct PackageMetadata {
-  /// Path to a markdown file containing a colophon describing the package.
+  /// Colophon describing the package.
   #[n(1)]
-  pub(crate) colophon: Option<RelativePath>,
+  pub(crate) colophon: Option<Text>,
   /// Primary person or group who created the package.
   #[n(2)]
   pub(crate) creator: Option<Line>,
@@ -34,10 +34,10 @@ impl PackageMetadata {
       .optional("creator", self.creator.as_ref())
       .optional("time", self.time.as_ref())
       .optional("description", self.description.as_ref())
-      .when_some(self.colophon.as_ref(), |builder, path| {
+      .when_some(self.colophon.as_ref(), |builder, text| {
         builder.link(
           "colophon",
-          Link::new("view").href(file_href(colophon.unwrap(), path.filename())),
+          Link::new("view").href(file_href(colophon.unwrap(), text.path.filename())),
         )
       })
       .when_some(self.homepage.as_ref(), |builder, homepage| {
@@ -62,7 +62,7 @@ mod tests {
   #[test]
   fn encoding() {
     assert_encoding(PackageMetadata {
-      colophon: Some("COLOPHON.md".parse().unwrap()),
+      colophon: Some(Text::new("COLOPHON.md".parse().unwrap()).unwrap()),
       creator: Some("foo".parse().unwrap()),
       description: Some("bar".parse().unwrap()),
       homepage: Some("http://example.com".parse().unwrap()),

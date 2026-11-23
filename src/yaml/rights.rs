@@ -60,6 +60,17 @@ impl Rights {
       }
     }
 
+    let texts = texts
+      .map(|texts| {
+        texts
+          .iter()
+          .cloned()
+          .map(Text::new)
+          .collect::<Result<Vec<Text>>>()
+      })
+      .transpose()?
+      .map(|texts| texts.try_into().unwrap());
+
     Ok(crate::Rights {
       basis,
       license: license.map(|license| license.to_string().parse().unwrap()),
