@@ -565,6 +565,11 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     text: RelativePath,
   },
+  #[snafu(display("license `{license}` requires `rights.text`"))]
+  RightsTextMissing {
+    backtrace: Option<Backtrace>,
+    license: String,
+  },
   #[snafu(display("`rights.text` may not be used with status `{status}`"))]
   RightsTextStatus {
     backtrace: Option<Backtrace>,

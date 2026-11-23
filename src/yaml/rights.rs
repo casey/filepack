@@ -41,6 +41,13 @@ impl Rights {
         license.is_some() || text.is_some(),
         error::RightsLicenseMissing,
       }
+
+      if let Some(license @ License::Reference(_)) = &license {
+        ensure! {
+          text.is_some(),
+          error::RightsTextMissing { license: license.to_string() },
+        }
+      }
     } else {
       ensure! {
         license.is_none(),
@@ -105,6 +112,13 @@ mod tests {
       crate::rights::Status::Unknown,
       None,
       "`rights.license` may not be used with status `unknown`",
+    );
+
+    case(
+      Some("LicenseRef-foo"),
+      crate::rights::Status::Licensed,
+      None,
+      "license `LicenseRef-foo` requires `rights.text`",
     );
 
     case(
