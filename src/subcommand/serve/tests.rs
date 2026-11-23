@@ -2187,6 +2187,7 @@ fn get_package_with_metadata() {
       creator: None,
       description: None,
       homepage: None,
+      sources: None,
       time: None,
       title: None,
     }),

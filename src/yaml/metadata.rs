@@ -526,6 +526,11 @@ mod tests {
         creator: None,
         description: None,
         homepage: None,
+        sources: Some(
+          vec!["http://example.com/foo".parse().unwrap()]
+            .try_into()
+            .unwrap(),
+        ),
         time: None,
         title: Some("baz".parse().unwrap()),
       }),
@@ -584,6 +589,11 @@ mod tests {
           creator: None,
           description: None,
           homepage: None,
+          sources: Some(
+            vec!["http://example.com/foo".parse().unwrap()]
+              .try_into()
+              .unwrap(),
+          ),
           time: None,
           title: Some("baz".parse().unwrap()),
         }),
@@ -720,6 +730,7 @@ mod tests {
         creator,
         description,
         homepage,
+        sources,
         time,
         title,
       } = package.unwrap();
@@ -728,6 +739,7 @@ mod tests {
       assert!(creator.is_some());
       assert!(description.is_some());
       assert!(homepage.is_some());
+      assert!(sources.is_some());
       assert!(time.is_some());
       assert!(title.is_some());
     }
@@ -748,6 +760,7 @@ mod tests {
           creator: None,
           description: None,
           homepage: None,
+          sources: None,
           time: None,
           title: None,
         }),

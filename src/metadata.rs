@@ -388,6 +388,7 @@ mod tests {
       creator: None,
       description: None,
       homepage: None,
+      sources: None,
       time: None,
       title: None,
     }
@@ -449,6 +450,7 @@ mod tests {
         creator: Some("baz".parse().unwrap()),
         description: Some("qux".parse().unwrap()),
         homepage: Some("http://example.com/foo".parse().unwrap()),
+        sources: None,
         time: Some("2024-01-01".parse().unwrap()),
         title: Some("foo-bar".parse().unwrap()),
       }),

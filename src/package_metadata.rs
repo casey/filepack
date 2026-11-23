@@ -16,11 +16,14 @@ pub(crate) struct PackageMetadata {
   /// Official homepage of the package.
   #[n(4)]
   pub(crate) homepage: Option<CheckedUrl>,
-  /// Time the package was created.
+  /// URLs where the package's content was obtained.
   #[n(5)]
+  pub(crate) sources: Option<NonEmptyOrderedSet<CheckedUrl>>,
+  /// Time the package was created.
+  #[n(6)]
   pub(crate) time: Option<Time>,
   /// Title of the package.
-  #[n(6)]
+  #[n(7)]
   pub(crate) title: Option<Text>,
 }
 
@@ -41,6 +44,15 @@ impl PackageMetadata {
       .when_some(self.homepage.as_ref(), |builder, homepage| {
         builder.link("homepage", homepage, homepage.to_string())
       })
+      .when_some(self.sources.as_ref(), |builder, sources| {
+        builder.list(
+          "sources",
+          sources
+            .as_slice()
+            .iter()
+            .map(|source| Info::Link(Link::new(source).href(source))),
+        )
+      })
       .build()
   }
 }
@@ -56,6 +68,11 @@ mod tests {
       creator: Some("foo".parse().unwrap()),
       description: Some("bar".parse().unwrap()),
       homepage: Some("http://example.com".parse().unwrap()),
+      sources: Some(
+        vec!["http://example.com/baz".parse().unwrap()]
+          .try_into()
+          .unwrap(),
+      ),
       time: Some("2024-01-01".parse().unwrap()),
       title: Some("foo-A0".parse().unwrap()),
     });

@@ -875,6 +875,11 @@ mod tests {
         creator: Some("foo".parse().unwrap()),
         description: Some("bar".parse().unwrap()),
         homepage: Some("http://example.com".parse().unwrap()),
+        sources: Some(
+          vec!["http://example.com/bar".parse().unwrap()]
+            .try_into()
+            .unwrap(),
+        ),
         time: Some("2024-01-01".parse().unwrap()),
         title: Some("baz".parse().unwrap()),
       }),
@@ -1037,6 +1042,16 @@ mod tests {
                     <dt>homepage</dt>
                     <dd>
                       <a href='http://example.com'>http://example.com</a>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>sources</dt>
+                    <dd>
+                      <ol role=list>
+                        <li>
+                          <a href='http://example.com/bar'>http://example.com/bar</a>
+                        </li>
+                      </ol>
                     </dd>
                   </div>
                 </dl>
