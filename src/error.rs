@@ -558,7 +558,7 @@ pub enum Error {
     number: u64,
     revision: RevisionHash,
   },
-  #[snafu(display("status `licensed` requires `rights.license` or `rights.text`"))]
+  #[snafu(display("status `licensed` requires `rights.license` or `rights.texts`"))]
   RightsLicenseMissing { backtrace: Option<Backtrace> },
   #[snafu(display("`rights.license` may not be used with status `{status}`"))]
   RightsLicenseStatus {
@@ -570,13 +570,13 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     text: RelativePath,
   },
-  #[snafu(display("license `{license}` requires `rights.text`"))]
-  RightsTextMissing {
+  #[snafu(display("license `{license}` requires `rights.texts`"))]
+  RightsTextsMissing {
     backtrace: Option<Backtrace>,
     license: String,
   },
-  #[snafu(display("`rights.text` may not be used with status `{status}`"))]
-  RightsTextStatus {
+  #[snafu(display("`rights.texts` may not be used with status `{status}`"))]
+  RightsTextsStatus {
     backtrace: Option<Backtrace>,
     status: String,
   },

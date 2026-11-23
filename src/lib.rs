@@ -296,6 +296,7 @@ pub use self::{
   flac_builder::FlacBuilder,
   functions::{gradient, gradient_alpha, install_default_crypto_provider},
   hash::Hash,
+  iterator_ext::IteratorExt,
   language::Language,
   lint_error::Lint,
   lint_group::LintGroup,
@@ -424,6 +425,7 @@ mod invalid_public_key;
 mod iso8601_duration;
 mod item;
 mod items;
+mod iterator_ext;
 pub mod json;
 mod json_formatter;
 mod key_identifier;

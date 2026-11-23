@@ -47,7 +47,6 @@ impl PackageMetadata {
         builder.list(
           "sources",
           sources
-            .as_slice()
             .iter()
             .map(|source| Info::Link(Link::new(source).href(source))),
         )

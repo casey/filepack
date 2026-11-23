@@ -6,12 +6,16 @@ use super::*;
 pub struct NonEmptyOrderedSet<T>(Vec<T>);
 
 impl<T> NonEmptyOrderedSet<T> {
-  pub(crate) fn as_slice(&self) -> &[T] {
-    &self.0
-  }
-
   pub fn singleton(element: T) -> Self {
     Self(vec![element])
+  }
+}
+
+impl<T> Deref for NonEmptyOrderedSet<T> {
+  type Target = [T];
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
   }
 }
 
@@ -20,6 +24,15 @@ impl<'de, T: Deserialize<'de> + Ord> Deserialize<'de> for NonEmptyOrderedSet<T> 
     Vec::<T>::deserialize(deserializer)?
       .try_into()
       .map_err(serde::de::Error::custom)
+  }
+}
+
+impl<'a, T> IntoIterator for &'a NonEmptyOrderedSet<T> {
+  type IntoIter = slice::Iter<'a, T>;
+  type Item = &'a T;
+
+  fn into_iter(self) -> Self::IntoIter {
+    self.0.iter()
   }
 }
 

@@ -13,7 +13,8 @@ use {
   boilerplate::Boilerplate,
   camino::{Utf8Path, Utf8PathBuf},
   filepack::{
-    Count, Language, Lint, LintGroup, MediaType, Reference, Tag, UnstableFeature, deco, json,
+    Count, IteratorExt, Language, Lint, LintGroup, MediaType, Reference, Tag, UnstableFeature,
+    deco, json,
     reference::{
       self, Command, ContentType, Hex, MediaFormat, Parameter, Request, Response, Route,
     },

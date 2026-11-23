@@ -514,7 +514,7 @@ fn upload_package_serves_package_html() {
       revision: None,
       revisions: None,
       signers: BTreeSet::new(),
-      text: None,
+      texts: Vec::new(),
       totals,
     })
     .send();

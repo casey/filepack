@@ -123,7 +123,9 @@ mod tests {
     }
 
     for (path, template) in templates {
-      if let Err(err) = serde_yaml::from_str::<yaml::Metadata>(&template.replace(": ...", ":")) {
+      if let Err(err) =
+        serde_yaml::from_str::<yaml::Metadata>(&template.replace("media: ...", "media:"))
+      {
         panic!("invalid template in `{path}`: {err}");
       }
     }
