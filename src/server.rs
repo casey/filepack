@@ -736,6 +736,15 @@ impl Server {
       None
     };
 
+    let text = if let Some(metadata) = &metadata
+      && let Some(rights) = &metadata.rights
+      && let Some(text) = &rights.text
+    {
+      Some(self.verified_package_file(fingerprint, text)?)
+    } else {
+      None
+    };
+
     Ok(PackageHtml {
       colophon,
       directory,
@@ -751,6 +760,7 @@ impl Server {
       revision,
       revisions,
       signers,
+      text,
       totals,
     })
   }

@@ -14,7 +14,7 @@
 %%     }
 %%     EntryType::File => {
 %%       if ResourceType::from_filename(name).is_some() {
-      <td><a href='/file/{{ entry.hash }}/{{ name.percent_encode_segment() }}'>{{ name }}</a></td>
+      <td><a href='{{ file_href(entry.hash, name) }}'>{{ name }}</a></td>
 %%       } else {
       <td><a>{{ name }}</a></td>
 %%       }

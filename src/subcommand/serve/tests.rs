@@ -2172,6 +2172,9 @@ fn get_package_with_metadata() {
   let colophon = b"bar";
   server.write_file(colophon);
 
+  let license = b"baz";
+  server.write_file(license);
+
   let metadata = Metadata {
     artwork: None,
     creator: None,
@@ -2189,7 +2192,14 @@ fn get_package_with_metadata() {
     }),
     publisher: None,
     readme: Some("README.md".parse().unwrap()),
-    rights: None,
+    rights: Some(Rights {
+      basis: None,
+      credits: None,
+      license: None,
+      links: None,
+      status: rights::Status::Licensed,
+      text: Some("LICENSE.txt".parse().unwrap()),
+    }),
     thumbnails: None,
     time: None,
     title: Some("foo".parse().unwrap()),
@@ -2200,6 +2210,7 @@ fn get_package_with_metadata() {
   let mut directory = Directory::new();
   directory
     .insert_file("COLOPHON.md", colophon)
+    .insert_file("LICENSE.txt", license)
     .insert_file("README.md", readme)
     .insert_file(Metadata::DECO_FILENAME, &metadata_deco);
   let (deco, hash) = directory.deco();
@@ -2218,11 +2229,12 @@ fn get_package_with_metadata() {
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
       readme: Some(Hash::bytes(readme)),
+      text: Some(Hash::bytes(license)),
       totals: Totals {
         directories: 0,
         directory_size: 0,
-        file_size: metadata_deco.len().into_u64() + 6,
-        files: 3,
+        file_size: metadata_deco.len().into_u64() + 9,
+        files: 4,
       },
       ..default()
     })

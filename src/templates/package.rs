@@ -17,6 +17,7 @@ pub struct PackageHtml {
   pub revision: Option<RevisionHash>,
   pub revisions: Option<u64>,
   pub signers: BTreeSet<PublicKey>,
+  pub text: Option<Hash>,
   pub totals: Totals,
 }
 
@@ -71,7 +72,13 @@ impl PackageHtml {
         builder.link("mount", "view", format!("/mount/{}/", self.identifier))
       })
       .when_some(self.metadata.as_ref(), |builder, metadata| {
-        metadata.info(builder, self.identifier, self.readme, self.colophon)
+        metadata.info(
+          builder,
+          self.identifier,
+          self.readme,
+          self.colophon,
+          self.text,
+        )
       })
       .build()
   }
@@ -178,6 +185,14 @@ mod tests {
           },
         ],
       }),
+      rights: Some(Rights {
+        basis: None,
+        credits: None,
+        license: None,
+        links: None,
+        status: rights::Status::Licensed,
+        text: Some("foo/LICENSE.txt".parse().unwrap()),
+      }),
       ..default()
     };
 
@@ -187,6 +202,7 @@ mod tests {
         identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
         number: Some(0),
+        text: Some(Hash::EXAMPLE.parse().unwrap()),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -221,6 +237,25 @@ mod tests {
               <dt>files</dt>
               <dd>
                 <a href='/directory/{directory}'>2 files</a>
+              </dd>
+            </div>
+            <div>
+              <dt>rights</dt>
+              <dd>
+                <dl>
+                  <div>
+                    <dt>status</dt>
+                    <dd>
+                      licensed
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>text</dt>
+                    <dd>
+                      <a href='/file/{hash}/LICENSE.txt'>foo/LICENSE.txt</a>
+                    </dd>
+                  </div>
+                </dl>
               </dd>
             </div>
             <div>
@@ -265,6 +300,7 @@ mod tests {
         ",
         directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
         fingerprint = Fingerprint::EXAMPLE,
+        hash = Hash::EXAMPLE,
       )),
     );
   }
@@ -439,6 +475,7 @@ mod tests {
         license: None,
         links: None,
         status: rights::Status::PublicDomain,
+        text: None,
       }),
       ..default()
     };
@@ -852,6 +889,7 @@ mod tests {
             .unwrap(),
         ),
         status: rights::Status::Licensed,
+        text: None,
       }),
       ..default()
     };

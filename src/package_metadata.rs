@@ -31,16 +31,13 @@ impl PackageMetadata {
       .optional("creator", self.creator.as_ref())
       .optional("time", self.time.as_ref())
       .optional("description", self.description.as_ref())
-      .when_some(
-        self.colophon.as_ref().zip(colophon),
-        |builder, (path, hash)| {
-          builder.link(
-            "colophon",
-            "view",
-            format!("/file/{hash}/{}", path.percent_encode_path()),
-          )
-        },
-      )
+      .when_some(self.colophon.as_ref(), |builder, path| {
+        builder.link(
+          "colophon",
+          "view",
+          file_href(colophon.unwrap(), path.filename()),
+        )
+      })
       .when_some(self.homepage.as_ref(), |builder, homepage| {
         builder.link("homepage", homepage, homepage.to_string())
       })
