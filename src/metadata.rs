@@ -308,12 +308,11 @@ impl Metadata {
       .when_some(self.readme.as_ref(), |builder, path| {
         builder.link(
           "readme",
-          "view",
-          file_href(readme.unwrap(), path.filename()),
+          Link::new("view").href(file_href(readme.unwrap(), path.filename())),
         )
       })
       .when_some(self.homepage.as_ref(), |builder, homepage| {
-        builder.link("homepage", homepage, homepage.to_string())
+        builder.link("homepage", Link::new(homepage).href(homepage))
       })
       .optional("language", self.language.map(Language::name))
       .when_some(self.rights.as_ref(), |builder, rights| {

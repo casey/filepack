@@ -14,15 +14,24 @@ impl MediaHtml {
   fn info(&self) -> Info {
     InfoBuilder::new()
       .when_some(self.number, |builder, number| {
-        builder.link("number", number, format!("/package/{number}"))
+        builder.link(
+          "number",
+          Link::new(number).href(format!("/package/{number}")),
+        )
       })
       .when_some(self.revision, |builder, revision| {
-        builder.code_link("revision", revision, format!("/package/{revision}"))
+        builder.link(
+          "revision",
+          Link::new(revision)
+            .href(format!("/package/{revision}"))
+            .code(),
+        )
       })
-      .code_link(
+      .link(
         "fingerprint",
-        self.fingerprint,
-        format!("/package/{}", self.fingerprint),
+        Link::new(self.fingerprint)
+          .href(format!("/package/{}", self.fingerprint))
+          .code(),
       )
       .when_some(
         self.metadata.media.as_ref().unwrap().items(),
