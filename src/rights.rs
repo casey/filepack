@@ -8,7 +8,7 @@ mod status;
 #[skip_serializing_none]
 #[derive(Clone, Debug, Decode, Encode, Json, PartialEq, Serialize)]
 pub(crate) struct Rights {
-  /// Reason the content is believed to have the stated license.
+  /// Reason the content is believed to have the stated status.
   #[n(1)]
   pub(crate) basis: Option<Text>,
   /// Credit lines to display with the content.
@@ -17,7 +17,7 @@ pub(crate) struct Rights {
   /// License of the content.
   #[n(3)]
   pub(crate) license: Option<Text>,
-  /// Links supporting the basis.
+  /// Links supporting the rights statement.
   #[n(4)]
   pub(crate) links: Option<NonEmptyOrderedSet<CheckedUrl>>,
   /// Rights status of the content.

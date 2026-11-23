@@ -5,7 +5,7 @@ use super::*;
 #[derive(Debug, Deserialize, PartialEq, Json)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct Rights {
-  /// Reason the content is believed to have the stated license.
+  /// Reason the content is believed to have the stated status.
   #[json(example = "Published in 1929.")]
   pub(crate) basis: Option<Text>,
   /// Credit lines to display with the content.
@@ -14,7 +14,7 @@ pub(crate) struct Rights {
   /// License of the content.
   #[json(example = "CC-BY-4.0")]
   pub(crate) license: Option<License>,
-  /// Links supporting the basis.
+  /// Links supporting the rights statement.
   #[json(example = "https://tobin-society.org/spirit-guide/copyright")]
   pub(crate) links: Option<NonEmptyOrderedSet<CheckedUrl>>,
   /// Rights status of the content.
