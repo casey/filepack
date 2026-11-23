@@ -20,6 +20,9 @@ pub(crate) struct Rights {
   /// Rights status of the content.
   #[json(example = "licensed")]
   pub(crate) status: crate::rights::Status,
+  /// Path to the text of the license.
+  #[json(example = "LICENSE.txt")]
+  pub(crate) text: Option<RelativePath>,
 }
 
 impl Rights {
@@ -30,17 +33,23 @@ impl Rights {
       license,
       links,
       status,
+      text,
     } = self;
 
-    if license.is_some() {
+    if status == crate::rights::Status::Licensed {
       ensure! {
-        status == crate::rights::Status::Licensed,
-        error::RightsLicenseStatus { status: status.to_string() },
+        license.is_some() || text.is_some(),
+        error::RightsLicenseMissing,
       }
     } else {
       ensure! {
-        status != crate::rights::Status::Licensed,
-        error::RightsLicenseMissing,
+        license.is_none(),
+        error::RightsLicenseStatus { status: status.to_string() },
+      }
+
+      ensure! {
+        text.is_none(),
+        error::RightsTextStatus { status: status.to_string() },
       }
     }
 
@@ -50,6 +59,7 @@ impl Rights {
       license: license.map(|license| license.to_string().parse().unwrap()),
       links,
       status,
+      text,
     })
   }
 }
@@ -61,7 +71,12 @@ mod tests {
   #[test]
   fn load_errors() {
     #[track_caller]
-    fn case(license: Option<&str>, status: crate::rights::Status, expected: &str) {
+    fn case(
+      license: Option<&str>,
+      status: crate::rights::Status,
+      text: Option<&str>,
+      expected: &str,
+    ) {
       assert_eq!(
         Rights {
           basis: None,
@@ -69,6 +84,7 @@ mod tests {
           license: license.map(|license| license.parse().unwrap()),
           links: None,
           status,
+          text: text.map(|text| text.parse().unwrap()),
         }
         .load()
         .unwrap_err()
@@ -80,13 +96,22 @@ mod tests {
     case(
       None,
       crate::rights::Status::Licensed,
-      "status `licensed` requires `rights.license`",
+      None,
+      "status `licensed` requires `rights.license` or `rights.text`",
     );
 
     case(
       Some("CC0-1.0"),
       crate::rights::Status::Unknown,
+      None,
       "`rights.license` may not be used with status `unknown`",
+    );
+
+    case(
+      None,
+      crate::rights::Status::Unknown,
+      Some("foo"),
+      "`rights.text` may not be used with status `unknown`",
     );
   }
 }

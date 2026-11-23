@@ -539,6 +539,7 @@ mod tests {
             .unwrap(),
         ),
         status: crate::rights::Status::Licensed,
+        text: Some("LICENSE.txt".parse().unwrap()),
       }),
       title: Some("qux".parse().unwrap()),
       ..default()
@@ -596,6 +597,7 @@ mod tests {
               .unwrap(),
           ),
           status: crate::rights::Status::Licensed,
+          text: Some("LICENSE.txt".parse().unwrap()),
         }),
         title: Some("qux".parse().unwrap()),
         ..default()

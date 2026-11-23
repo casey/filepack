@@ -55,6 +55,13 @@ pub(crate) fn default<T: Default>() -> T {
   Default::default()
 }
 
+pub(crate) fn file_href(hash: Hash, filename: &Component) -> String {
+  format!(
+    "/file/{hash}/{}",
+    filename.as_str().percent_encode_segment()
+  )
+}
+
 pub(crate) fn format_size(size: u64) -> SizeFormatter<u64, FormatSizeOptions> {
   SizeFormatter::new(size, FormatSizeOptions::from(BINARY).decimal_places(1))
 }

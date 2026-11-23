@@ -134,6 +134,19 @@ impl Metadata {
     Ok(())
   }
 
+  fn check_text(text: &RelativePath) -> Result {
+    ensure! {
+      text
+        .extension()
+        .is_some_and(|extension| matches!(extension, "md" | "txt")),
+      error::RightsTextExtension {
+        text,
+      },
+    }
+
+    Ok(())
+  }
+
   pub(crate) fn files(&self) -> Vec<RelativePath> {
     let mut files = Vec::new();
 
@@ -149,6 +162,12 @@ impl Metadata {
 
     if let Some(readme) = &self.readme {
       files.push(readme.clone());
+    }
+
+    if let Some(rights) = &self.rights
+      && let Some(text) = &rights.text
+    {
+      files.push(text.clone());
     }
 
     if let Some(media) = &self.media {
@@ -278,6 +297,7 @@ impl Metadata {
     identifier: PackageIdentifier,
     readme: Option<Hash>,
     colophon: Option<Hash>,
+    text: Option<Hash>,
   ) -> InfoBuilder {
     builder
       .optional("title", self.title.as_ref())
@@ -285,11 +305,11 @@ impl Metadata {
       .optional("publisher", self.publisher.as_ref())
       .optional("time", self.time.as_ref())
       .optional("description", self.description.as_ref())
-      .when_some(self.readme.as_ref().zip(readme), |builder, (path, hash)| {
+      .when_some(self.readme.as_ref(), |builder, path| {
         builder.link(
           "readme",
           "view",
-          format!("/file/{hash}/{}", path.percent_encode_path()),
+          file_href(readme.unwrap(), path.filename()),
         )
       })
       .when_some(self.homepage.as_ref(), |builder, homepage| {
@@ -297,7 +317,7 @@ impl Metadata {
       })
       .optional("language", self.language.map(Language::name))
       .when_some(self.rights.as_ref(), |builder, rights| {
-        builder.info("rights", rights.info())
+        builder.info("rights", rights.info(text))
       })
       .when_some(
         self
@@ -336,6 +356,12 @@ impl Metadata {
       && let Some(colophon) = &package.colophon
     {
       Self::check_colophon(colophon)?;
+    }
+
+    if let Some(rights) = &self.rights
+      && let Some(text) = &rights.text
+    {
+      Self::check_text(text)?;
     }
 
     if let Some(artwork) = &self.artwork {
@@ -438,6 +464,7 @@ mod tests {
             .unwrap(),
         ),
         status: rights::Status::Unknown,
+        text: None,
       }),
       thumbnails: Some(
         [(
@@ -773,7 +800,13 @@ mod tests {
 
     assert_eq!(
       metadata
-        .info(InfoBuilder::new(), PackageIdentifier::Number(0), None, None)
+        .info(
+          InfoBuilder::new(),
+          PackageIdentifier::Number(0),
+          None,
+          None,
+          None,
+        )
         .build(),
       Info::Map(Vec::new()),
     );
@@ -815,6 +848,21 @@ mod tests {
       },
       "COLOPHON.md",
     );
+
+    case(
+      Metadata {
+        rights: Some(Rights {
+          basis: None,
+          credits: None,
+          license: None,
+          links: None,
+          status: rights::Status::Licensed,
+          text: Some("LICENSE.txt".parse().unwrap()),
+        }),
+        ..default()
+      },
+      "LICENSE.txt",
+    );
   }
 
   #[test]
@@ -841,6 +889,24 @@ mod tests {
       .unwrap_err()
       .to_string(),
       "colophon `COLOPHON.txt` must end in `.md`",
+    );
+
+    assert_eq!(
+      Metadata {
+        rights: Some(Rights {
+          basis: None,
+          credits: None,
+          license: None,
+          links: None,
+          status: rights::Status::Licensed,
+          text: Some("LICENSE".parse().unwrap()),
+        }),
+        ..default()
+      }
+      .validate(&root)
+      .unwrap_err()
+      .to_string(),
+      "license text `LICENSE` must end in `.md` or `.txt`",
     );
   }
 }

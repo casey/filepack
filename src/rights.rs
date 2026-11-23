@@ -23,10 +23,13 @@ pub(crate) struct Rights {
   /// Rights status of the content.
   #[n(5)]
   pub(crate) status: Status,
+  /// Path to the text of the license.
+  #[n(6)]
+  pub(crate) text: Option<RelativePath>,
 }
 
 impl Rights {
-  pub(crate) fn info(&self) -> Info {
+  pub(crate) fn info(&self, text: Option<Hash>) -> Info {
     InfoBuilder::new()
       .value("status", self.status)
       .when_some(self.license.as_ref(), |builder, license| {
@@ -45,6 +48,9 @@ impl Rights {
         } else {
           builder.value("license", license)
         }
+      })
+      .when_some(self.text.as_ref(), |builder, path| {
+        builder.link("text", path, file_href(text.unwrap(), path.filename()))
       })
       .when_some(self.credits.as_ref(), |builder, credits| {
         builder.list(
@@ -85,6 +91,7 @@ mod tests {
           .unwrap(),
       ),
       status: Status::Licensed,
+      text: Some("qux".parse().unwrap()),
     });
   }
 }

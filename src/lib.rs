@@ -83,7 +83,7 @@ use {
     float_ext::FloatExt,
     format::Format,
     functions::{
-      check_case, check_metadata, current_dir, decode_path, default, format_size, now,
+      check_case, check_metadata, current_dir, decode_path, default, file_href, format_size, now,
       parse_number, transfer_tempfile, verify_subpackage,
     },
     hashing_writer::HashingWriter,
