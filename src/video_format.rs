@@ -17,6 +17,13 @@ pub(crate) enum VideoFormat {
 impl Format for VideoFormat {
   const EXTENSIONS: &[&str] = &["mp4", "webm"];
 
+  fn extension(self) -> &'static str {
+    match self {
+      Self::Mp4 => "mp4",
+      Self::Webm => "webm",
+    }
+  }
+
   fn from_extension(extension: &str) -> Option<Self> {
     match extension {
       "mp4" => Some(Self::Mp4),
@@ -36,6 +43,18 @@ impl Format for VideoFormat {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn extension() {
+    #[track_caller]
+    fn case(format: VideoFormat, extension: &str) {
+      assert_eq!(format.extension(), extension);
+      assert_eq!(VideoFormat::from_extension(extension), Some(format));
+    }
+
+    case(VideoFormat::Mp4, "mp4");
+    case(VideoFormat::Webm, "webm");
+  }
 
   #[test]
   fn from_path() {

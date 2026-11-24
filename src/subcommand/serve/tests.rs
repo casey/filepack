@@ -840,7 +840,7 @@ fn artwork_package_not_found() {
 #[test]
 fn artwork_response() {
   #[track_caller]
-  fn case(filename: &str, content_type: &str) {
+  fn case(filename: &str, content_disposition: &str, content_type: &str) {
     let server = TestServer::new();
 
     let artwork = b"foo";
@@ -869,6 +869,7 @@ fn artwork_response() {
       .get(format!("/artwork/{fingerprint}"))
       .assert_header(header::ACCEPT_RANGES, "bytes")
       .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+      .assert_header(header::CONTENT_DISPOSITION, content_disposition)
       .assert_header(header::CONTENT_LENGTH, "3")
       .assert_header(
         header::CONTENT_SECURITY_POLICY,
@@ -890,8 +891,12 @@ fn artwork_response() {
       .send();
   }
 
-  case("cover.png", "image/png");
-  case("cover.jpg", "image/jpeg");
+  case("cover.png", "inline; filename=\"artwork.png\"", "image/png");
+  case(
+    "cover.jpg",
+    "inline; filename=\"artwork.jpg\"",
+    "image/jpeg",
+  );
 }
 
 #[test]
@@ -954,6 +959,47 @@ fn closed_server_forbids_writes() {
     .assert_body(
       "writes forbidden, server must be started with `--admin-key` or `--unrestricted-writes`",
     )
+    .send();
+}
+
+#[test]
+fn colophon_not_found() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata::default())
+    .upload(&server);
+
+  server
+    .get(format!("/colophon/{fingerprint}"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {fingerprint} colophon not found"))
+    .send();
+}
+
+#[test]
+fn colophon_response() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .file("foo.md", b"bar")
+    .metadata(&Metadata {
+      package: Some(PackageMetadata {
+        colophon: Some(Text::new("foo.md".parse().unwrap()).unwrap()),
+        ..default()
+      }),
+      ..default()
+    })
+    .upload(&server);
+
+  server
+    .get(format!("/colophon/{fingerprint}"))
+    .assert_header(
+      header::CONTENT_DISPOSITION,
+      "inline; filename=\"COLOPHON.md\"",
+    )
+    .assert_header(header::CONTENT_TYPE, "text/plain;charset=utf-8")
+    .assert_body("bar")
     .send();
 }
 
@@ -2228,13 +2274,10 @@ fn get_package_with_metadata() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
-      colophon: Some(Hash::bytes(colophon)),
       directory,
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata: Some(metadata),
-      readme: Some(Hash::bytes(readme)),
-      texts: vec![Hash::bytes(license)],
       totals: Totals {
         directories: 0,
         directory_size: 0,
@@ -2425,6 +2468,55 @@ fn install_script() {
   TestServer::new()
     .get("/install.sh")
     .assert_static("install.sh")
+    .send();
+}
+
+#[test]
+fn license_not_found() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata::default())
+    .upload(&server);
+
+  server
+    .get(format!("/license/{fingerprint}/1"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {fingerprint} license text 1 not found"))
+    .send();
+}
+
+#[test]
+fn license_response() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .file("foo.txt", b"bar")
+    .metadata(&Metadata {
+      rights: Some(Rights {
+        basis: None,
+        license: None,
+        links: None,
+        notices: None,
+        status: rights::Status::Licensed,
+        texts: Some(
+          vec![Text::new("foo.txt".parse().unwrap()).unwrap()]
+            .try_into()
+            .unwrap(),
+        ),
+      }),
+      ..default()
+    })
+    .upload(&server);
+
+  server
+    .get(format!("/license/{fingerprint}/1"))
+    .assert_header(
+      header::CONTENT_DISPOSITION,
+      "inline; filename=\"LICENSE.txt\"",
+    )
+    .assert_header(header::CONTENT_TYPE, "text/plain;charset=utf-8")
+    .assert_body("bar")
     .send();
 }
 
@@ -4546,6 +4638,61 @@ fn public_key_redirects_to_key() {
     .status(StatusCode::PERMANENT_REDIRECT)
     .assert_header(header::LOCATION, format!("/key/{}", PublicKey::EXAMPLE))
     .send();
+}
+
+#[test]
+fn readme_not_found() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata::default())
+    .upload(&server);
+
+  server
+    .get(format!("/readme/{fingerprint}"))
+    .status(StatusCode::NOT_FOUND)
+    .assert_body(format!("package {fingerprint} readme not found"))
+    .send();
+}
+
+#[test]
+fn readme_response() {
+  #[track_caller]
+  fn case(format: Decoded<TextFormat>, content_disposition: &str, content_type: &str) {
+    let server = TestServer::new();
+
+    let fingerprint = PackageBuilder::new()
+      .file("foo.md", b"bar")
+      .metadata(&Metadata {
+        readme: Some(Text {
+          format,
+          path: "foo.md".parse().unwrap(),
+        }),
+        ..default()
+      })
+      .upload(&server);
+
+    server
+      .get(format!("/readme/{fingerprint}"))
+      .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+      .assert_header(header::CONTENT_DISPOSITION, content_disposition)
+      .assert_header(header::CONTENT_TYPE, content_type)
+      .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"bar")))
+      .assert_body("bar")
+      .send();
+  }
+
+  case(
+    Decoded::Known(TextFormat::Markdown),
+    "inline; filename=\"README.md\"",
+    "text/plain;charset=utf-8",
+  );
+
+  case(
+    Decoded::Unknown(vec![99]),
+    "attachment; filename=\"README\"",
+    "application/octet-stream",
+  );
 }
 
 #[test]

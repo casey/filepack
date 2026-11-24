@@ -19,6 +19,8 @@ pub(crate) enum ServerError {
   AuthorizationMalformed,
   #[snafu(display("missing authorization header"))]
   AuthorizationMissing,
+  #[snafu(display("package {fingerprint} colophon not found"))]
+  ColophonNotFound { fingerprint: Fingerprint },
   #[snafu(display("cross-origin request forbidden"))]
   CrossOriginRequest,
   #[snafu(context(false), display("failed to open database"))]
@@ -93,6 +95,11 @@ pub(crate) enum ServerError {
   InvalidResponse { source: http::Error },
   #[snafu(display("key {key} not found"))]
   KeyNotFound { key: PublicKey },
+  #[snafu(display("package {fingerprint} license text {index} not found"))]
+  LicenseTextNotFound {
+    fingerprint: Fingerprint,
+    index: Ordinal,
+  },
   #[snafu(display(
     "{noun} {index} does not exist, package {fingerprint} has {}",
     Count::new(*count, noun),
@@ -173,6 +180,8 @@ pub(crate) enum ServerError {
   },
   #[snafu(display("{source}"))]
   PublicKeyParse { source: HexError },
+  #[snafu(display("package {fingerprint} readme not found"))]
+  ReadmeNotFound { fingerprint: Fingerprint },
   #[snafu(display(
     "package number {number} is at revision {head} but revision's parent is {parent}"
   ))]
@@ -299,9 +308,11 @@ impl ServerError {
       | Self::UploadHashMismatch { .. } => StatusCode::BAD_REQUEST,
       Self::ApiEndpointNotFound
       | Self::ArtworkNotFound { .. }
+      | Self::ColophonNotFound { .. }
       | Self::DirectoryNotFound { .. }
       | Self::FileNotFound { .. }
       | Self::KeyNotFound { .. }
+      | Self::LicenseTextNotFound { .. }
       | Self::MediaItemDoesNotExist { .. }
       | Self::MediaType { .. }
       | Self::MediaTypeDoesNotHaveItems { .. }
@@ -313,6 +324,7 @@ impl ServerError {
       | Self::PackageNumberNotFound { .. }
       | Self::PageNotFound
       | Self::PlaceholderNotFound { .. }
+      | Self::ReadmeNotFound { .. }
       | Self::RevisionNotFound { .. }
       | Self::SignatureNotFound => StatusCode::NOT_FOUND,
       Self::HostNotAllowed { .. } => StatusCode::MISDIRECTED_REQUEST,

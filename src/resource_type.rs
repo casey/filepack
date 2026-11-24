@@ -14,9 +14,9 @@ pub(crate) enum ResourceType {
 }
 
 impl ResourceType {
-  pub(crate) fn content_disposition(self) -> Option<HeaderValue> {
+  pub(crate) fn content_disposition(self) -> Option<&'static str> {
     match self {
-      Self::Binary => Some(HeaderValue::from_static("attachment")),
+      Self::Binary => Some("attachment"),
       Self::Flac
       | Self::Jpeg
       | Self::M4a

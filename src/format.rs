@@ -3,6 +3,8 @@ use super::*;
 pub(crate) trait Format: Copy + Display + PartialEq {
   const EXTENSIONS: &'static [&'static str];
 
+  fn extension(self) -> &'static str;
+
   fn from_extension(extension: &str) -> Option<Self>;
 
   fn from_path(path: &RelativePath) -> Result<Self, PathError> {

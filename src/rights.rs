@@ -29,7 +29,7 @@ pub(crate) struct Rights {
 }
 
 impl Rights {
-  pub(crate) fn info(&self, hashes: &[Hash]) -> Info {
+  pub(crate) fn info(&self, fingerprint: Fingerprint) -> Info {
     InfoBuilder::new()
       .value("status", self.status.display())
       .when_some(self.license.as_ref(), |builder, license| {
@@ -52,8 +52,8 @@ impl Rights {
       .when_some(self.texts.as_ref(), |builder, texts| {
         builder.list(
           "texts",
-          texts.iter().zip_eq(hashes).map(|(text, hash)| {
-            Info::Link(Link::new(&text.path).href(file_href(*hash, text.path.filename())))
+          texts.iter().enumerate().map(|(i, text)| {
+            Info::Link(Link::new(&text.path).href(format!("/license/{fingerprint}/{}", Ordinal(i))))
           }),
         )
       })
