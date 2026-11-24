@@ -69,6 +69,10 @@ dd {
   overflow-wrap: anywhere;
 }
 
+dd:has(> dl) {
+  padding: 0;
+}
+
 dd > ol {
   display: grid;
   grid-template-columns: max-content auto;
@@ -92,6 +96,12 @@ dd > ol {
 
 dl dl {
   margin-block: 0;
+}
+
+dd > dl {
+  border-radius: 0;
+  border: none;
+  width: auto;
 }
 
 dl, .thumbnails a, .artwork {
@@ -120,16 +130,19 @@ dl {
   width: fit-content;
 
   > div {
-    column-gap: var(--space-3);
+    column-gap: var(--space-1);
     display: grid;
     grid-column: 1 / -1;
     grid-template-columns: subgrid;
-    padding: var(--space-1);
 
     + div {
       border-top: 1px solid var(--border);
     }
   }
+}
+
+dt, dd {
+  padding: var(--space-1);
 }
 
 dt {
@@ -260,5 +273,17 @@ body > header > nav {
 
   dt {
     font-style: normal;
+  }
+}
+
+@media (width < 30rem) {
+  dl, dd > ol {
+    grid-template-columns: 1fr;
+    width: auto;
+  }
+
+  dd > dl {
+    border-top: 1px solid var(--border);
+    margin-inline-start: var(--space-4);
   }
 }
