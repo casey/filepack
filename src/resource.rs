@@ -4,6 +4,7 @@ pub(crate) struct Resource {
   pub(crate) cache: bool,
   pub(crate) content_length: u64,
   pub(crate) file: fs::File,
+  pub(crate) filename: Option<String>,
   pub(crate) hash: Hash,
   pub(crate) range: Option<headers::Range>,
   pub(crate) ty: ResourceType,
@@ -15,6 +16,26 @@ impl Resource {
 
   pub(crate) fn cache(self, cache: bool) -> Self {
     Self { cache, ..self }
+  }
+
+  pub(crate) fn filename<T: Format>(self, stem: &'static str, format: &Decoded<T>) -> Self {
+    let filename = if let Decoded::Known(format) = format {
+      format!("{stem}.{}", format.extension())
+    } else {
+      stem.into()
+    };
+
+    assert!(
+      filename
+        .chars()
+        .all(|c| matches!(c, '\t' | ' ' | '!' | '#'..='[' | ']'..='~') && c != '%'),
+      "filename `{filename}` requires encoding",
+    );
+
+    Self {
+      filename: Some(filename),
+      ..self
+    }
   }
 
   pub(crate) fn range(self, range: Option<TypedHeader<headers::Range>>) -> Self {
@@ -66,7 +87,18 @@ impl IntoResponse for Resource {
         builder = builder.header(header::CONTENT_SECURITY_POLICY, "sandbox");
       }
 
-      if let Some(content_disposition) = self.ty.content_disposition() {
+      let content_disposition = self.ty.content_disposition();
+
+      let content_disposition = if let Some(filename) = &self.filename {
+        Some(format!(
+          "{}; filename=\"{filename}\"",
+          content_disposition.unwrap_or("inline"),
+        ))
+      } else {
+        content_disposition.map(str::to_owned)
+      };
+
+      if let Some(content_disposition) = content_disposition {
         builder = builder.header(header::CONTENT_DISPOSITION, content_disposition);
       }
     }
@@ -144,5 +176,26 @@ impl IntoResponse for Resource {
 impl Describe for Resource {
   fn describe(endpoint: &mut reference::Endpoint, _registry: &mut deco::Registry) {
     endpoint.response = Some(reference::Response::File);
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  #[should_panic(expected = "filename `foo%` requires encoding")]
+  fn filename_requires_encoding() {
+    Resource {
+      cache: false,
+      content_length: 0,
+      file: tempfile::tempfile().unwrap(),
+      filename: None,
+      hash: Hash::bytes(b""),
+      range: None,
+      ty: ResourceType::Binary,
+      unsandboxed_content_type: None,
+    }
+    .filename::<TextFormat>("foo%", &Decoded::Unknown(Vec::new()));
   }
 }

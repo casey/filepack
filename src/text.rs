@@ -20,6 +20,14 @@ impl Text {
       path,
     })
   }
+
+  pub(crate) fn resource_type(&self) -> ResourceType {
+    self
+      .format
+      .known()
+      .copied()
+      .map_or(ResourceType::Binary, Format::resource_type)
+  }
 }
 
 #[cfg(test)]
@@ -49,5 +57,24 @@ mod tests {
 
     case("foo.md", TextFormat::Markdown);
     case("foo.txt", TextFormat::Plain);
+  }
+
+  #[test]
+  fn resource_type() {
+    assert_eq!(
+      Text::new("foo.md".parse().unwrap())
+        .unwrap()
+        .resource_type(),
+      ResourceType::Text,
+    );
+
+    assert_eq!(
+      Text {
+        format: Decoded::Unknown(vec![99]),
+        path: "foo".parse().unwrap(),
+      }
+      .resource_type(),
+      ResourceType::Binary,
+    );
   }
 }

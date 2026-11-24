@@ -21,6 +21,14 @@ pub(crate) enum AudioFormat {
 impl Format for AudioFormat {
   const EXTENSIONS: &[&str] = &["flac", "m4a", "mp3"];
 
+  fn extension(self) -> &'static str {
+    match self {
+      Self::Flac => "flac",
+      Self::Mp3 => "mp3",
+      Self::Mp4 => "m4a",
+    }
+  }
+
   fn from_extension(extension: &str) -> Option<Self> {
     match extension {
       "flac" => Some(Self::Flac),
@@ -48,6 +56,19 @@ mod tests {
     assert_eq!(AudioFormat::Flac.to_string(), "FLAC");
     assert_eq!(AudioFormat::Mp3.to_string(), "MP3");
     assert_eq!(AudioFormat::Mp4.to_string(), "MP4");
+  }
+
+  #[test]
+  fn extension() {
+    #[track_caller]
+    fn case(format: AudioFormat, extension: &str) {
+      assert_eq!(format.extension(), extension);
+      assert_eq!(AudioFormat::from_extension(extension), Some(format));
+    }
+
+    case(AudioFormat::Flac, "flac");
+    case(AudioFormat::Mp3, "mp3");
+    case(AudioFormat::Mp4, "m4a");
   }
 
   #[test]

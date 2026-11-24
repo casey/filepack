@@ -28,16 +28,16 @@ pub(crate) struct PackageMetadata {
 }
 
 impl PackageMetadata {
-  pub(crate) fn info(&self, colophon: Option<Hash>) -> Info {
+  pub(crate) fn info(&self, fingerprint: Fingerprint) -> Info {
     InfoBuilder::new()
       .optional("title", self.title.as_ref())
       .optional("creator", self.creator.as_ref())
       .optional("time", self.time.as_ref())
       .optional("description", self.description.as_ref())
-      .when_some(self.colophon.as_ref(), |builder, text| {
+      .when(self.colophon.is_some(), |builder| {
         builder.link(
           "colophon",
-          Link::new("view").href(file_href(colophon.unwrap(), text.path.filename())),
+          Link::new("view").href(format!("/colophon/{fingerprint}")),
         )
       })
       .when_some(self.homepage.as_ref(), |builder, homepage| {

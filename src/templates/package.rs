@@ -3,7 +3,6 @@ use super::*;
 #[derive(Boilerplate)]
 #[cfg_attr(test, derive(Default))]
 pub struct PackageHtml {
-  pub colophon: Option<Hash>,
   pub directory: Directory,
   pub fingerprint: Fingerprint,
   pub identifier: PackageIdentifier,
@@ -13,11 +12,9 @@ pub struct PackageHtml {
   pub number: Option<u64>,
   pub parents: Vec<RevisionHash>,
   pub prev: Option<u64>,
-  pub readme: Option<Hash>,
   pub revision: Option<RevisionHash>,
   pub revisions: Option<u64>,
   pub signers: BTreeSet<PublicKey>,
-  pub texts: Vec<Hash>,
   pub totals: Totals,
 }
 
@@ -87,13 +84,7 @@ impl PackageHtml {
         )
       })
       .when_some(self.metadata.as_ref(), |builder, metadata| {
-        metadata.info(
-          builder,
-          self.identifier,
-          self.readme,
-          self.colophon,
-          &self.texts,
-        )
+        metadata.info(builder, self.identifier, self.fingerprint)
       })
       .build()
   }
@@ -221,7 +212,6 @@ mod tests {
         identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
         number: Some(0),
-        texts: vec![Hash::EXAMPLE.parse().unwrap()],
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -279,7 +269,7 @@ mod tests {
                     <dd>
                       <ol role=list>
                         <li>
-                          <a href='/file/{hash}/LICENSE.txt'>foo/LICENSE.txt</a>
+                          <a href='/license/{fingerprint}/1'>foo/LICENSE.txt</a>
                         </li>
                       </ol>
                     </dd>
@@ -329,7 +319,6 @@ mod tests {
         ",
         directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
         fingerprint = Fingerprint::EXAMPLE,
-        hash = Hash::EXAMPLE,
       )),
     );
   }
@@ -933,13 +922,11 @@ mod tests {
 
     assert_eq!(
       PackageHtml {
-        colophon: Some(Hash::EXAMPLE.parse().unwrap()),
         directory,
         fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
         identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
         metadata: Some(metadata),
         number: Some(0),
-        readme: Some(Hash::EXAMPLE.parse().unwrap()),
         totals: Totals {
           directories: 0,
           directory_size: 0,
@@ -979,7 +966,7 @@ mod tests {
             <div>
               <dt>readme</dt>
               <dd>
-                <a href='/file/{hash}/README.md'>view</a>
+                <a href='/readme/{fingerprint}'>view</a>
               </dd>
             </div>
             <div>
@@ -1064,7 +1051,7 @@ mod tests {
                   <div>
                     <dt>colophon</dt>
                     <dd>
-                      <a href='/file/{hash}/COLOPHON.md'>view</a>
+                      <a href='/colophon/{fingerprint}'>view</a>
                     </dd>
                   </div>
                   <div>
@@ -1105,7 +1092,6 @@ mod tests {
         directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
         fingerprint = Fingerprint::EXAMPLE,
         foo = Hash::bytes(b"foo"),
-        hash = Hash::EXAMPLE,
       )),
     );
   }

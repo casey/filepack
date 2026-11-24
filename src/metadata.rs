@@ -260,9 +260,7 @@ impl Metadata {
     &self,
     builder: InfoBuilder,
     identifier: PackageIdentifier,
-    readme: Option<Hash>,
-    colophon: Option<Hash>,
-    texts: &[Hash],
+    fingerprint: Fingerprint,
   ) -> InfoBuilder {
     builder
       .optional("title", self.title.as_ref())
@@ -270,10 +268,10 @@ impl Metadata {
       .optional("publisher", self.publisher.as_ref())
       .optional("time", self.time.as_ref())
       .optional("description", self.description.as_ref())
-      .when_some(self.readme.as_ref(), |builder, text| {
+      .when(self.readme.is_some(), |builder| {
         builder.link(
           "readme",
-          Link::new("view").href(file_href(readme.unwrap(), text.path.filename())),
+          Link::new("view").href(format!("/readme/{fingerprint}")),
         )
       })
       .when_some(self.homepage.as_ref(), |builder, homepage| {
@@ -281,14 +279,14 @@ impl Metadata {
       })
       .optional("language", self.language.map(Language::name))
       .when_some(self.rights.as_ref(), |builder, rights| {
-        builder.info("rights", rights.info(texts))
+        builder.info("rights", rights.info(fingerprint))
       })
       .when_some(
         self
           .package
           .as_ref()
           .filter(|package| **package != PackageMetadata::default()),
-        |builder, package| builder.info("package", package.info(colophon)),
+        |builder, package| builder.info("package", package.info(fingerprint)),
       )
       .when_some(self.media.as_ref(), |builder, media| {
         media.info(builder, identifier)
@@ -753,9 +751,7 @@ mod tests {
         .info(
           InfoBuilder::new(),
           PackageIdentifier::Number(0),
-          None,
-          None,
-          &[],
+          Fingerprint::EXAMPLE.parse().unwrap(),
         )
         .build(),
       Info::Map(Vec::new()),

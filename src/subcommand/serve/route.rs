@@ -32,6 +32,7 @@ impl Route {
       api_verify_signature_route(registry),
       artwork_route(registry),
       artwork_thumbnail_route(registry),
+      colophon_route(registry),
       directory_route(registry),
       favicon_route(registry),
       file_route(registry),
@@ -40,6 +41,7 @@ impl Route {
       home_route(registry),
       install_script_route(registry),
       key_route(registry),
+      license_route(registry),
       media_audio_item_route(registry),
       media_image_item_route(registry),
       media_image_item_thumbnail_route(registry),
@@ -54,6 +56,7 @@ impl Route {
       package_item_route(registry),
       package_media_route(registry),
       packages_route(registry),
+      readme_route(registry),
       static_asset_route(registry),
     ]
   }
@@ -260,6 +263,18 @@ pub(crate) async fn artwork_thumbnail(
   block_in_place(|| Ok(server.artwork(*fingerprint, true)?.range(range)))
 }
 
+/// Serve colophon of package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+#[route(GET, "/colophon/{fingerprint}")]
+pub(crate) async fn colophon(
+  server: ServerExtension,
+  fingerprint: Path<Fingerprint>,
+  range: Option<TypedHeader<headers::Range>>,
+) -> ServerResult<Resource> {
+  block_in_place(|| Ok(server.colophon(*fingerprint)?.range(range)))
+}
+
 /// Display entries of directory with `hash`.
 ///
 /// `hash`: Hash of the directory.
@@ -368,6 +383,19 @@ pub(crate) async fn key(
   key: Path<PublicKey>,
 ) -> PageResult<KeyHtml> {
   block_in_place(|| Ok(server.key_html(*key)?.page(server_config.url.clone())))
+}
+
+/// Serve license text `index` of package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+/// `index`: One-based index of the license text.
+#[route(GET, "/license/{fingerprint}/{index}")]
+pub(crate) async fn license(
+  server: ServerExtension,
+  Path((fingerprint, Ordinal(index))): Path<(Fingerprint, Ordinal)>,
+  range: Option<TypedHeader<headers::Range>>,
+) -> ServerResult<Resource> {
+  block_in_place(|| Ok(server.license(fingerprint, index)?.range(range)))
 }
 
 /// Serve audio `item` of package with `fingerprint`.
@@ -706,6 +734,18 @@ pub(crate) async fn packages(
       .page(server_config.url.clone()),
     )
   })
+}
+
+/// Serve readme of package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+#[route(GET, "/readme/{fingerprint}")]
+pub(crate) async fn readme(
+  server: ServerExtension,
+  fingerprint: Path<Fingerprint>,
+  range: Option<TypedHeader<headers::Range>>,
+) -> ServerResult<Resource> {
+  block_in_place(|| Ok(server.readme(*fingerprint)?.range(range)))
 }
 
 /// Serve static asset at `path`.

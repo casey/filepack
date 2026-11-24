@@ -500,7 +500,6 @@ fn upload_package_serves_package_html() {
   server
     .get(format!("/package/{fingerprint}"))
     .assert_page(PackageHtml {
-      colophon: None,
       directory,
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
@@ -510,11 +509,9 @@ fn upload_package_serves_package_html() {
       number: None,
       prev: None,
       parents: Vec::new(),
-      readme: None,
       revision: None,
       revisions: None,
       signers: BTreeSet::new(),
-      texts: Vec::new(),
       totals,
     })
     .send();

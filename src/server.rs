@@ -46,7 +46,24 @@ impl Server {
 
     let hash = self.verified_package_file(fingerprint, &image.path)?;
 
-    Ok(self.open_file(hash)?.ty(image.resource_type()))
+    Ok(
+      self
+        .open_file(hash)?
+        .filename("artwork", &image.format)
+        .ty(image.resource_type()),
+    )
+  }
+
+  pub(crate) fn colophon(&self, fingerprint: Fingerprint) -> ServerResult<Resource> {
+    let metadata = self.package_metadata(fingerprint)?;
+
+    let colophon = metadata
+      .package
+      .as_ref()
+      .and_then(|package| package.colophon.as_ref())
+      .context(server_error::ColophonNotFound { fingerprint })?;
+
+    self.text(fingerprint, "COLOPHON", colophon)
   }
 
   pub(crate) fn delete_number(&self, number: u64) -> ServerResult {
@@ -424,6 +441,19 @@ impl Server {
     })
   }
 
+  pub(crate) fn license(&self, fingerprint: Fingerprint, index: usize) -> ServerResult<Resource> {
+    let metadata = self.package_metadata(fingerprint)?;
+
+    let text = metadata
+      .rights
+      .as_ref()
+      .and_then(|rights| rights.texts.as_ref())
+      .and_then(|texts| texts.get(index))
+      .context(server_error::LicenseTextNotFound { fingerprint, index })?;
+
+    self.text(fingerprint, "LICENSE", text)
+  }
+
   pub(crate) fn media_item(
     &self,
     fingerprint: Fingerprint,
@@ -634,6 +664,7 @@ impl Server {
       cache: true,
       content_length,
       file,
+      filename: None,
       hash,
       range: None,
       ty: ResourceType::Binary,
@@ -719,37 +750,7 @@ impl Server {
 
     let totals = directory.totals().unwrap();
 
-    let colophon = if let Some(metadata) = &metadata
-      && let Some(package) = &metadata.package
-      && let Some(colophon) = &package.colophon
-    {
-      Some(self.verified_package_file(fingerprint, &colophon.path)?)
-    } else {
-      None
-    };
-
-    let readme = if let Some(metadata) = &metadata
-      && let Some(readme) = &metadata.readme
-    {
-      Some(self.verified_package_file(fingerprint, &readme.path)?)
-    } else {
-      None
-    };
-
-    let texts = if let Some(metadata) = &metadata
-      && let Some(rights) = &metadata.rights
-      && let Some(texts) = &rights.texts
-    {
-      texts
-        .iter()
-        .map(|text| self.verified_package_file(fingerprint, &text.path))
-        .collect::<ServerResult<Vec<Hash>>>()?
-    } else {
-      Vec::new()
-    };
-
     Ok(PackageHtml {
-      colophon,
       directory,
       fingerprint,
       identifier: package,
@@ -759,11 +760,9 @@ impl Server {
       number,
       parents,
       prev,
-      readme,
       revision,
       revisions,
       signers,
-      texts,
       totals,
     })
   }
@@ -850,6 +849,17 @@ impl Server {
   fn read_revision(&self, revision: RevisionHash) -> ServerResult<Revision> {
     Revision::decode_from_slice(&self.read_file(revision.into())?)
       .context(server_error::RevisionCorrupt { revision })
+  }
+
+  pub(crate) fn readme(&self, fingerprint: Fingerprint) -> ServerResult<Resource> {
+    let metadata = self.package_metadata(fingerprint)?;
+
+    let readme = metadata
+      .readme
+      .as_ref()
+      .context(server_error::ReadmeNotFound { fingerprint })?;
+
+    self.text(fingerprint, "README", readme)
   }
 
   pub(crate) fn resolve(&self, identifier: PackageIdentifier) -> ServerResult<Resolved> {
@@ -958,6 +968,22 @@ impl Server {
         Ok((PublicKey::from_bytes(key).unwrap(), hash.value()))
       })
       .collect()
+  }
+
+  fn text(
+    &self,
+    fingerprint: Fingerprint,
+    stem: &'static str,
+    text: &Text,
+  ) -> ServerResult<Resource> {
+    let hash = self.verified_package_file(fingerprint, &text.path)?;
+
+    Ok(
+      self
+        .open_file(hash)?
+        .filename(stem, &text.format)
+        .ty(text.resource_type()),
+    )
   }
 
   fn verified_package_file(

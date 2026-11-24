@@ -13,17 +13,15 @@ pub(crate) enum ImageFormat {
   Png,
 }
 
-impl ImageFormat {
-  pub(crate) fn extension(self) -> &'static str {
+impl Format for ImageFormat {
+  const EXTENSIONS: &[&str] = &["jpg", "png"];
+
+  fn extension(self) -> &'static str {
     match self {
       Self::Jpeg => "jpg",
       Self::Png => "png",
     }
   }
-}
-
-impl Format for ImageFormat {
-  const EXTENSIONS: &[&str] = &["jpg", "png"];
 
   fn from_extension(extension: &str) -> Option<Self> {
     match extension {
@@ -47,8 +45,14 @@ mod tests {
 
   #[test]
   fn extension() {
-    assert_eq!(ImageFormat::Jpeg.extension(), "jpg");
-    assert_eq!(ImageFormat::Png.extension(), "png");
+    #[track_caller]
+    fn case(format: ImageFormat, extension: &str) {
+      assert_eq!(format.extension(), extension);
+      assert_eq!(ImageFormat::from_extension(extension), Some(format));
+    }
+
+    case(ImageFormat::Jpeg, "jpg");
+    case(ImageFormat::Png, "png");
   }
 
   #[test]
