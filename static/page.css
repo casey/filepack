@@ -66,6 +66,7 @@ code, kbd {
 
 dd {
   margin: 0;
+  max-width: 46rem;
   overflow-wrap: anywhere;
 }
 
@@ -75,7 +76,7 @@ dd:has(> dl) {
 
 dd > ol {
   display: grid;
-  grid-template-columns: max-content auto;
+  grid-template-columns: auto 1fr;
   margin-block: 0;
   padding-left: 0;
   row-gap: var(--space-2);
@@ -126,7 +127,7 @@ dl, .thumbnails a, .artwork {
 
 dl {
   display: grid;
-  grid-template-columns: max-content auto;
+  grid-template-columns: auto 1fr;
   width: fit-content;
 
   > div {
