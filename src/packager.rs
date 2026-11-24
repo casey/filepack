@@ -223,6 +223,8 @@ impl Packager {
 
       metadata.check_files(&files)?;
 
+      metadata.check_texts(&root)?;
+
       if metadata.media.is_some() {
         metadata.check_extras(&files, &empty)?;
       }

@@ -7,6 +7,9 @@
 %%     let dimensions = items[self.index].content.oriented_dimensions();
 <img src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }} width={{ dimensions.width }} height={{ dimensions.height }}>
 %%   }
+%%   Items::Text(_) => {
+<iframe sandbox src=/media/text/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }}></iframe>
+%%   }
 %%   Items::Video(_) => {
 <video
   autofocus

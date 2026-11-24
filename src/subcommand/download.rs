@@ -109,9 +109,7 @@ impl Download {
 
         progress_bar.inc(deco.len().into_u64());
       } else {
-        assert!(totals.is_none());
-
-        totals = Some(actual);
+        totals.replace_none(actual);
 
         progress_bar.set_totals(actual.bytes(), actual.entries());
       }

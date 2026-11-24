@@ -388,7 +388,7 @@ mod tests {
 
     assert_eq!(
       xmp::title(b"\xff").unwrap_err().to_string(),
-      "invalid UTF-8",
+      "XML is not valid UTF-8",
     );
   }
 }

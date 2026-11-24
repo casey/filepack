@@ -112,6 +112,36 @@ impl Metadata {
     Ok(())
   }
 
+  pub(crate) fn check_texts(&self, root: &Utf8Path) -> Result {
+    let mut texts = Vec::new();
+
+    if let Some(package) = &self.package
+      && let Some(colophon) = &package.colophon
+    {
+      texts.push(colophon);
+    }
+
+    if let Some(readme) = &self.readme {
+      texts.push(readme);
+    }
+
+    if let Some(rights) = &self.rights
+      && let Some(rights_texts) = &rights.texts
+    {
+      texts.extend(rights_texts.iter());
+    }
+
+    if let Some(Media::Text { items }) = &self.media {
+      texts.extend(items.iter().map(|item| &item.content));
+    }
+
+    for text in texts {
+      text.check(root)?;
+    }
+
+    Ok(())
+  }
+
   pub(crate) fn files(&self) -> Vec<RelativePath> {
     let mut files = Vec::new();
 
@@ -142,6 +172,9 @@ impl Metadata {
         }
         Media::Image { items } => {
           files.extend(items.iter().map(|image| image.path().into()));
+        }
+        Media::Text { items } => {
+          files.extend(items.iter().map(|text| text.path().into()));
         }
         Media::Video { items } => {
           for video in items {
@@ -458,6 +491,24 @@ mod tests {
       vec![
         "foo.png".parse::<RelativePath>().unwrap(),
         "bar.jpg".parse().unwrap(),
+      ],
+    );
+  }
+
+  #[test]
+  fn files_include_texts() {
+    let metadata = Metadata {
+      media: Some(Media::Text {
+        items: vec![Item::test("foo.md"), Item::test("bar.txt")],
+      }),
+      ..default()
+    };
+
+    assert_eq!(
+      metadata.files(),
+      vec![
+        "foo.md".parse::<RelativePath>().unwrap(),
+        "bar.txt".parse().unwrap(),
       ],
     );
   }

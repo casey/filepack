@@ -1097,6 +1097,89 @@ mod tests {
   }
 
   #[test]
+  fn text() {
+    assert_eq!(
+      PackageHtml {
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
+        metadata: Some(Metadata {
+          media: Some(Media::Text {
+            items: vec![
+              Item {
+                content: Text::test("foo.md"),
+                title: Some("bar".parse().unwrap()),
+              },
+              Item::test("baz.txt"),
+            ],
+          }),
+          ..default()
+        }),
+        ..default()
+      }
+      .to_string(),
+      unindent(&format!(
+        "
+          <dl>
+            <div>
+              <dt>fingerprint</dt>
+              <dd>
+                <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+              </dd>
+            </div>
+            <div>
+              <dt>size</dt>
+              <dd>
+                0 B
+              </dd>
+            </div>
+            <div>
+              <dt>files</dt>
+              <dd>
+                <a href='/directory/{directory}'>0 files</a>
+              </dd>
+            </div>
+            <div>
+              <dt>media</dt>
+              <dd>
+                <a href='/package/{fingerprint}/media'>text</a>
+              </dd>
+            </div>
+            <div>
+              <dt>texts</dt>
+              <dd>
+                2
+              </dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                <ol role=list>
+                  <li>
+                    Markdown
+                  </li>
+                  <li>
+                    plain text
+                  </li>
+                </ol>
+              </dd>
+            </div>
+          </dl>
+          <ol>
+            <li>
+              <a href=/package/{fingerprint}/item/1>bar</a>
+            </li>
+            <li>
+              <a href=/package/{fingerprint}/item/2>Text 2</a>
+            </li>
+          </ol>
+        ",
+        directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
+        fingerprint = Fingerprint::EXAMPLE,
+      )),
+    );
+  }
+
+  #[test]
   fn video() {
     let metadata = Metadata {
       media: Some(Media::Video {

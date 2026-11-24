@@ -8,8 +8,8 @@ use {
   filepack::{
     Decode, DecodeOptions, Decoded, Decoder, Directory, DirectoryExt, Encode, Encoder, Entry,
     Fingerprint, FlacBuilder, Hash, Loader, MagicType, Manifest, Metadata, Mp3Builder, Mp4Builder,
-    NonEmptyOrderedSet, PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey, Reference,
-    Revision, ServerState, State, Totals, api, gradient, gradient_alpha, hex,
+    NonEmptyOrderedSet, OptionExt, PackageIdentifier, Page, PngBuilder, PrivateKey, PublicKey,
+    Reference, Revision, ServerState, State, Totals, api, gradient, gradient_alpha, hex,
     templates::{DirectoryHtml, PackageHtml},
   },
   image::{DynamicImage, ImageFormat},

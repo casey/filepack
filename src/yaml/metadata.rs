@@ -59,7 +59,7 @@ impl Metadata {
     match media {
       Media::Image { items } => !items.is_empty(),
       Media::Video { items } => items.iter().any(|item| item.placeholder.is_some()),
-      Media::Audio { .. } | Media::Web => false,
+      Media::Audio { .. } | Media::Text { .. } | Media::Web => false,
     }
   }
 
@@ -86,6 +86,7 @@ impl Metadata {
       match media {
         Media::Audio { items } => files += items.len().into_u64(),
         Media::Image { items } => files += items.len().into_u64(),
+        Media::Text { items } => files += items.len().into_u64(),
         Media::Video { items } => {
           for item in items {
             files += 1 + u64::from(item.placeholder.is_some());
@@ -120,7 +121,7 @@ impl Metadata {
       media,
       package: package.map(PackageMetadata::load).transpose()?,
       publisher,
-      readme: readme.map(Text::new).transpose()?,
+      readme: readme.map(crate::Text::new).transpose()?,
       rights: rights.map(Rights::load).transpose()?,
       thumbnails: None,
       time,
@@ -160,6 +161,33 @@ mod tests {
             path: "bar.flac".parse().unwrap(),
           },
         ],
+      }),
+    );
+  }
+
+  #[test]
+  fn deserialize_media_text() {
+    let metadata = Metadata::deserialize(
+      crate::Metadata::YAML_FILENAME.as_ref(),
+      &unindent(
+        "
+          media:
+            type: text
+            items:
+              - path: foo.md
+                title: bar
+        ",
+      ),
+    )
+    .unwrap();
+
+    assert_eq!(
+      metadata.media,
+      Some(Media::Text {
+        items: vec![Text {
+          path: "foo.md".parse().unwrap(),
+          title: "bar".parse().unwrap(),
+        }],
       }),
     );
   }
@@ -329,6 +357,15 @@ mod tests {
               bar: baz
       ",
       "unknown field `bar`, expected `path`",
+    );
+    case(
+      "
+        media:
+          type: text
+          items:
+            - path: foo.md
+      ",
+      "missing field `title`",
     );
   }
 
@@ -588,7 +625,7 @@ mod tests {
           }],
         }),
         package: Some(crate::PackageMetadata {
-          colophon: Some(Text::new("COLOPHON.md".parse().unwrap()).unwrap()),
+          colophon: Some(crate::Text::new("COLOPHON.md".parse().unwrap()).unwrap()),
           creator: None,
           description: None,
           homepage: None,
@@ -611,7 +648,7 @@ mod tests {
           notices: Some(vec!["bar".parse().unwrap()].try_into().unwrap()),
           status: crate::rights::Status::Licensed,
           texts: Some(
-            vec![Text::new("LICENSE.txt".parse().unwrap()).unwrap()]
+            vec![crate::Text::new("LICENSE.txt".parse().unwrap()).unwrap()]
               .try_into()
               .unwrap(),
           ),

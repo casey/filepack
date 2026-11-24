@@ -3,6 +3,7 @@ use super::*;
 pub(crate) enum Items<'a> {
   Audio(&'a [Item<Audio>]),
   Image(&'a [Item<Image>]),
+  Text(&'a [Item<Text>]),
   Video(&'a [Item<Video>]),
 }
 
@@ -17,6 +18,7 @@ impl<'a> Items<'a> {
     match self {
       Self::Audio(items) => formats(items),
       Self::Image(items) => formats(items),
+      Self::Text(items) => formats(items),
       Self::Video(items) => formats(items),
     }
   }
@@ -25,6 +27,7 @@ impl<'a> Items<'a> {
     match self {
       Self::Audio(items) => items.get(i).map(|item| item as &dyn MediaItem),
       Self::Image(items) => items.get(i).map(|item| item as &dyn MediaItem),
+      Self::Text(items) => items.get(i).map(|item| item as &dyn MediaItem),
       Self::Video(items) => items.get(i).map(|item| item as &dyn MediaItem),
     }
   }
@@ -33,6 +36,7 @@ impl<'a> Items<'a> {
     match self {
       Self::Audio(items) => items.len(),
       Self::Image(items) => items.len(),
+      Self::Text(items) => items.len(),
       Self::Video(items) => items.len(),
     }
   }
@@ -45,6 +49,7 @@ impl<'a> Items<'a> {
     match self {
       Self::Audio(_) => "track",
       Self::Image(_) => "image",
+      Self::Text(_) => "text",
       Self::Video(_) => "video",
     }
   }
@@ -66,6 +71,7 @@ impl<'a> IntoIterator for Items<'a> {
     match self {
       Self::Audio(items) => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
       Self::Image(items) => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
+      Self::Text(items) => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
       Self::Video(items) => Box::new(items.iter().map(|item| item as &dyn MediaItem)),
     }
   }

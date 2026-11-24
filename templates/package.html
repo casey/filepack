@@ -39,6 +39,15 @@
 %%       }
 </ul>
 %%     }
+%%     Media::Text { items } => {
+<ol>
+%%       for (i, text) in items.iter().enumerate() {
+  <li>
+    <a href=/package/{{ self.identifier }}/item/{{ Ordinal(i) }}>{{ text.display_title(i) }}</a>
+  </li>
+%%       }
+</ol>
+%%     }
 %%     Media::Video { .. } => {
 <ol class=thumbnails role=list>
 %%       for (i, (video, duration, image, dimensions)) in self.videos().enumerate() {

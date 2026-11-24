@@ -343,6 +343,44 @@ fn create_extracts_m4a_track_tags() {
 }
 
 #[test]
+fn create_extracts_text_items() {
+  Test::new()
+    .write("foo.md", "bar")
+    .write(
+      "filepack.yaml",
+      "
+        media:
+          type: text
+          items:
+            - path: foo.md
+              title: baz
+      ",
+    )
+    .arg("create")
+    .success()
+    .arg("metadata")
+    .stdout(
+      r#"
+        {
+          "media": {
+            "type": "text",
+            "items": [
+              {
+                "content": {
+                  "format": "markdown",
+                  "path": "foo.md"
+                },
+                "title": "baz"
+              }
+            ]
+          }
+        }
+      "#,
+    )
+    .success();
+}
+
+#[test]
 fn create_extracts_track_tags() {
   Test::new()
     .write(
@@ -929,6 +967,61 @@ fn create_rejects_invalid_tracks() {
       ",
     )
     .failure();
+}
+
+#[test]
+fn create_rejects_invalid_utf8_text() {
+  #[track_caller]
+  fn case(path: &str, yaml: &str) {
+    Test::new()
+      .write(path, vec![0xff])
+      .write("filepack.yaml", yaml)
+      .arg("create")
+      .stderr_regex(&format!(
+        "
+          error: text file `.*{}` is not valid UTF-8
+                 └─ invalid utf-8 sequence of 1 bytes from index 0
+        ",
+        regex::escape(path),
+      ))
+      .failure();
+  }
+
+  case(
+    "COLOPHON.md",
+    "
+      package:
+        colophon: COLOPHON.md
+    ",
+  );
+
+  case(
+    "LICENSE.txt",
+    "
+      rights:
+        status: licensed
+        texts:
+          - LICENSE.txt
+    ",
+  );
+
+  case(
+    "foo.md",
+    "
+      media:
+        type: text
+        items:
+          - path: foo.md
+            title: bar
+    ",
+  );
+
+  case(
+    "README.md",
+    "
+      readme: README.md
+    ",
+  );
 }
 
 #[test]

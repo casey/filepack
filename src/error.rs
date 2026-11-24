@@ -637,6 +637,12 @@ pub enum Error {
     backtrace: Option<Backtrace>,
     path: DisplayPath,
   },
+  #[snafu(display("text file `{path}` is not valid UTF-8"))]
+  TextUtf8 {
+    backtrace: Option<Backtrace>,
+    path: DisplayPath,
+    source: Utf8Error,
+  },
   #[snafu(display(
     "thumbnail for `{image}` conflicts with `{path}`, use `--force` to overwrite it"
   ))]

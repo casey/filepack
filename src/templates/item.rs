@@ -18,6 +18,7 @@ impl ItemHtml {
     let ty = match self.items() {
       Items::Audio(_) => "audio",
       Items::Image(_) => "image",
+      Items::Text(_) => "text",
       Items::Video(_) => "video",
     };
 
@@ -48,7 +49,7 @@ impl Page for ItemHtml {
 
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
     match self.items() {
-      Items::Audio(_) => OpenGraphImage::artwork(&self.metadata, self.fingerprint),
+      Items::Audio(_) | Items::Text(_) => OpenGraphImage::artwork(&self.metadata, self.fingerprint),
       Items::Image(items) => Some(OpenGraphImage::thumbnail(
         &self.metadata,
         &items[self.index].content,
@@ -429,6 +430,34 @@ mod tests {
 
     case(
       Metadata {
+        media: Some(Media::Text {
+          items: vec![Item {
+            content: Text::test("foo.md"),
+            title: Some("bar".parse().unwrap()),
+          }],
+        }),
+        ..default()
+      },
+      format!(
+        "
+          <iframe sandbox src=/media/text/{fingerprint}/item/1></iframe>
+          <footer>
+            <hgroup>
+              <h1>bar</h1>
+              <p>
+                <a href=/package/{fingerprint}>
+                  <code>{fingerprint}</code>
+                </a>
+              </p>
+            </hgroup>
+            <a download href=/media/text/{fingerprint}/item/1>Download</a>
+          </footer>
+        "
+      ),
+    );
+
+    case(
+      Metadata {
         media: Some(Media::Video {
           items: vec![Item::test("foo.mp4")],
         }),
@@ -597,6 +626,13 @@ mod tests {
         items: vec![Item::test("foo.png")],
       },
       "Image 1 · Filepack",
+    );
+
+    case(
+      Media::Text {
+        items: vec![Item::test("foo.md")],
+      },
+      "Text 1 · Filepack",
     );
 
     case(

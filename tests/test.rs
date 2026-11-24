@@ -101,14 +101,12 @@ impl Test {
   }
 
   pub(crate) fn current_dir(mut self, path: &str) -> Self {
-    assert!(self.current_dir.is_none());
-    self.current_dir = Some(path.into());
+    self.current_dir.replace_none(path.into());
     self
   }
 
   pub(crate) fn data_dir(mut self, path: &str) -> Self {
-    assert!(self.data_dir.is_none());
-    self.data_dir = Some(path.into());
+    self.data_dir.replace_none(path.into());
     self
   }
 
@@ -399,8 +397,7 @@ impl Test {
   }
 
   pub(crate) fn stdin(mut self, stdin: &str) -> Self {
-    assert!(self.stdin.is_none());
-    self.stdin = Some(stdin.into());
+    self.stdin.replace_none(stdin.into());
     self
   }
 
