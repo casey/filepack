@@ -383,7 +383,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <a download='foo.flac' href=/media/audio/{fingerprint}/item/1>Download</a>
+            <a download href=/media/audio/{fingerprint}/item/1>Download</a>
           </footer>
         "
       ),
@@ -421,7 +421,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <a download='foo.png' href=/media/image/{fingerprint}/item/1>Download</a>
+            <a download href=/media/image/{fingerprint}/item/1>Download</a>
           </footer>
         "
       ),
@@ -449,7 +449,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <a download='foo.mp4' href=/media/video/{fingerprint}/item/1>Download</a>
+            <a download href=/media/video/{fingerprint}/item/1>Download</a>
           </footer>
         "
       ),
@@ -484,7 +484,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <a download='foo.mp4' href=/media/video/{fingerprint}/item/1>Download</a>
+            <a download href=/media/video/{fingerprint}/item/1>Download</a>
           </footer>
         "
       ),
@@ -512,7 +512,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <a download='foo.png' href=/media/image/{fingerprint}/item/1>Download</a>
+            <a download href=/media/image/{fingerprint}/item/1>Download</a>
           </footer>
         "
       ),
@@ -543,7 +543,7 @@ mod tests {
                 </a>
               </p>
             </hgroup>
-            <a download='bar baz.png' href=/media/image/{fingerprint}/item/1>Download</a>
+            <a download href=/media/image/{fingerprint}/item/1>Download</a>
           </footer>
         "
       )),

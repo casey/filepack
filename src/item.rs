@@ -43,6 +43,14 @@ impl<T: Content> MediaItem for Item<T> {
     }
   }
 
+  fn filename(&self) -> Option<String> {
+    self
+      .content
+      .format()
+      .known()
+      .map(|format| format.filename(self.content.path().filename().as_str()))
+  }
+
   fn info(&self, url: String) -> Info {
     self
       .content

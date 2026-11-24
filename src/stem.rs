@@ -13,3 +13,13 @@ pub(crate) enum Stem {
   Readme,
   Thumbnail,
 }
+
+impl Stem {
+  pub(crate) fn filename<T: Format>(self, format: &Decoded<T>) -> String {
+    if let Decoded::Known(format) = format {
+      format.filename(&self.to_string())
+    } else {
+      self.to_string()
+    }
+  }
+}

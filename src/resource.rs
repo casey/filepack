@@ -18,13 +18,7 @@ impl Resource {
     Self { cache, ..self }
   }
 
-  pub(crate) fn filename<T: Format>(self, stem: Stem, format: &Decoded<T>) -> Self {
-    let filename = if let Decoded::Known(format) = format {
-      format!("{stem}.{}", format.extension())
-    } else {
-      stem.to_string()
-    };
-
+  pub(crate) fn filename(self, filename: String) -> Self {
     Self {
       filename: Some(filename),
       ..self
@@ -84,8 +78,9 @@ impl IntoResponse for Resource {
 
       let content_disposition = if let Some(filename) = &self.filename {
         Some(format!(
-          "{}; filename=\"{filename}\"",
+          "{}; filename*=UTF-8''{}",
           content_disposition.unwrap_or("inline"),
+          filename.percent_encode_parameter(),
         ))
       } else {
         content_disposition.map(str::to_owned)
