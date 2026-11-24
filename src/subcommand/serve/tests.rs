@@ -891,10 +891,14 @@ fn artwork_response() {
       .send();
   }
 
-  case("cover.png", "inline; filename=\"artwork.png\"", "image/png");
+  case(
+    "cover.png",
+    "inline; filename*=UTF-8''artwork.png",
+    "image/png",
+  );
   case(
     "cover.jpg",
-    "inline; filename=\"artwork.jpg\"",
+    "inline; filename*=UTF-8''artwork.jpg",
     "image/jpeg",
   );
 }
@@ -927,7 +931,7 @@ fn artwork_thumbnail_response() {
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(
       header::CONTENT_DISPOSITION,
-      "inline; filename=\"thumbnail.jpg\"",
+      "inline; filename*=UTF-8''thumbnail.jpg",
     )
     .assert_header(header::CONTENT_LENGTH, "6")
     .assert_header(header::CONTENT_TYPE, "image/jpeg")
@@ -947,7 +951,7 @@ fn artwork_thumbnail_response() {
     .get(format!("/artwork/{without_thumbnail}/thumbnail"))
     .assert_header(
       header::CONTENT_DISPOSITION,
-      "inline; filename=\"thumbnail.png\"",
+      "inline; filename*=UTF-8''thumbnail.png",
     )
     .assert_header(header::CONTENT_LENGTH, "3")
     .assert_header(header::CONTENT_TYPE, "image/png")
@@ -1004,7 +1008,7 @@ fn colophon_response() {
     .get(format!("/colophon/{fingerprint}"))
     .assert_header(
       header::CONTENT_DISPOSITION,
-      "inline; filename=\"COLOPHON.md\"",
+      "inline; filename*=UTF-8''COLOPHON.md",
     )
     .assert_header(header::CONTENT_TYPE, "text/plain;charset=utf-8")
     .assert_body("bar")
@@ -2521,7 +2525,7 @@ fn license_response() {
     .get(format!("/license/{fingerprint}/1"))
     .assert_header(
       header::CONTENT_DISPOSITION,
-      "inline; filename=\"LICENSE.txt\"",
+      "inline; filename*=UTF-8''LICENSE.txt",
     )
     .assert_header(header::CONTENT_TYPE, "text/plain;charset=utf-8")
     .assert_body("bar")
@@ -2960,7 +2964,7 @@ fn media_image_item_thumbnail_response() {
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(
       header::CONTENT_DISPOSITION,
-      "inline; filename=\"thumbnail.jpg\"",
+      "inline; filename*=UTF-8''thumbnail.jpg",
     )
     .assert_header(header::CONTENT_LENGTH, "9")
     .assert_header(header::CONTENT_TYPE, "image/jpeg")
@@ -2972,7 +2976,7 @@ fn media_image_item_thumbnail_response() {
     .get(format!("/media/image/{fingerprint}/item/2/thumbnail"))
     .assert_header(
       header::CONTENT_DISPOSITION,
-      "inline; filename=\"thumbnail.jpg\"",
+      "inline; filename*=UTF-8''thumbnail.jpg",
     )
     .assert_header(header::CONTENT_LENGTH, "6")
     .assert_header(header::CONTENT_TYPE, "image/jpeg")
@@ -2986,6 +2990,40 @@ fn media_image_item_thumbnail_response() {
     .assert_body(format!(
       "image 3 does not exist, package {fingerprint} has 2 images"
     ))
+    .send();
+}
+
+#[test]
+fn media_item_filename() {
+  let server = TestServer::new();
+
+  let mut unknown = Item::<Image>::test("bob.png");
+  unknown.content.format = Decoded::Unknown(vec![99]);
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Image {
+        items: vec![Item::test("foo/bar baz.png"), unknown],
+      }),
+      ..default()
+    })
+    .file("foo/bar baz.png", b"qux")
+    .file("bob.png", b"bob")
+    .upload(&server);
+
+  server
+    .get(format!("/media/image/{fingerprint}/item/1"))
+    .assert_header(
+      header::CONTENT_DISPOSITION,
+      "inline; filename*=UTF-8''bar%20baz.png",
+    )
+    .assert_body("qux")
+    .send();
+
+  server
+    .get(format!("/media/image/{fingerprint}/item/2"))
+    .assert_header(header::CONTENT_DISPOSITION, "attachment")
+    .assert_body("bob")
     .send();
 }
 
@@ -3091,7 +3129,7 @@ fn media_video_item_placeholder_response() {
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(
       header::CONTENT_DISPOSITION,
-      "inline; filename=\"placeholder.png\"",
+      "inline; filename*=UTF-8''placeholder.png",
     )
     .assert_header(header::CONTENT_LENGTH, "3")
     .assert_header(header::CONTENT_TYPE, "image/png")
@@ -3157,7 +3195,7 @@ fn media_video_item_placeholder_thumbnail_response() {
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
     .assert_header(
       header::CONTENT_DISPOSITION,
-      "inline; filename=\"thumbnail.jpg\"",
+      "inline; filename*=UTF-8''thumbnail.jpg",
     )
     .assert_header(header::CONTENT_LENGTH, "9")
     .assert_header(header::CONTENT_TYPE, "image/jpeg")
@@ -3171,7 +3209,7 @@ fn media_video_item_placeholder_thumbnail_response() {
     ))
     .assert_header(
       header::CONTENT_DISPOSITION,
-      "inline; filename=\"thumbnail.png\"",
+      "inline; filename*=UTF-8''thumbnail.png",
     )
     .assert_header(header::CONTENT_LENGTH, "3")
     .assert_header(header::CONTENT_TYPE, "image/png")
@@ -4712,13 +4750,13 @@ fn readme_response() {
 
   case(
     Decoded::Known(TextFormat::Markdown),
-    "inline; filename=\"README.md\"",
+    "inline; filename*=UTF-8''README.md",
     "text/plain;charset=utf-8",
   );
 
   case(
     Decoded::Unknown(vec![99]),
-    "attachment; filename=\"README\"",
+    "attachment; filename*=UTF-8''README",
     "application/octet-stream",
   );
 }

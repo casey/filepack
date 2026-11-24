@@ -46,17 +46,16 @@ impl Server {
 
     let hash = self.verified_package_file(fingerprint, &image.path)?;
 
+    let stem = if thumbnail {
+      Stem::Thumbnail
+    } else {
+      Stem::Artwork
+    };
+
     Ok(
       self
         .open_file(hash)?
-        .filename(
-          if thumbnail {
-            Stem::Thumbnail
-          } else {
-            Stem::Artwork
-          },
-          &image.format,
-        )
+        .filename(stem.filename(&image.format))
         .ty(image.resource_type()),
     )
   }
@@ -506,7 +505,7 @@ impl Server {
       })?;
 
     let (path, ty, filename) = match resource {
-      MediaItemResource::Original => (item.path(), item.resource_type(), None),
+      MediaItemResource::Original => (item.path(), item.resource_type(), item.filename()),
       MediaItemResource::Placeholder | MediaItemResource::PlaceholderThumbnail => {
         let placeholder = item
           .placeholder()
@@ -522,7 +521,7 @@ impl Server {
         (
           &image.path,
           image.resource_type(),
-          Some((stem, &image.format)),
+          Some(stem.filename(&image.format)),
         )
       }
       MediaItemResource::Thumbnail => {
@@ -534,7 +533,7 @@ impl Server {
         (
           &image.path,
           image.resource_type(),
-          Some((Stem::Thumbnail, &image.format)),
+          Some(Stem::Thumbnail.filename(&image.format)),
         )
       }
     };
@@ -543,8 +542,8 @@ impl Server {
 
     let resource = self.open_file(hash)?.ty(ty);
 
-    if let Some((stem, format)) = filename {
-      Ok(resource.filename(stem, format))
+    if let Some(filename) = filename {
+      Ok(resource.filename(filename))
     } else {
       Ok(resource)
     }
@@ -1004,7 +1003,7 @@ impl Server {
     Ok(
       self
         .open_file(hash)?
-        .filename(stem, &text.format)
+        .filename(stem.filename(&text.format))
         .ty(text.resource_type()),
     )
   }
