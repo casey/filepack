@@ -5,7 +5,7 @@ use super::*;
 #[derive(Debug, Deserialize, PartialEq, Json)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct PackageMetadata {
-  /// Path to a markdown file containing a colophon describing the package.
+  /// Path to a colophon describing the package.
   #[json(example = "COLOPHON.md")]
   pub(crate) colophon: Option<RelativePath>,
   /// Primary person or group who created the package.

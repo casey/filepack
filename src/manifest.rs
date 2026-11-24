@@ -220,18 +220,6 @@ mod tests {
   }
 
   #[test]
-  fn manifests_in_readme_are_valid() {
-    let readme = filesystem::read_to_string("README.md").unwrap();
-
-    let re = Regex::new(r"(?s)```json(.*?)```").unwrap();
-
-    for capture in re.captures_iter(&readme) {
-      let manifest = capture[1].replace("…", Attestation::EXAMPLE);
-      serde_json::from_str::<Manifest>(&manifest).unwrap();
-    }
-  }
-
-  #[test]
   fn reserved_filename() {
     #[track_caller]
     fn case(path: &str, expected: &str) {

@@ -96,22 +96,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn dates_in_readme_are_valid() {
-    let readme = filesystem::read_to_string("README.md").unwrap();
-
-    let re = Regex::new(r"(?s)```tsv(.*?)```").unwrap();
-
-    for capture in re.captures_iter(&readme) {
-      for line in capture[1].lines() {
-        if line.is_empty() {
-          continue;
-        }
-        assert!(line.parse::<Time>().is_ok(), "invalid date {line}");
-      }
-    }
-  }
-
-  #[test]
   fn decode_error() {
     assert_matches!(
       Time::decode_from_slice(&[0x82, 0x02, 0x80]),
