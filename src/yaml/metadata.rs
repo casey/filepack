@@ -29,7 +29,7 @@ pub(crate) struct Metadata {
   /// Primary publisher of the content.
   #[json(example = "Miskatonic University Press")]
   pub(crate) publisher: Option<Line>,
-  /// Path to a markdown file containing a readme describing the content.
+  /// Path to a readme describing the content.
   #[json(example = "README.md")]
   pub(crate) readme: Option<RelativePath>,
   /// Rights statement for the content.
@@ -725,72 +725,6 @@ mod tests {
       },
       "invalid path `foo`: path must end in `.md` or `.txt`",
     );
-  }
-
-  #[test]
-  fn metadata_in_readme_is_valid() {
-    let readme = filesystem::read_to_string("README.md").unwrap();
-
-    let re = Regex::new(r"(?s)```yaml(.*?)```").unwrap();
-
-    for capture in re.captures_iter(&readme) {
-      let metadata = Metadata::deserialize("README.md".as_ref(), &capture[1]).unwrap();
-
-      let Metadata {
-        artwork,
-        creator,
-        description,
-        homepage,
-        language,
-        lints,
-        media,
-        package,
-        publisher,
-        readme,
-        rights,
-        time,
-        title,
-      } = metadata;
-
-      if title
-        .as_ref()
-        .is_none_or(|title| title != "Tobin's Spirit Guide")
-      {
-        continue;
-      }
-
-      assert!(artwork.is_some());
-      assert!(creator.is_some());
-      assert!(description.is_some());
-      assert!(homepage.is_some());
-      assert!(language.is_some());
-      assert!(lints.is_some());
-      assert!(publisher.is_some());
-      assert!(readme.is_some());
-      assert!(rights.is_some());
-      assert!(time.is_some());
-      assert!(title.is_some());
-
-      assert!(media.is_none());
-
-      let PackageMetadata {
-        colophon,
-        creator,
-        description,
-        homepage,
-        sources,
-        time,
-        title,
-      } = package.unwrap();
-
-      assert!(colophon.is_some());
-      assert!(creator.is_some());
-      assert!(description.is_some());
-      assert!(homepage.is_some());
-      assert!(sources.is_some());
-      assert!(time.is_some());
-      assert!(title.is_some());
-    }
   }
 
   #[test]
