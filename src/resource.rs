@@ -18,19 +18,12 @@ impl Resource {
     Self { cache, ..self }
   }
 
-  pub(crate) fn filename<T: Format>(self, stem: &'static str, format: &Decoded<T>) -> Self {
+  pub(crate) fn filename<T: Format>(self, stem: Stem, format: &Decoded<T>) -> Self {
     let filename = if let Decoded::Known(format) = format {
       format!("{stem}.{}", format.extension())
     } else {
-      stem.into()
+      stem.to_string()
     };
-
-    assert!(
-      filename
-        .chars()
-        .all(|c| matches!(c, '\t' | ' ' | '!' | '#'..='[' | ']'..='~') && c != '%'),
-      "filename `{filename}` requires encoding",
-    );
 
     Self {
       filename: Some(filename),
@@ -176,26 +169,5 @@ impl IntoResponse for Resource {
 impl Describe for Resource {
   fn describe(endpoint: &mut reference::Endpoint, _registry: &mut deco::Registry) {
     endpoint.response = Some(reference::Response::File);
-  }
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  #[should_panic(expected = "filename `foo%` requires encoding")]
-  fn filename_requires_encoding() {
-    Resource {
-      cache: false,
-      content_length: 0,
-      file: tempfile::tempfile().unwrap(),
-      filename: None,
-      hash: Hash::bytes(b""),
-      range: None,
-      ty: ResourceType::Binary,
-      unsandboxed_content_type: None,
-    }
-    .filename::<TextFormat>("foo%", &Decoded::Unknown(Vec::new()));
   }
 }
