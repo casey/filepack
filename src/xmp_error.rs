@@ -11,6 +11,6 @@ pub enum XmpError {
   TitleMultiple,
   #[snafu(display("unexpected element `{name}`"))]
   UnexpectedElement { name: String },
-  #[snafu(display("invalid UTF-8"))]
+  #[snafu(display("XML is not valid UTF-8"))]
   Utf8 { source: str::Utf8Error },
 }

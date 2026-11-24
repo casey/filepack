@@ -77,6 +77,7 @@ mod tests {
       [
         ("media", "audio"),
         ("media", "image"),
+        ("media", "text"),
         ("media", "video"),
         ("media", "web"),
       ],

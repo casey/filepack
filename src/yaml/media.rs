@@ -14,6 +14,11 @@ pub(crate) enum Media {
     /// Metadata describing the image items.
     items: Vec<Image>,
   },
+  /// Collection of text items.
+  Text {
+    /// Metadata describing the text items.
+    items: Vec<Text>,
+  },
   /// Collection of video items.
   Video {
     /// Metadata describing the video items.
@@ -28,6 +33,7 @@ impl Media {
     match self {
       Self::Audio { items } => items.is_empty(),
       Self::Image { items } => items.is_empty(),
+      Self::Text { items } => items.is_empty(),
       Self::Video { items } => items.is_empty(),
       Self::Web => false,
     }
@@ -73,6 +79,17 @@ impl Media {
           })
           .collect::<Result<Vec<Item<crate::Image>>>>()?,
       },
+      Self::Text { items } => crate::Media::Text {
+        items: items
+          .into_iter()
+          .map(|Text { path, title }| {
+            let mut item = crate::Text::load(root, path)?;
+            bar.inc(1);
+            item.title.replace_none(title);
+            Ok(item)
+          })
+          .collect::<Result<Vec<Item<crate::Text>>>>()?,
+      },
       Self::Video { items } => crate::Media::Video {
         items: items
           .into_iter()
@@ -105,6 +122,7 @@ mod tests {
 
     case(Media::Audio { items: Vec::new() }, true);
     case(Media::Image { items: Vec::new() }, true);
+    case(Media::Text { items: Vec::new() }, true);
     case(Media::Video { items: Vec::new() }, true);
     case(
       Media::Image {

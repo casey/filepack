@@ -16,6 +16,7 @@ impl Display for Section {
     match self {
       Self::Media(MediaType::Audio) => write!(f, "Audio"),
       Self::Media(MediaType::Image) => write!(f, "Image"),
+      Self::Media(MediaType::Text) => write!(f, "Text"),
       Self::Media(MediaType::Video) => write!(f, "Video"),
       Self::Media(MediaType::Web) => write!(f, "Web"),
       Self::None => write!(f, "None"),

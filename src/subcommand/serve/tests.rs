@@ -3028,6 +3028,32 @@ fn media_item_filename() {
 }
 
 #[test]
+fn media_text_item_response() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Text {
+        items: vec![Item::test("foo.md")],
+      }),
+      ..default()
+    })
+    .file("foo.md", b"bar")
+    .upload(&server);
+
+  server
+    .get(format!("/media/text/{fingerprint}/item/1"))
+    .assert_header(
+      header::CONTENT_DISPOSITION,
+      "inline; filename*=UTF-8''foo.md",
+    )
+    .assert_header(header::CONTENT_TYPE, "text/plain;charset=utf-8")
+    .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"bar")))
+    .assert_body("bar")
+    .send();
+}
+
+#[test]
 fn media_type_mismatch() {
   #[track_caller]
   fn case(server: &TestServer, path: String, body: String) {
@@ -3948,6 +3974,36 @@ fn package_item_package_not_found() {
       StatusCode::NOT_FOUND,
       ServerError::PackageFingerprintNotFound { fingerprint },
     )
+    .send();
+}
+
+#[test]
+fn package_item_text() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    media: Some(Media::Text {
+      items: vec![Item {
+        content: Text::test("foo.md"),
+        title: Some("bar".parse().unwrap()),
+      }],
+    }),
+    ..default()
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.md", b"baz")
+    .upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}/item/1"))
+    .assert_page(ItemHtml {
+      fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
+      metadata,
+      ..default()
+    })
     .send();
 }
 

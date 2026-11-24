@@ -229,7 +229,7 @@ use {
     DeserializeFromStr, MapPreventDuplicates, SerializeDisplay, SetPreventDuplicates, serde_as,
     skip_serializing_none,
   },
-  snafu::{ErrorCompat, IntoError, OptionExt, ResultExt, Snafu, ensure},
+  snafu::{ErrorCompat, IntoError, OptionExt as _, ResultExt, Snafu, ensure},
   std::{
     backtrace::{Backtrace, BacktraceStatus},
     borrow::Borrow,
@@ -311,6 +311,7 @@ pub use self::{
   mp3_builder::Mp3Builder,
   mp4_builder::Mp4Builder,
   non_empty_ordered_set::NonEmptyOrderedSet,
+  option_ext::OptionExt,
   package_identifier::PackageIdentifier,
   page::Page,
   png_builder::PngBuilder,
@@ -475,6 +476,7 @@ mod non_empty_ordered_set;
 mod number;
 mod number_error;
 mod open_graph_image;
+mod option_ext;
 mod options;
 mod or;
 mod order;

@@ -5,13 +5,14 @@ use super::*;
   Clone, Copy, Debug, Decode, Display, Encode, Eq, Json, Ord, PartialEq, PartialOrd, Serialize,
 )]
 #[serde(rename_all = "kebab-case")]
-#[strum(serialize_all = "kebab-case")]
 pub(crate) enum TextFormat {
   /// [Markdown](https://en.wikipedia.org/wiki/Markdown).
   #[n(0)]
+  #[strum(serialize = "Markdown")]
   Markdown,
   /// Plain text.
   #[n(1)]
+  #[strum(serialize = "plain text")]
   Plain,
 }
 

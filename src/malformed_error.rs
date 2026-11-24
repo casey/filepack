@@ -73,10 +73,10 @@ pub enum MalformedError {
     actual: String,
     expected: &'static str,
   },
-  #[snafu(display("string is not valid UTF-8"))]
-  Unicode { source: Utf8Error },
   #[snafu(display("unsorted or duplicate array elements"))]
   Unsorted,
   #[snafu(display("failed to parse URL"))]
   Url { source: UrlError },
+  #[snafu(display("string is not valid UTF-8"))]
+  Utf8 { source: Utf8Error },
 }

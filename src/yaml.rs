@@ -4,7 +4,7 @@ pub use self::example::Example;
 
 pub(crate) use self::{
   audio::Audio, image::Image, lints::Lints, media::Media, metadata::Metadata,
-  package_metadata::PackageMetadata, rights::Rights, video::Video, writer::Writer,
+  package_metadata::PackageMetadata, rights::Rights, text::Text, video::Video, writer::Writer,
 };
 
 mod audio;
@@ -15,5 +15,6 @@ mod media;
 mod metadata;
 mod package_metadata;
 mod rights;
+mod text;
 mod video;
 mod writer;

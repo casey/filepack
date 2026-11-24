@@ -13,6 +13,13 @@ pub(crate) struct Text {
 }
 
 impl Text {
+  pub(crate) fn check(&self, root: &Utf8Path) -> Result {
+    let path = root.join(&self.path);
+    let bytes = filesystem::read(&path)?;
+    str::from_utf8(&bytes).context(error::TextUtf8 { path })?;
+    Ok(())
+  }
+
   pub(crate) fn new(path: RelativePath) -> Result<Self> {
     let format = TextFormat::from_path(&path).context(error::Path { path: &path })?;
     Ok(Self {
@@ -20,19 +27,49 @@ impl Text {
       path,
     })
   }
+}
 
-  pub(crate) fn resource_type(&self) -> ResourceType {
-    self
-      .format
-      .known()
-      .copied()
-      .map_or(ResourceType::Binary, Format::resource_type)
+impl Content for Text {
+  const LABEL: &'static str = "Text";
+
+  type Format = TextFormat;
+
+  fn format(&self) -> &Decoded<Self::Format> {
+    &self.format
+  }
+
+  fn info(&self, builder: InfoBuilder) -> InfoBuilder {
+    builder.value("format", &self.format)
+  }
+
+  fn load(_root: &Utf8Path, path: RelativePath) -> Result<Item<Self>> {
+    Ok(Item {
+      content: Self::new(path)?,
+      title: None,
+    })
+  }
+
+  fn path(&self) -> &RelativePath {
+    &self.path
+  }
+
+  #[cfg(test)]
+  fn test(path: &str) -> Self {
+    Self::new(path.parse().unwrap()).unwrap()
   }
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn info() {
+    assert_eq!(
+      Text::test("foo.md").info(InfoBuilder::new()).build(),
+      InfoBuilder::new().value("format", "Markdown").build(),
+    );
+  }
 
   #[test]
   fn json() {

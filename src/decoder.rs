@@ -142,7 +142,7 @@ impl<'a> Decoder<'a> {
   }
 
   pub(crate) fn text(&mut self) -> DecodeResult<&'a str> {
-    Ok(str::from_utf8(self.bytes()?).context(malformed_error::Unicode)?)
+    Ok(str::from_utf8(self.bytes()?).context(malformed_error::Utf8)?)
   }
 
   pub(crate) fn unknown(&self, source: UnknownError) -> DecodeError {
@@ -250,7 +250,7 @@ mod tests {
   fn unicode() {
     assert_matches!(
       Decoder::new(&[0x82, 0xff, 0xfe]).text().map(drop),
-      Err(DecodeError::Malformed(MalformedError::Unicode { .. })),
+      Err(DecodeError::Malformed(MalformedError::Utf8 { .. })),
     );
   }
 }

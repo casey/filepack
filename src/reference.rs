@@ -197,6 +197,7 @@ impl Reference {
       media_formats: [
         (MediaType::Audio, media_formats::<AudioFormat>()),
         (MediaType::Image, media_formats::<ImageFormat>()),
+        (MediaType::Text, media_formats::<TextFormat>()),
         (MediaType::Video, media_formats::<VideoFormat>()),
       ]
       .into(),

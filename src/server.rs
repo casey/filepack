@@ -528,7 +528,7 @@ impl Server {
         let image = match (metadata.thumbnail(item.path()), items) {
           (Some(thumbnail), _) => thumbnail,
           (None, Items::Image(images)) => &images[index].content,
-          (None, Items::Audio(_) | Items::Video(_)) => unreachable!(),
+          (None, Items::Audio(_) | Items::Text(_) | Items::Video(_)) => unreachable!(),
         };
         (
           &image.path,

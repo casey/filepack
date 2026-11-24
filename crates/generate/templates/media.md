@@ -123,6 +123,17 @@ If necessary, orientation may be corrected:
 exiftool -overwrite_original -Orientation='Rotate 90 CW' foo.jpg
 ```
 %%     }
+%%     MediaType::Text => {
+
+Text
+----
+
+A collection of text files.
+
+### Formats
+
+{{ FormatsMd { formats: &self.media_formats[ty] } }}
+%%     }
 %%     MediaType::Video => {
 
 Video

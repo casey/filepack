@@ -28,15 +28,22 @@ pub(crate) enum Media {
     #[n(1)]
     items: Vec<Item<Image>>,
   },
-  /// Collection of video items.
+  /// Collection of text items.
   #[n(2)]
+  Text {
+    /// Metadata describing the text items.
+    #[n(1)]
+    items: Vec<Item<Text>>,
+  },
+  /// Collection of video items.
+  #[n(3)]
   Video {
     /// Metadata describing the video items.
     #[n(1)]
     items: Vec<Item<Video>>,
   },
   /// A web site, with `static/index.html` as its entry point.
-  #[n(3)]
+  #[n(4)]
   Web,
 }
 
@@ -67,6 +74,7 @@ impl Media {
           items,
         ),
         Self::Image { items } => format(builder.value("images", items.len()), items),
+        Self::Text { items } => format(builder.value("texts", items.len()), items),
         Self::Video { items } => format(
           builder
             .value("videos", items.len())
@@ -81,6 +89,7 @@ impl Media {
     match self {
       Self::Audio { items } => Some(Items::Audio(items)),
       Self::Image { items } => Some(Items::Image(items)),
+      Self::Text { items } => Some(Items::Text(items)),
       Self::Video { items } => Some(Items::Video(items)),
       Self::Web => None,
     }

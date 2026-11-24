@@ -65,8 +65,8 @@ impl Rights {
         texts
           .iter()
           .cloned()
-          .map(Text::new)
-          .collect::<Result<Vec<Text>>>()
+          .map(crate::Text::new)
+          .collect::<Result<Vec<crate::Text>>>()
       })
       .transpose()?
       .map(|texts| texts.try_into().unwrap());

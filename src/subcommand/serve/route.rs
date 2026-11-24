@@ -45,6 +45,7 @@ impl Route {
       media_audio_item_route(registry),
       media_image_item_route(registry),
       media_image_item_thumbnail_route(registry),
+      media_text_item_route(registry),
       media_video_item_route(registry),
       media_video_item_placeholder_route(registry),
       media_video_item_placeholder_thumbnail_route(registry),
@@ -464,6 +465,30 @@ pub(crate) async fn media_image_item_thumbnail(
           item,
           MediaType::Image,
           MediaItemResource::Thumbnail,
+        )?
+        .range(range),
+    )
+  })
+}
+
+/// Serve text `item` of package with `fingerprint`.
+///
+/// `fingerprint`: Fingerprint of the package.
+/// `item`: One-based index of the media item.
+#[route(GET, "/media/text/{fingerprint}/item/{item}")]
+pub(crate) async fn media_text_item(
+  server: ServerExtension,
+  Path((fingerprint, Ordinal(item))): Path<(Fingerprint, Ordinal)>,
+  range: Option<TypedHeader<headers::Range>>,
+) -> ServerResult<Resource> {
+  block_in_place(|| {
+    Ok(
+      server
+        .media_item(
+          fingerprint,
+          item,
+          MediaType::Text,
+          MediaItemResource::Original,
         )?
         .range(range),
     )

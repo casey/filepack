@@ -44,7 +44,7 @@ impl PackageMetadata {
     } = self;
 
     Ok(crate::PackageMetadata {
-      colophon: colophon.map(Text::new).transpose()?,
+      colophon: colophon.map(crate::Text::new).transpose()?,
       creator,
       description,
       homepage,
