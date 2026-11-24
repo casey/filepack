@@ -173,6 +173,7 @@ use {
     sort::Sort,
     sort_key::SortKey,
     static_asset::StaticAsset,
+    stem::Stem,
     style::Style,
     subcommand::Subcommand,
     subcommand::serve::route::Route,
@@ -521,6 +522,7 @@ mod sort_key;
 mod sorted_set;
 mod state;
 mod static_asset;
+mod stem;
 mod style;
 mod subcommand;
 mod tag;

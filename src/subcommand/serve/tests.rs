@@ -925,6 +925,10 @@ fn artwork_thumbnail_response() {
   server
     .get(format!("/artwork/{with_thumbnail}/thumbnail"))
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(
+      header::CONTENT_DISPOSITION,
+      "inline; filename=\"thumbnail.jpg\"",
+    )
     .assert_header(header::CONTENT_LENGTH, "6")
     .assert_header(header::CONTENT_TYPE, "image/jpeg")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(thumbnail)))
@@ -941,6 +945,10 @@ fn artwork_thumbnail_response() {
 
   server
     .get(format!("/artwork/{without_thumbnail}/thumbnail"))
+    .assert_header(
+      header::CONTENT_DISPOSITION,
+      "inline; filename=\"thumbnail.png\"",
+    )
     .assert_header(header::CONTENT_LENGTH, "3")
     .assert_header(header::CONTENT_TYPE, "image/png")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(artwork)))
@@ -2950,6 +2958,10 @@ fn media_image_item_thumbnail_response() {
   server
     .get(format!("/media/image/{fingerprint}/item/1/thumbnail"))
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(
+      header::CONTENT_DISPOSITION,
+      "inline; filename=\"thumbnail.jpg\"",
+    )
     .assert_header(header::CONTENT_LENGTH, "9")
     .assert_header(header::CONTENT_TYPE, "image/jpeg")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(thumbnail)))
@@ -2958,6 +2970,10 @@ fn media_image_item_thumbnail_response() {
 
   server
     .get(format!("/media/image/{fingerprint}/item/2/thumbnail"))
+    .assert_header(
+      header::CONTENT_DISPOSITION,
+      "inline; filename=\"thumbnail.jpg\"",
+    )
     .assert_header(header::CONTENT_LENGTH, "6")
     .assert_header(header::CONTENT_TYPE, "image/jpeg")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(bar)))
@@ -3073,6 +3089,10 @@ fn media_video_item_placeholder_response() {
     .get(format!("/media/video/{fingerprint}/item/1/placeholder"))
     .assert_header(header::ACCEPT_RANGES, "bytes")
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(
+      header::CONTENT_DISPOSITION,
+      "inline; filename=\"placeholder.png\"",
+    )
     .assert_header(header::CONTENT_LENGTH, "3")
     .assert_header(header::CONTENT_TYPE, "image/png")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"bar")))
@@ -3135,6 +3155,10 @@ fn media_video_item_placeholder_thumbnail_response() {
       "/media/video/{fingerprint}/item/1/placeholder/thumbnail"
     ))
     .assert_header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
+    .assert_header(
+      header::CONTENT_DISPOSITION,
+      "inline; filename=\"thumbnail.jpg\"",
+    )
     .assert_header(header::CONTENT_LENGTH, "9")
     .assert_header(header::CONTENT_TYPE, "image/jpeg")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(thumbnail)))
@@ -3145,6 +3169,10 @@ fn media_video_item_placeholder_thumbnail_response() {
     .get(format!(
       "/media/video/{fingerprint}/item/2/placeholder/thumbnail"
     ))
+    .assert_header(
+      header::CONTENT_DISPOSITION,
+      "inline; filename=\"thumbnail.png\"",
+    )
     .assert_header(header::CONTENT_LENGTH, "3")
     .assert_header(header::CONTENT_TYPE, "image/png")
     .assert_header(header::ETAG, format!("\"{}\"", Hash::bytes(b"qux")))

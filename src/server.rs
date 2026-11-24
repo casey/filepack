@@ -49,7 +49,14 @@ impl Server {
     Ok(
       self
         .open_file(hash)?
-        .filename("artwork", &image.format)
+        .filename(
+          if thumbnail {
+            Stem::Thumbnail
+          } else {
+            Stem::Artwork
+          },
+          &image.format,
+        )
         .ty(image.resource_type()),
     )
   }
@@ -63,7 +70,7 @@ impl Server {
       .and_then(|package| package.colophon.as_ref())
       .context(server_error::ColophonNotFound { fingerprint })?;
 
-    self.text(fingerprint, "COLOPHON", colophon)
+    self.text(fingerprint, Stem::Colophon, colophon)
   }
 
   pub(crate) fn delete_number(&self, number: u64) -> ServerResult {
@@ -451,7 +458,7 @@ impl Server {
       .and_then(|texts| texts.get(index))
       .context(server_error::LicenseTextNotFound { fingerprint, index })?;
 
-    self.text(fingerprint, "LICENSE", text)
+    self.text(fingerprint, Stem::License, text)
   }
 
   pub(crate) fn media_item(
@@ -498,28 +505,49 @@ impl Server {
         noun: items.noun(),
       })?;
 
-    let (path, ty) = match resource {
-      MediaItemResource::Original => (item.path(), item.resource_type()),
+    let (path, ty, filename) = match resource {
+      MediaItemResource::Original => (item.path(), item.resource_type(), None),
       MediaItemResource::Placeholder | MediaItemResource::PlaceholderThumbnail => {
         let placeholder = item
           .placeholder()
           .context(server_error::PlaceholderNotFound { fingerprint, index })?;
-        let image = if resource == MediaItemResource::PlaceholderThumbnail {
-          metadata.thumbnail(&placeholder.path).unwrap_or(placeholder)
+        let (image, stem) = if resource == MediaItemResource::PlaceholderThumbnail {
+          (
+            metadata.thumbnail(&placeholder.path).unwrap_or(placeholder),
+            Stem::Thumbnail,
+          )
         } else {
-          placeholder
+          (placeholder, Stem::Placeholder)
         };
-        (&image.path, image.resource_type())
+        (
+          &image.path,
+          image.resource_type(),
+          Some((stem, &image.format)),
+        )
       }
-      MediaItemResource::Thumbnail => match metadata.thumbnail(item.path()) {
-        Some(thumbnail) => (&thumbnail.path, thumbnail.resource_type()),
-        None => (item.path(), item.resource_type()),
-      },
+      MediaItemResource::Thumbnail => {
+        let image = match (metadata.thumbnail(item.path()), items) {
+          (Some(thumbnail), _) => thumbnail,
+          (None, Items::Image(images)) => &images[index].content,
+          (None, Items::Audio(_) | Items::Video(_)) => unreachable!(),
+        };
+        (
+          &image.path,
+          image.resource_type(),
+          Some((Stem::Thumbnail, &image.format)),
+        )
+      }
     };
 
     let hash = self.verified_package_file(fingerprint, path)?;
 
-    Ok(self.open_file(hash)?.ty(ty))
+    let resource = self.open_file(hash)?.ty(ty);
+
+    if let Some((stem, format)) = filename {
+      Ok(resource.filename(stem, format))
+    } else {
+      Ok(resource)
+    }
   }
 
   fn metadata(&self, fingerprint: Fingerprint) -> ServerResult<Option<Metadata>> {
@@ -859,7 +887,7 @@ impl Server {
       .as_ref()
       .context(server_error::ReadmeNotFound { fingerprint })?;
 
-    self.text(fingerprint, "README", readme)
+    self.text(fingerprint, Stem::Readme, readme)
   }
 
   pub(crate) fn resolve(&self, identifier: PackageIdentifier) -> ServerResult<Resolved> {
@@ -970,12 +998,7 @@ impl Server {
       .collect()
   }
 
-  fn text(
-    &self,
-    fingerprint: Fingerprint,
-    stem: &'static str,
-    text: &Text,
-  ) -> ServerResult<Resource> {
+  fn text(&self, fingerprint: Fingerprint, stem: Stem, text: &Text) -> ServerResult<Resource> {
     let hash = self.verified_package_file(fingerprint, &text.path)?;
 
     Ok(
