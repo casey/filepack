@@ -8,7 +8,8 @@
 <img src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }} width={{ dimensions.width }} height={{ dimensions.height }}>
 %%   }
 %%   Items::Text(_) => {
-<iframe sandbox src=/media/text/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }}></iframe>
+<pre>
+{{ self.text.as_ref().unwrap() }}</pre>
 %%   }
 %%   Items::Video(_) => {
 <video

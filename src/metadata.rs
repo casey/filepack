@@ -113,29 +113,7 @@ impl Metadata {
   }
 
   pub(crate) fn check_texts(&self, root: &Utf8Path) -> Result {
-    let mut texts = Vec::new();
-
-    if let Some(package) = &self.package
-      && let Some(colophon) = &package.colophon
-    {
-      texts.push(colophon);
-    }
-
-    if let Some(readme) = &self.readme {
-      texts.push(readme);
-    }
-
-    if let Some(rights) = &self.rights
-      && let Some(rights_texts) = &rights.texts
-    {
-      texts.extend(rights_texts.iter());
-    }
-
-    if let Some(Media::Text { items }) = &self.media {
-      texts.extend(items.iter().map(|item| &item.content));
-    }
-
-    for text in texts {
+    for text in self.texts() {
       text.check(root)?;
     }
 
@@ -336,6 +314,32 @@ impl Metadata {
     let metadata = Self::decode_from_slice(&deco).context(error::DecodeMetadataDeco { path })?;
 
     Ok(Some(metadata))
+  }
+
+  pub(crate) fn texts(&self) -> Vec<&Text> {
+    let mut texts = Vec::new();
+
+    if let Some(package) = &self.package
+      && let Some(colophon) = &package.colophon
+    {
+      texts.push(colophon);
+    }
+
+    if let Some(readme) = &self.readme {
+      texts.push(readme);
+    }
+
+    if let Some(rights) = &self.rights
+      && let Some(rights_texts) = &rights.texts
+    {
+      texts.extend(rights_texts.iter());
+    }
+
+    if let Some(Media::Text { items }) = &self.media {
+      texts.extend(items.iter().map(|item| &item.content));
+    }
+
+    texts
   }
 
   pub(crate) fn thumbnail(&self, path: &RelativePath) -> Option<&Image> {

@@ -4002,8 +4002,45 @@ fn package_item_text() {
       fingerprint,
       identifier: PackageIdentifier::Fingerprint(fingerprint),
       metadata,
+      text: Some("baz".into()),
       ..default()
     })
+    .send();
+}
+
+#[test]
+fn package_item_text_corrupt() {
+  let server = TestServer::new();
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&Metadata {
+      media: Some(Media::Text {
+        items: vec![Item::test("foo.md")],
+      }),
+      ..default()
+    })
+    .file("foo.md", b"bar")
+    .upload(&server);
+
+  fs::write(
+    server
+      .data_dir
+      .join("files")
+      .join(Hash::bytes(b"bar").to_string()),
+    [0x80],
+  )
+  .unwrap();
+
+  server
+    .get(format!("/package/{fingerprint}/item/1"))
+    .assert_error(
+      StatusCode::INTERNAL_SERVER_ERROR,
+      ServerError::PackageTextCorrupt {
+        fingerprint,
+        path: "foo.md".parse().unwrap(),
+        source: String::from_utf8(vec![0x80]).unwrap_err(),
+      },
+    )
     .send();
 }
 
@@ -5378,6 +5415,37 @@ fn verify_directory_metadata_references_present_file() {
   server.write_file(&deco);
 
   server.post(format!("/api/directory/{hash}")).send();
+}
+
+#[test]
+fn verify_directory_metadata_text_invalid_utf8() {
+  let server = TestServer::new();
+
+  server.write_file(&[0x80]);
+
+  let metadata = Metadata {
+    media: Some(Media::Text {
+      items: vec![Item::test("foo.md")],
+    }),
+    ..default()
+  }
+  .encode_to_vec();
+  server.write_file(&metadata);
+
+  let (deco, hash) = Directory::new()
+    .insert_file(Metadata::DECO_FILENAME, &metadata)
+    .insert_file("foo.md", &[0x80])
+    .deco();
+  let fingerprint = Fingerprint(hash);
+  server.write_file(&deco);
+
+  server
+    .post(format!("/api/directory/{hash}"))
+    .status(StatusCode::BAD_REQUEST)
+    .assert_body(format!(
+      "package {fingerprint} text file `foo.md` is not valid UTF-8"
+    ))
+    .send();
 }
 
 #[test]

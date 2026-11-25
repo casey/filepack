@@ -824,6 +824,16 @@ impl Server {
     self.metadata(fingerprint)
   }
 
+  pub(crate) fn package_text(
+    &self,
+    fingerprint: Fingerprint,
+    path: &RelativePath,
+  ) -> ServerResult<String> {
+    let hash = self.verified_package_file(fingerprint, path)?;
+    let bytes = self.read_file(hash)?;
+    String::from_utf8(bytes).context(server_error::PackageTextCorrupt { fingerprint, path })
+  }
+
   pub(crate) fn packages(&self, sort: Sort, order: Order) -> ServerResult<Vec<PackageSummary>> {
     let tx = self.database.begin_read()?;
 
@@ -1109,6 +1119,15 @@ impl Server {
             self.resolve_path(fingerprint, &path)?.is_some(),
             server_error::PackageMetadataFileMissing { fingerprint, path },
           );
+        }
+
+        for text in metadata.texts() {
+          let path = &text.path;
+
+          let hash = self.resolve_path(fingerprint, path)?.unwrap();
+
+          str::from_utf8(&self.read_file(hash)?)
+            .context(server_error::PackageMetadataTextUtf8 { fingerprint, path })?;
         }
       }
 

@@ -691,12 +691,19 @@ pub(crate) async fn package_item(
       },
     }
 
+    let text = if let Items::Text(items) = items {
+      Some(server.package_text(fingerprint, &items[index].content.path)?)
+    } else {
+      None
+    };
+
     Ok(
       ItemHtml {
         fingerprint,
         identifier,
         index,
         metadata,
+        text,
       }
       .page(server_config.url.clone()),
     )

@@ -40,6 +40,7 @@ use {
     checked_url::CheckedUrl,
     chroma_subsampling::ChromaSubsampling,
     claims::Claims,
+    class::Class,
     client::Client,
     color_info::ColorInfo,
     color_type::ColorType,
@@ -248,6 +249,7 @@ use {
     process::{self, ExitCode},
     ptr, slice,
     str::{self, FromStr, Utf8Error},
+    string::FromUtf8Error,
     sync::{
       Arc, LazyLock,
       atomic::{self, AtomicU64},
@@ -356,6 +358,7 @@ mod cause;
 mod checked_url;
 mod chroma_subsampling;
 mod claims;
+mod class;
 mod client;
 mod color_info;
 mod color_type;

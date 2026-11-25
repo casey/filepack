@@ -163,12 +163,24 @@ pub(crate) enum ServerError {
   },
   #[snafu(display("package {fingerprint} does not have metadata"))]
   PackageMetadataNotFound { fingerprint: Fingerprint },
+  #[snafu(display("package {fingerprint} text file `{path}` is not valid UTF-8"))]
+  PackageMetadataTextUtf8 {
+    fingerprint: Fingerprint,
+    path: RelativePath,
+    source: Utf8Error,
+  },
   #[snafu(display("package {fingerprint} not mounted"))]
   PackageNotMounted { fingerprint: Fingerprint },
   #[snafu(display("package number {number} not found"))]
   PackageNumberNotFound { number: u64 },
   #[snafu(display("package {fingerprint} root directory is unverified"))]
   PackageRootUnverified { fingerprint: Fingerprint },
+  #[snafu(display("stored text file `{path}` in package {fingerprint} is not valid UTF-8"))]
+  PackageTextCorrupt {
+    fingerprint: Fingerprint,
+    path: RelativePath,
+    source: FromUtf8Error,
+  },
   #[snafu(display("package {fingerprint} is unverified"))]
   PackageUnverified { fingerprint: Fingerprint },
   #[snafu(display("page not found"))]
@@ -271,6 +283,7 @@ impl ServerError {
       | Self::PackageFileMissing { .. }
       | Self::DirectoryCorrupt { .. }
       | Self::PackageMetadataCorrupt { .. }
+      | Self::PackageTextCorrupt { .. }
       | Self::RevisionCorrupt { .. }
       | Self::Time { .. } => StatusCode::INTERNAL_SERVER_ERROR,
       Self::ApiVersionMalformed { .. }
@@ -292,6 +305,7 @@ impl ServerError {
       | Self::RevisionParse { .. }
       | Self::PackageMetadataDecode { .. }
       | Self::PackageMetadataFileMissing { .. }
+      | Self::PackageMetadataTextUtf8 { .. }
       | Self::PackageRootUnverified { .. }
       | Self::PackageUnverified { .. }
       | Self::PublicKeyParse { .. }
