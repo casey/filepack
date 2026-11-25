@@ -7,6 +7,7 @@ pub(crate) struct ItemHtml {
   pub(crate) identifier: PackageIdentifier,
   pub(crate) index: usize,
   pub(crate) metadata: Metadata,
+  pub(crate) text: Option<String>,
 }
 
 impl ItemHtml {
@@ -43,6 +44,14 @@ impl ItemHtml {
 }
 
 impl Page for ItemHtml {
+  fn class(&self) -> Option<&'static str> {
+    if matches!(self.items(), Items::Text(_)) {
+      Some("text")
+    } else {
+      None
+    }
+  }
+
   fn next(&self) -> Option<String> {
     self.items().next_url(self.identifier, self.index)
   }
@@ -346,12 +355,13 @@ mod tests {
   #[test]
   fn render() {
     #[track_caller]
-    fn case(metadata: Metadata, expected: String) {
+    fn case(metadata: Metadata, text: Option<&str>, expected: String) {
       assert_eq!(
         ItemHtml {
           fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
           identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
           metadata,
+          text: text.map(str::to_owned),
           ..default()
         }
         .to_string(),
@@ -370,6 +380,7 @@ mod tests {
         title: Some("qux".parse().unwrap()),
         ..default()
       },
+      None,
       format!(
         "
           <img src=/artwork/{fingerprint}>
@@ -410,6 +421,7 @@ mod tests {
         }),
         ..default()
       },
+      None,
       format!(
         "
           <img src=/media/image/{fingerprint}/item/1 width=1 height=2>
@@ -438,9 +450,12 @@ mod tests {
         }),
         ..default()
       },
+      Some("\n<baz>"),
       format!(
         "
-          <iframe sandbox src=/media/text/{fingerprint}/item/1></iframe>
+          <pre>
+
+          &lt;baz&gt;</pre>
           <footer>
             <hgroup>
               <h1>bar</h1>
@@ -463,6 +478,7 @@ mod tests {
         }),
         ..default()
       },
+      None,
       format!(
         "
           <video
@@ -497,6 +513,7 @@ mod tests {
         }),
         ..default()
       },
+      None,
       format!(
         "
           <video
@@ -528,6 +545,7 @@ mod tests {
         title: Some("baz".parse().unwrap()),
         ..default()
       },
+      None,
       format!(
         "
           <img src=/media/image/{fingerprint}/item/1 width=1 height=1>

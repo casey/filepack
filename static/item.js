@@ -1,6 +1,6 @@
 let audio = document.querySelector('audio');
 let download = document.querySelector('a[download]');
-let media = document.querySelector('img, video');
+let media = document.querySelector('img, pre, video');
 let next = document.querySelector('link[rel=next]');
 
 let autoplay = sessionStorage.getItem('autoplay');

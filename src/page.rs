@@ -1,6 +1,10 @@
 use super::*;
 
 pub trait Page: Display + Sized {
+  fn class(&self) -> Option<&'static str> {
+    None
+  }
+
   fn next(&self) -> Option<String> {
     None
   }

@@ -1,4 +1,4 @@
-body {
+html:not(.text) body {
   height: 100dvh;
 }
 
@@ -83,5 +83,28 @@ audio {
 
   &::-webkit-media-controls-enclosure {
     border-radius: 0;
+  }
+}
+
+html.text {
+  header {
+    position: sticky;
+    top: 0;
+  }
+
+  footer {
+    bottom: 0;
+    position: sticky;
+  }
+
+  pre {
+    flex: 1;
+    margin: 0;
+    overflow-x: auto;
+    padding: var(--space-2);
+
+    &:fullscreen {
+      background-color: var(--background);
+    }
   }
 }

@@ -60,7 +60,7 @@ body {
   min-height: 100dvh;
 }
 
-code, kbd {
+code, kbd, pre {
   font-family: ui-monospace, Menlo, "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
 }
 

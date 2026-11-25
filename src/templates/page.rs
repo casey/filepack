@@ -52,6 +52,24 @@ impl<T: Page> Describe for PageHtml<T> {
 mod tests {
   use {super::*, pretty_assertions::assert_eq};
 
+  struct ClassPage;
+
+  impl Display for ClassPage {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+      write!(f, "bar")
+    }
+  }
+
+  impl Page for ClassPage {
+    fn class(&self) -> Option<&'static str> {
+      Some("foo")
+    }
+
+    fn title(&self) -> String {
+      "class".into()
+    }
+  }
+
   struct ImagePage;
 
   impl Display for ImagePage {
@@ -129,6 +147,49 @@ mod tests {
     fn title(&self) -> String {
       "script".into()
     }
+  }
+
+  #[test]
+  fn class() {
+    assert_eq!(
+      ClassPage.page(None).to_string(),
+      unindent(
+        "
+          <!doctype html>
+          <html class=foo lang=en>
+            <head>
+              <meta charset=utf-8>
+              <meta name=viewport content='width=device-width,initial-scale=1.0'>
+              <title>class</title>
+              <meta name=description content='Filepack package server'>
+              <meta name=google content=notranslate>
+              <meta property=og:site_name content=Filepack>
+              <link href=/static/page.css rel=stylesheet>
+              <script src=/static/page.js type=module></script>
+            </head>
+            <body>
+              <header>
+                <nav>
+                  <a href=/>Filepack</a>
+                  <a href=/packages>Packages</a>
+                  <a href=https://filepack.com/book>Book</a>
+                  <a href=https://github.com/casey/filepack>GitHub</a>
+                  <button aria-label='Keyboard shortcuts' popovertarget=shortcuts title='Keyboard shortcuts'>?</button>
+                </nav>
+              </header>
+              <main>
+                bar
+              </main>
+              <div id=shortcuts popover>
+                <dl>
+                  <div><dt><kbd>?</kbd></dt><dd>toggle shortcuts</dd></div>
+                </dl>
+              </div>
+            </body>
+          </html>
+        "
+      ),
+    );
   }
 
   #[test]
