@@ -8,7 +8,7 @@
 <img src=/media/image/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }} width={{ dimensions.width }} height={{ dimensions.height }}>
 %%   }
 %%   Items::Text(_) => {
-<pre>
+<pre{{ Attribute::lang(self.metadata.language) }}>
 {{ self.text.as_ref().unwrap() }}</pre>
 %%   }
 %%   Items::Video(_) => {

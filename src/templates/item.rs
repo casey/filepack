@@ -442,6 +442,7 @@ mod tests {
 
     case(
       Metadata {
+        language: Some("en".parse().unwrap()),
         media: Some(Media::Text {
           items: vec![Item {
             content: Text::test("foo.md"),
@@ -453,7 +454,7 @@ mod tests {
       Some("\n<baz>"),
       format!(
         "
-          <pre>
+          <pre lang='en'>
 
           &lt;baz&gt;</pre>
           <footer>
