@@ -29,7 +29,7 @@ pub(crate) struct Rights {
 }
 
 impl Rights {
-  pub(crate) fn info(&self, fingerprint: Fingerprint) -> Info {
+  pub(crate) fn info(&self, identifier: PackageIdentifier) -> Info {
     InfoBuilder::new()
       .value("status", self.status.display())
       .when_some(self.license.as_ref(), |builder, license| {
@@ -53,7 +53,7 @@ impl Rights {
         builder.list(
           "texts",
           texts.iter().enumerate().map(|(i, text)| {
-            Info::Link(Link::new(&text.path).href(format!("/license/{fingerprint}/{}", Ordinal(i))))
+            Info::Link(Link::new(&text.path).href(PackageText::License(i).path(identifier)))
           }),
         )
       })

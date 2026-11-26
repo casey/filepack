@@ -3796,6 +3796,35 @@ fn number_redirects_to_package() {
 }
 
 #[test]
+fn package_colophon() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    package: Some(PackageMetadata {
+      colophon: Some(Text::test("foo.md")),
+      ..default()
+    }),
+    ..default()
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.md", b"bar")
+    .upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}/colophon"))
+    .assert_page(PackageTextHtml {
+      fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
+      metadata,
+      text: "bar".into(),
+      ty: PackageText::Colophon,
+    })
+    .send();
+}
+
+#[test]
 fn package_item_audio() {
   let server = TestServer::new();
 
@@ -4193,6 +4222,44 @@ fn package_item_without_metadata() {
 }
 
 #[test]
+fn package_license() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    rights: Some(Rights {
+      basis: None,
+      license: None,
+      links: None,
+      notices: None,
+      status: rights::Status::Licensed,
+      texts: Some(
+        vec![Text::test("foo.txt"), Text::test("bar.txt")]
+          .try_into()
+          .unwrap(),
+      ),
+    }),
+    ..default()
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("bar.txt", b"baz")
+    .file("foo.txt", b"qux")
+    .upload(&server);
+
+  server
+    .get(format!("/package/{fingerprint}/license/2"))
+    .assert_page(PackageTextHtml {
+      fingerprint,
+      identifier: PackageIdentifier::Fingerprint(fingerprint),
+      metadata,
+      text: "baz".into(),
+      ty: PackageText::License(1),
+    })
+    .send();
+}
+
+#[test]
 fn package_media() {
   let server = TestServer::new();
 
@@ -4536,6 +4603,32 @@ fn package_page_web() {
         files: 2,
       },
       ..default()
+    })
+    .send();
+}
+
+#[test]
+fn package_readme() {
+  let server = TestServer::new();
+
+  let metadata = Metadata {
+    readme: Some(Text::test("foo.md")),
+    ..default()
+  };
+
+  let fingerprint = PackageBuilder::new()
+    .metadata(&metadata)
+    .file("foo.md", b"bar")
+    .upload(&server);
+
+  server
+    .get("/package/0/readme")
+    .assert_page(PackageTextHtml {
+      fingerprint,
+      identifier: PackageIdentifier::Number(0),
+      metadata,
+      text: "bar".into(),
+      ty: PackageText::Readme,
     })
     .send();
 }

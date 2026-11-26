@@ -267,12 +267,7 @@ impl Metadata {
     Ok(())
   }
 
-  pub(crate) fn info(
-    &self,
-    builder: InfoBuilder,
-    identifier: PackageIdentifier,
-    fingerprint: Fingerprint,
-  ) -> InfoBuilder {
+  pub(crate) fn info(&self, builder: InfoBuilder, identifier: PackageIdentifier) -> InfoBuilder {
     builder
       .optional("title", self.title.as_ref())
       .optional("creator", self.creator.as_ref())
@@ -282,7 +277,7 @@ impl Metadata {
       .when(self.readme.is_some(), |builder| {
         builder.link(
           "readme",
-          Link::new("view").href(format!("/readme/{fingerprint}")),
+          Link::new("view").href(PackageText::Readme.path(identifier)),
         )
       })
       .when_some(self.homepage.as_ref(), |builder, homepage| {
@@ -290,14 +285,14 @@ impl Metadata {
       })
       .optional("language", self.language.map(Language::name))
       .when_some(self.rights.as_ref(), |builder, rights| {
-        builder.info("rights", rights.info(fingerprint))
+        builder.info("rights", rights.info(identifier))
       })
       .when_some(
         self
           .package
           .as_ref()
           .filter(|package| **package != PackageMetadata::default()),
-        |builder, package| builder.info("package", package.info(fingerprint)),
+        |builder, package| builder.info("package", package.info(identifier)),
       )
       .when_some(self.media.as_ref(), |builder, media| {
         media.info(builder, identifier)
@@ -803,11 +798,7 @@ mod tests {
 
     assert_eq!(
       metadata
-        .info(
-          InfoBuilder::new(),
-          PackageIdentifier::Number(0),
-          Fingerprint::EXAMPLE.parse().unwrap(),
-        )
+        .info(InfoBuilder::new(), PackageIdentifier::Number(0))
         .build(),
       Info::Map(Vec::new()),
     );

@@ -1,0 +1,20 @@
+<footer>
+  <hgroup>
+    <h1>{{ self.heading }}</h1>
+    <p>
+%% if let Some(creator) = &self.metadata.creator {
+      <span>{{ creator }}</span>
+%% }
+      <a href=/package/{{ self.identifier }}>
+%% if let Some(title) = &self.metadata.title {
+        {{ title }}
+%% } else if let PackageIdentifier::Fingerprint(fingerprint) = self.identifier {
+        <code>{{ fingerprint }}</code>
+%% } else {
+        {{ self.identifier }}
+%% }
+      </a>
+    </p>
+  </hgroup>
+  <a download href={{ self.download }}>Download</a>
+</footer>

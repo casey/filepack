@@ -23,7 +23,7 @@ use {
   },
   templates::{
     DirectoryHtml, FilesHtml, HistoryHtml, HomeHtml, ItemHtml, KeyHtml, MediaHtml, PackageHtml,
-    PackagesHtml,
+    PackageTextHtml, PackagesHtml,
   },
   tokio::{net::TcpListener, runtime, task::block_in_place},
   tower_http::set_header::SetResponseHeaderLayer,
