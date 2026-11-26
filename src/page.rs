@@ -17,6 +17,10 @@ pub trait Page: Display + Sized {
     None
   }
 
+  fn open_graph_title(&self) -> Option<String> {
+    None
+  }
+
   fn page(self, base: Option<Url>) -> PageHtml<Self> {
     PageHtml {
       base,

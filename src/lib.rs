@@ -570,6 +570,7 @@ mod webm_builder;
 
 const API_VERSION: u64 = 0;
 const API_VERSION_HEADER: HeaderName = HeaderName::from_static("filepack-api-version");
+const UNTITLED_PACKAGE: &str = "Untitled package";
 
 const KIB: usize = 1 << 10;
 const MIB: usize = KIB << 10;

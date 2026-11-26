@@ -25,6 +25,10 @@ impl Page for PackageTextHtml {
     Some("text")
   }
 
+  fn open_graph_image(&self) -> Option<OpenGraphImage> {
+    OpenGraphImage::artwork(&self.metadata, self.fingerprint)
+  }
+
   fn script(&self) -> Option<&'static str> {
     Some("/static/item.js")
   }
@@ -58,6 +62,32 @@ impl Page for PackageTextHtml {
 #[cfg(test)]
 mod tests {
   use {super::*, pretty_assertions::assert_eq};
+
+  #[test]
+  fn open_graph() {
+    let html = PackageTextHtml {
+      fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+      identifier: PackageIdentifier::Number(0),
+      metadata: Metadata {
+        artwork: Some(Image::test("foo.png")),
+        ..default()
+      },
+      text: String::new(),
+      ty: PackageText::Readme,
+    };
+
+    assert_eq!(
+      html.open_graph_image(),
+      Some(OpenGraphImage {
+        alt: "Artwork for Untitled package".into(),
+        dimensions: Dimensions {
+          height: 1,
+          width: 1,
+        },
+        path: format!("artwork/{}", Fingerprint::EXAMPLE),
+      }),
+    );
+  }
 
   #[test]
   fn render() {

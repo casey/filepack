@@ -7,6 +7,27 @@ pub struct PageHtml<T: Page> {
 }
 
 impl<T: Page> PageHtml<T> {
+  fn description(&self) -> String {
+    self
+      .content
+      .open_graph_description()
+      .unwrap_or_else(|| "Filepack package server".into())
+  }
+
+  fn open_graph_image(&self) -> OpenGraphImage {
+    self
+      .content
+      .open_graph_image()
+      .unwrap_or_else(OpenGraphImage::fallback)
+  }
+
+  fn open_graph_title(&self) -> String {
+    self
+      .content
+      .open_graph_title()
+      .unwrap_or_else(|| self.content.title())
+  }
+
   fn shortcuts(&self) -> Vec<Shortcut> {
     let mut shortcuts = Vec::new();
 
@@ -85,12 +106,17 @@ mod tests {
 
     fn open_graph_image(&self) -> Option<OpenGraphImage> {
       Some(OpenGraphImage {
+        alt: "quux".into(),
         dimensions: Dimensions {
           height: 1,
           width: 2,
         },
         path: "bar".into(),
       })
+    }
+
+    fn open_graph_title(&self) -> Option<String> {
+      Some("baz".into())
     }
 
     fn title(&self) -> String {
@@ -163,7 +189,10 @@ mod tests {
               <title>class</title>
               <meta name=description content='Filepack package server'>
               <meta name=google content=notranslate>
+              <meta name=theme-color content=#dfa66c>
               <meta property=og:site_name content=Filepack>
+              <meta property=og:title content='class'>
+              <meta property=og:type content=website>
               <link href=/static/page.css rel=stylesheet>
               <script src=/static/page.js type=module></script>
             </head>
@@ -206,7 +235,10 @@ mod tests {
               <title>navigation</title>
               <meta name=description content='Filepack package server'>
               <meta name=google content=notranslate>
+              <meta name=theme-color content=#dfa66c>
               <meta property=og:site_name content=Filepack>
+              <meta property=og:title content='navigation'>
+              <meta property=og:type content=website>
               <link href=/static/page.css rel=stylesheet>
               <link href=/foo rel=next>
               <link href=/bar rel=prev>
@@ -256,13 +288,18 @@ mod tests {
               <meta charset=utf-8>
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
               <title>image</title>
-              <meta name=description content='Filepack package server'>
+              <meta name=description content='qux'>
               <meta name=google content=notranslate>
+              <meta name=theme-color content=#dfa66c>
               <meta property=og:description content='qux'>
               <meta property=og:image content='https://example.com/bar'>
+              <meta property=og:image:alt content='quux'>
               <meta property=og:image:height content=1>
               <meta property=og:image:width content=2>
+              <meta name=twitter:card content=summary>
               <meta property=og:site_name content=Filepack>
+              <meta property=og:title content='baz'>
+              <meta property=og:type content=website>
               <link href=/static/page.css rel=stylesheet>
               <script src=/static/page.js type=module></script>
             </head>
@@ -300,10 +337,13 @@ mod tests {
               <meta charset=utf-8>
               <meta name=viewport content='width=device-width,initial-scale=1.0'>
               <title>image</title>
-              <meta name=description content='Filepack package server'>
+              <meta name=description content='qux'>
               <meta name=google content=notranslate>
+              <meta name=theme-color content=#dfa66c>
               <meta property=og:description content='qux'>
               <meta property=og:site_name content=Filepack>
+              <meta property=og:title content='baz'>
+              <meta property=og:type content=website>
               <link href=/static/page.css rel=stylesheet>
               <script src=/static/page.js type=module></script>
             </head>
@@ -333,6 +373,14 @@ mod tests {
   }
 
   #[test]
+  fn open_graph_image_fallback() {
+    assert_eq!(
+      ClassPage.page(None).open_graph_image(),
+      OpenGraphImage::fallback(),
+    );
+  }
+
+  #[test]
   fn script() {
     assert_eq!(
       ScriptPage.page(None).to_string(),
@@ -346,7 +394,10 @@ mod tests {
               <title>script</title>
               <meta name=description content='Filepack package server'>
               <meta name=google content=notranslate>
+              <meta name=theme-color content=#dfa66c>
               <meta property=og:site_name content=Filepack>
+              <meta property=og:title content='script'>
+              <meta property=og:type content=website>
               <link href=/static/page.css rel=stylesheet>
               <script src=/static/page.js type=module></script>
               <script src=/foo.js type=module></script>

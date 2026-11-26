@@ -53,4 +53,24 @@ mod tests {
     case("item.js", "text/javascript;charset=utf-8");
     case("page.css", "text/css;charset=utf-8");
   }
+
+  #[test]
+  fn open_graph_image_fallback() {
+    let fallback = OpenGraphImage::fallback();
+
+    let image = ::image::load_from_memory(
+      &StaticAsset::get(fallback.path.strip_prefix("static/").unwrap())
+        .unwrap()
+        .content,
+    )
+    .unwrap();
+
+    assert_eq!(
+      Dimensions {
+        height: image.height().into(),
+        width: image.width().into(),
+      },
+      fallback.dimensions,
+    );
+  }
 }

@@ -2,11 +2,17 @@ use super::*;
 
 #[derive(Boilerplate)]
 pub(crate) struct HistoryHtml {
+  pub(crate) fingerprint: Fingerprint,
   pub(crate) identifier: PackageIdentifier,
+  pub(crate) metadata: Option<Metadata>,
   pub(crate) revisions: Vec<(RevisionHash, BTreeSet<PublicKey>)>,
 }
 
 impl Page for HistoryHtml {
+  fn open_graph_image(&self) -> Option<OpenGraphImage> {
+    OpenGraphImage::artwork(self.metadata.as_ref()?, self.fingerprint)
+  }
+
   fn title(&self) -> String {
     format!("Package {} history · Filepack", self.identifier)
   }
@@ -20,7 +26,9 @@ mod tests {
   fn history() {
     assert_eq!(
       HistoryHtml {
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
         identifier: PackageIdentifier::Number(0),
+        metadata: None,
         revisions: vec![
           (
             RevisionHash::EXAMPLE.parse().unwrap(),
@@ -49,6 +57,31 @@ mod tests {
         revision = RevisionHash::EXAMPLE,
         zero = RevisionHash::ZERO,
       )),
+    );
+  }
+
+  #[test]
+  fn open_graph() {
+    let html = HistoryHtml {
+      fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+      identifier: PackageIdentifier::Number(0),
+      metadata: Some(Metadata {
+        artwork: Some(Image::test("foo.png")),
+        ..default()
+      }),
+      revisions: Vec::new(),
+    };
+
+    assert_eq!(
+      html.open_graph_image(),
+      Some(OpenGraphImage {
+        alt: "Artwork for Untitled package".into(),
+        dimensions: Dimensions {
+          height: 1,
+          width: 1,
+        },
+        path: format!("artwork/{}", Fingerprint::EXAMPLE),
+      }),
     );
   }
 }
