@@ -60,29 +60,36 @@ mod tests {
               <dt>packages</dt>
               <dd>
                 <ol role=list>
-                  <li>
-                    <a href='/package/0'>0</a>
-                  </li>
-                  <li>
-                    <a href='/package/1'>1</a>
-                  </li>
-                </ol>
+            <li>
+              <a href='/package/0'>0</a>
+
+            </li>
+            <li>
+              <a href='/package/1'>1</a>
+
+            </li>
+          </ol>
+
               </dd>
             </div>
             <div>
               <dt>revisions</dt>
               <dd>
                 <ol role=list>
-                  <li>
-                    <a href='/package/{zero}'><code>{zero}</code></a>
-                  </li>
-                  <li>
-                    <a href='/package/{revision}'><code>{revision}</code></a>
-                  </li>
-                </ol>
+            <li>
+              <a href='/package/{zero}'><code>{zero}</code></a>
+
+            </li>
+            <li>
+              <a href='/package/{revision}'><code>{revision}</code></a>
+
+            </li>
+          </ol>
+
               </dd>
             </div>
           </dl>
+
         ",
         key = PublicKey::EXAMPLE,
         revision = RevisionHash::EXAMPLE,

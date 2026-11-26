@@ -72,6 +72,7 @@ mod tests {
               </tr>
             </tbody>
           </table>
+
         "#,
       ),
     );
