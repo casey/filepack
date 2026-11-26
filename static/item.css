@@ -99,6 +99,7 @@ html.text {
 
   pre {
     flex: 1;
+    font-size: calc(var(--scale, 1) * 1em);
     margin: 0 auto;
     max-width: 100%;
     overflow-x: auto;
