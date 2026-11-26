@@ -27,6 +27,7 @@ use {
     array_decoder::ArrayDecoder,
     array_encoder::ArrayEncoder,
     attestation_error::AttestationError,
+    attribute::Attribute,
     audio::Audio,
     audio_codec::AudioCodec,
     audio_error::AudioError,
@@ -40,7 +41,6 @@ use {
     checked_url::CheckedUrl,
     chroma_subsampling::ChromaSubsampling,
     claims::Claims,
-    class::Class,
     client::Client,
     color_info::ColorInfo,
     color_type::ColorType,
@@ -344,6 +344,7 @@ mod arguments;
 mod array_decoder;
 mod array_encoder;
 mod attestation_error;
+mod attribute;
 mod audio;
 mod audio_codec;
 mod audio_error;
@@ -358,7 +359,6 @@ mod cause;
 mod checked_url;
 mod chroma_subsampling;
 mod claims;
-mod class;
 mod client;
 mod color_info;
 mod color_type;
