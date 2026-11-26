@@ -109,4 +109,24 @@ html.text {
       background-color: var(--background);
     }
   }
+
+  @media print {
+    --background: white;
+    --text: black;
+    color-scheme: light;
+
+    footer, header {
+      display: none;
+    }
+
+    pre {
+      font-size: 10pt;
+      margin: 0;
+      overflow: visible;
+      overflow-wrap: anywhere;
+      padding: 0;
+      white-space: pre-wrap;
+      width: auto;
+    }
+  }
 }
