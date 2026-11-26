@@ -68,6 +68,7 @@ impl Page for ItemHtml {
           self.fingerprint,
           Ordinal(self.index)
         ),
+        self.item().display_title(self.index),
       )),
       Items::Video(_) => {
         if let Some(placeholder) = self.item().placeholder() {
@@ -79,12 +80,21 @@ impl Page for ItemHtml {
               self.fingerprint,
               Ordinal(self.index)
             ),
+            format!("Placeholder for {}", self.item().display_title(self.index)),
           ))
         } else {
           OpenGraphImage::artwork(&self.metadata, self.fingerprint)
         }
       }
     }
+  }
+
+  fn open_graph_title(&self) -> Option<String> {
+    Some(format!(
+      "{} · {}",
+      self.item().display_title(self.index),
+      self.metadata.title.as_deref().unwrap_or(UNTITLED_PACKAGE),
+    ))
   }
 
   fn prev(&self) -> Option<String> {
@@ -172,6 +182,7 @@ mod tests {
 
     fn artwork() -> OpenGraphImage {
       OpenGraphImage {
+        alt: "Artwork for Untitled package".into(),
         dimensions: Dimensions {
           height: 1,
           width: 1,
@@ -224,6 +235,7 @@ mod tests {
         ..default()
       },
       Some(OpenGraphImage {
+        alt: "Image 1".into(),
         dimensions: Dimensions {
           height: 2,
           width: 1,
@@ -256,6 +268,7 @@ mod tests {
         ..default()
       },
       Some(OpenGraphImage {
+        alt: "Image 1".into(),
         dimensions: Dimensions {
           height: 3,
           width: 4,
@@ -285,6 +298,7 @@ mod tests {
         ..default()
       },
       Some(OpenGraphImage {
+        alt: "Placeholder for Video 1".into(),
         dimensions: Dimensions {
           height: 2,
           width: 4,
@@ -320,6 +334,7 @@ mod tests {
         ..default()
       },
       Some(OpenGraphImage {
+        alt: "Placeholder for Video 1".into(),
         dimensions: Dimensions {
           height: 1,
           width: 2,
@@ -350,6 +365,25 @@ mod tests {
         ..default()
       },
       None,
+    );
+  }
+
+  #[test]
+  fn open_graph_title() {
+    assert_eq!(
+      ItemHtml {
+        fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+        identifier: PackageIdentifier::Fingerprint(Fingerprint::EXAMPLE.parse().unwrap()),
+        metadata: Metadata {
+          media: Some(Media::Image {
+            items: vec![Item::test("foo.png")],
+          }),
+          ..default()
+        },
+        ..default()
+      }
+      .open_graph_title(),
+      Some("Image 1 · Untitled package".into()),
     );
   }
 

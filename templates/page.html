@@ -4,19 +4,23 @@
     <meta charset=utf-8>
     <meta name=viewport content='width=device-width,initial-scale=1.0'>
     <title>{{ self.content.title() }}</title>
-    <meta name=description content='Filepack package server'>
+    <meta name=description content='{{ self.description() }}'>
     <meta name=google content=notranslate>
+    <meta name=theme-color content=#dfa66c>
 %% if let Some(open_graph_description) = self.content.open_graph_description() {
     <meta property=og:description content='{{ open_graph_description }}'>
 %% }
-%% if let Some(base) = &self.base
-%%   && let Some(open_graph_image) = self.content.open_graph_image()
-%% {
+%% if let Some(base) = &self.base {
+%%   let open_graph_image = self.open_graph_image();
     <meta property=og:image content='{{ base.join(&open_graph_image.path).unwrap() }}'>
+    <meta property=og:image:alt content='{{ open_graph_image.alt }}'>
     <meta property=og:image:height content={{ open_graph_image.dimensions.height }}>
     <meta property=og:image:width content={{ open_graph_image.dimensions.width }}>
+    <meta name=twitter:card content=summary>
 %% }
     <meta property=og:site_name content=Filepack>
+    <meta property=og:title content='{{ self.open_graph_title() }}'>
+    <meta property=og:type content=website>
     <link href=/static/page.css rel=stylesheet>
 %% if let Some(stylesheet) = self.content.stylesheet() {
     <link href={{ stylesheet }} rel=stylesheet>

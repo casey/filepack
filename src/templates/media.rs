@@ -53,12 +53,15 @@ impl MediaHtml {
 }
 
 impl Page for MediaHtml {
+  fn open_graph_image(&self) -> Option<OpenGraphImage> {
+    OpenGraphImage::artwork(&self.metadata, self.fingerprint)
+  }
+
   fn title(&self) -> String {
-    if let Some(title) = self.title() {
-      format!("{title} media · Filepack")
-    } else {
-      format!("{} media · Filepack", self.fingerprint)
-    }
+    format!(
+      "{} media · Filepack",
+      self.title().unwrap_or(UNTITLED_PACKAGE)
+    )
   }
 
   fn up(&self) -> Option<String> {
@@ -213,6 +216,33 @@ mod tests {
         fingerprint = Fingerprint::EXAMPLE,
       )),
     );
+  }
+
+  #[test]
+  fn open_graph() {
+    let html = MediaHtml {
+      fingerprint: Fingerprint::EXAMPLE.parse().unwrap(),
+      identifier: PackageIdentifier::Number(0),
+      metadata: Metadata {
+        artwork: Some(Image::test("foo.png")),
+        ..default()
+      },
+      ..default()
+    };
+
+    assert_eq!(
+      html.open_graph_image(),
+      Some(OpenGraphImage {
+        alt: "Artwork for Untitled package".into(),
+        dimensions: Dimensions {
+          height: 1,
+          width: 1,
+        },
+        path: format!("artwork/{}", Fingerprint::EXAMPLE),
+      }),
+    );
+
+    assert_eq!(Page::title(&html), "Untitled package media · Filepack");
   }
 
   #[test]

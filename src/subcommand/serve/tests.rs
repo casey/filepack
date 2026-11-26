@@ -2095,7 +2095,9 @@ fn get_package_history() {
   server
     .get("/package/0/history")
     .assert_page(HistoryHtml {
+      fingerprint: bar,
       identifier: PackageIdentifier::Number(0),
+      metadata: None,
       revisions: vec![
         (head, BTreeSet::from([PrivateKey::zero().public_key()])),
         (root, BTreeSet::new()),
@@ -2106,7 +2108,9 @@ fn get_package_history() {
   server
     .get(format!("/package/{root}/history"))
     .assert_page(HistoryHtml {
+      fingerprint: foo,
       identifier: PackageIdentifier::RevisionHash(root),
+      metadata: None,
       revisions: vec![(root, BTreeSet::new())],
     })
     .send();
@@ -6269,7 +6273,9 @@ fn verify_revision_update_merge() {
   server
     .get("/package/0/history")
     .assert_page(HistoryHtml {
+      fingerprint: baz,
       identifier: PackageIdentifier::Number(0),
+      metadata: None,
       revisions: vec![(merge, BTreeSet::new()), (a, BTreeSet::new())],
     })
     .send();

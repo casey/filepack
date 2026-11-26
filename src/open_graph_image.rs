@@ -2,6 +2,7 @@ use super::*;
 
 #[derive(Debug, PartialEq)]
 pub struct OpenGraphImage {
+  pub(crate) alt: String,
   pub(crate) dimensions: Dimensions,
   pub(crate) path: String,
 }
@@ -12,17 +13,34 @@ impl OpenGraphImage {
       metadata,
       metadata.artwork.as_ref()?,
       format!("artwork/{fingerprint}"),
+      format!(
+        "Artwork for {}",
+        metadata.title.as_deref().unwrap_or(UNTITLED_PACKAGE),
+      ),
     ))
   }
 
-  pub(crate) fn thumbnail(metadata: &Metadata, image: &Image, path: String) -> Self {
+  pub(crate) fn fallback() -> Self {
+    Self {
+      alt: "Filepack logo".into(),
+      dimensions: Dimensions {
+        height: 1024,
+        width: 1024,
+      },
+      path: "static/favicon.png".into(),
+    }
+  }
+
+  pub(crate) fn thumbnail(metadata: &Metadata, image: &Image, path: String, alt: String) -> Self {
     if let Some(thumbnail) = metadata.thumbnail(&image.path) {
       Self {
+        alt,
         dimensions: thumbnail.oriented_dimensions(),
         path: format!("{path}/thumbnail"),
       }
     } else {
       Self {
+        alt,
         dimensions: image.oriented_dimensions(),
         path,
       }
@@ -39,7 +57,12 @@ mod tests {
     #[track_caller]
     fn case(metadata: &Metadata, expected: OpenGraphImage) {
       assert_eq!(
-        OpenGraphImage::thumbnail(metadata, metadata.artwork.as_ref().unwrap(), "foo".into()),
+        OpenGraphImage::thumbnail(
+          metadata,
+          metadata.artwork.as_ref().unwrap(),
+          "foo".into(),
+          "bar".into(),
+        ),
         expected,
       );
     }
@@ -67,6 +90,7 @@ mod tests {
         ..default()
       },
       OpenGraphImage {
+        alt: "bar".into(),
         dimensions: Dimensions {
           height: 2,
           width: 1,
@@ -100,6 +124,7 @@ mod tests {
         ..default()
       },
       OpenGraphImage {
+        alt: "bar".into(),
         dimensions: Dimensions {
           height: 3,
           width: 4,

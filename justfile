@@ -56,6 +56,19 @@ fmt:
   cargo fmt --all
   rumdl fmt
 
+favicon-png:
+  magick \
+    -background none \
+    -size 797x920 \
+    static/favicon.svg \
+    -background '#111111' \
+    -gravity center \
+    -extent 1024x1024 \
+    -depth 8 \
+    -strip \
+    -define png:exclude-chunks=date,time \
+    static/favicon.png
+
 outdated:
   cargo outdated --workspace --root-deps-only
 

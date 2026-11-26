@@ -126,11 +126,37 @@ impl Page for PackageHtml {
   }
 
   fn open_graph_description(&self) -> Option<String> {
-    Some(self.metadata.as_ref()?.description.as_ref()?.to_string())
+    let metadata = self.metadata.as_ref();
+
+    if let Some(description) = metadata.and_then(|metadata| metadata.description.as_ref()) {
+      return Some(description.to_string());
+    }
+
+    let ty = match metadata
+      .and_then(|metadata| metadata.media.as_ref())
+      .map(Media::ty)
+    {
+      Some(MediaType::Audio) => "Audio package",
+      Some(MediaType::Image) => "Image package",
+      Some(MediaType::Text) => "Text package",
+      Some(MediaType::Video) => "Video package",
+      Some(MediaType::Web) => "Web package",
+      None => "Package",
+    };
+
+    Some(format!(
+      "{ty} with {} totaling {}",
+      Count::new(self.totals.files, "file"),
+      format_size(self.totals.file_size),
+    ))
   }
 
   fn open_graph_image(&self) -> Option<OpenGraphImage> {
     OpenGraphImage::artwork(self.metadata.as_ref()?, self.fingerprint)
+  }
+
+  fn open_graph_title(&self) -> Option<String> {
+    Some(self.title().unwrap_or(UNTITLED_PACKAGE).into())
   }
 
   fn prev(&self) -> Option<String> {
@@ -142,11 +168,7 @@ impl Page for PackageHtml {
   }
 
   fn title(&self) -> String {
-    if let Some(title) = self.title() {
-      format!("{title} · Filepack")
-    } else {
-      format!("{} · Filepack", self.fingerprint)
-    }
+    format!("{} · Filepack", self.title().unwrap_or(UNTITLED_PACKAGE))
   }
 
   fn up(&self) -> Option<String> {
@@ -877,6 +899,7 @@ mod tests {
           path: "foo.png".parse().unwrap(),
         }),
         description: Some("bar".parse().unwrap()),
+        title: Some("baz".parse().unwrap()),
         ..default()
       }),
       number: Some(0),
@@ -886,6 +909,7 @@ mod tests {
     assert_eq!(
       html.open_graph_image(),
       Some(OpenGraphImage {
+        alt: "Artwork for baz".into(),
         dimensions: Dimensions {
           height: 2,
           width: 1,
@@ -895,6 +919,8 @@ mod tests {
     );
 
     assert_eq!(html.open_graph_description(), Some("bar".into()));
+
+    assert_eq!(html.open_graph_title(), Some("baz".into()));
 
     let mut html = html;
 
@@ -921,6 +947,7 @@ mod tests {
     assert_eq!(
       html.open_graph_image(),
       Some(OpenGraphImage {
+        alt: "Artwork for baz".into(),
         dimensions: Dimensions {
           height: 3,
           width: 4,
@@ -937,7 +964,31 @@ mod tests {
     };
 
     assert_eq!(html.open_graph_image(), None);
-    assert_eq!(html.open_graph_description(), None);
+    assert_eq!(
+      html.open_graph_description(),
+      Some("Package with 0 files totaling 0 B".into()),
+    );
+
+    let html = PackageHtml {
+      metadata: Some(Metadata {
+        media: Some(Media::Web),
+        ..default()
+      }),
+      totals: Totals {
+        directories: 0,
+        directory_size: 0,
+        file_size: 2048,
+        files: 1,
+      },
+      ..html
+    };
+
+    assert_eq!(
+      html.open_graph_description(),
+      Some("Web package with 1 file totaling 2 KiB".into()),
+    );
+    assert_eq!(html.open_graph_title(), Some("Untitled package".into()));
+    assert_eq!(Page::title(&html), "Untitled package · Filepack");
   }
 
   #[test]

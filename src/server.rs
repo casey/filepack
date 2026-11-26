@@ -396,7 +396,9 @@ impl Server {
       .collect::<ServerResult<Vec<(RevisionHash, BTreeSet<PublicKey>)>>>()?;
 
     Ok(HistoryHtml {
+      fingerprint,
       identifier,
+      metadata: self.package_metadata_opt(fingerprint)?,
       revisions,
     })
   }
