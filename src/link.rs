@@ -40,7 +40,7 @@ impl Link {
 impl Display for Link {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     fn escape(f: &mut Formatter, s: &str) -> fmt::Result {
-      fmt::Write::write_str(&mut boilerplate::Formatter::new(f, true, "", false), s)
+      boilerplate::Escape::escape(&s, f)
     }
 
     write!(f, "<a")?;

@@ -228,84 +228,99 @@ mod tests {
               <dt>number</dt>
               <dd>
                 <a href='/package/0'>0</a>
+
               </dd>
             </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
                 <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+
               </dd>
             </div>
             <div>
               <dt>size</dt>
               <dd>
                 6 B
+
               </dd>
             </div>
             <div>
               <dt>files</dt>
               <dd>
                 <a href='/directory/{directory}'>2 files</a>
+
               </dd>
             </div>
             <div>
               <dt>rights</dt>
               <dd>
                 <dl>
-                  <div>
-                    <dt>status</dt>
-                    <dd>
-                      licensed
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>license</dt>
-                    <dd>
-                      LicenseRef-foo
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>texts</dt>
-                    <dd>
-                      <ol role=list>
-                        <li>
-                          <a href='/license/{fingerprint}/1'>foo/LICENSE.txt</a>
-                        </li>
-                      </ol>
-                    </dd>
-                  </div>
-                </dl>
+            <div>
+              <dt>status</dt>
+              <dd>
+                licensed
+
+              </dd>
+            </div>
+            <div>
+              <dt>license</dt>
+              <dd>
+                LicenseRef-foo
+
+              </dd>
+            </div>
+            <div>
+              <dt>texts</dt>
+              <dd>
+                <ol role=list>
+            <li>
+              <a href='/license/{fingerprint}/1'>foo/LICENSE.txt</a>
+
+            </li>
+          </ol>
+
+              </dd>
+            </div>
+          </dl>
+
               </dd>
             </div>
             <div>
               <dt>media</dt>
               <dd>
                 <a href='/package/{fingerprint}/media'>audio</a>
+
               </dd>
             </div>
             <div>
               <dt>tracks</dt>
               <dd>
                 2
+
               </dd>
             </div>
             <div>
               <dt>duration</dt>
               <dd>
                 3:46
+
               </dd>
             </div>
             <div>
               <dt>format</dt>
               <dd>
                 <ol role=list>
-                  <li>
-                    FLAC
-                  </li>
-                </ol>
+            <li>
+              FLAC
+
+            </li>
+          </ol>
+
               </dd>
             </div>
           </dl>
+
           <ol>
             <li>
               <a href=/package/{fingerprint}/item/1>foo</a>
@@ -368,55 +383,65 @@ mod tests {
               <dt>number</dt>
               <dd>
                 <a href='/package/0'>0</a>
+
               </dd>
             </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
                 <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+
               </dd>
             </div>
             <div>
               <dt>size</dt>
               <dd>
                 6 B
+
               </dd>
             </div>
             <div>
               <dt>files</dt>
               <dd>
                 <a href='/directory/{directory}'>2 files</a>
+
               </dd>
             </div>
             <div>
               <dt>media</dt>
               <dd>
                 <a href='/package/{fingerprint}/media'>audio</a>
+
               </dd>
             </div>
             <div>
               <dt>tracks</dt>
               <dd>
                 2
+
               </dd>
             </div>
             <div>
               <dt>duration</dt>
               <dd>
                 5124095576030431:00:15
+
               </dd>
             </div>
             <div>
               <dt>format</dt>
               <dd>
                 <ol role=list>
-                  <li>
-                    FLAC
-                  </li>
-                </ol>
+            <li>
+              FLAC
+
+            </li>
+          </ol>
+
               </dd>
             </div>
           </dl>
+
           <ol>
             <li>
               <a href=/package/{fingerprint}/item/1>foo</a>
@@ -520,71 +545,84 @@ mod tests {
               <dt>number</dt>
               <dd>
                 <a href='/package/0'>0</a>
+
               </dd>
             </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
                 <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+
               </dd>
             </div>
             <div>
               <dt>size</dt>
               <dd>
                 9 B
+
               </dd>
             </div>
             <div>
               <dt>files</dt>
               <dd>
                 <a href='/directory/{directory}'>3 files</a>
+
               </dd>
             </div>
             <div>
               <dt>publisher</dt>
               <dd>
                 qux
+
               </dd>
             </div>
             <div>
               <dt>rights</dt>
               <dd>
                 <dl>
-                  <div>
-                    <dt>status</dt>
-                    <dd>
-                      public domain
-                    </dd>
-                  </div>
-                </dl>
+            <div>
+              <dt>status</dt>
+              <dd>
+                public domain
+
+              </dd>
+            </div>
+          </dl>
+
               </dd>
             </div>
             <div>
               <dt>media</dt>
               <dd>
                 <a href='/package/{fingerprint}/media'>image</a>
+
               </dd>
             </div>
             <div>
               <dt>images</dt>
               <dd>
                 3
+
               </dd>
             </div>
             <div>
               <dt>format</dt>
               <dd>
                 <ol role=list>
-                  <li>
-                    PNG
-                  </li>
-                  <li>
-                    JPEG
-                  </li>
-                </ol>
+            <li>
+              PNG
+
+            </li>
+            <li>
+              JPEG
+
+            </li>
+          </ol>
+
               </dd>
             </div>
           </dl>
+
           <ul class=thumbnails role=list>
             <li style="--aspect-ratio: 2 / 1">
               <a href=/package/{fingerprint}/item/1>
@@ -667,99 +705,117 @@ mod tests {
               <dt>number</dt>
               <dd>
                 <a href='/package/0'>0</a>
+
               </dd>
             </div>
             <div>
               <dt>revision</dt>
               <dd>
                 <a href='/package/{revision}'><code>{revision}</code></a>
+
               </dd>
             </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
                 <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+
               </dd>
             </div>
             <div>
               <dt>parent</dt>
               <dd>
                 <a href='/package/{revision}'><code>{revision}</code></a>
+
               </dd>
             </div>
             <div>
               <dt>merge parents</dt>
               <dd>
                 <ol role=list>
-                  <li>
-                    <a href='/package/{merge}'><code>{merge}</code></a>
-                  </li>
-                </ol>
+            <li>
+              <a href='/package/{merge}'><code>{merge}</code></a>
+
+            </li>
+          </ol>
+
               </dd>
             </div>
             <div>
               <dt>history</dt>
               <dd>
                 <a href='/package/0/history'>2 revisions</a>
+
               </dd>
             </div>
             <div>
               <dt>signatures</dt>
               <dd>
                 <ol role=list>
-                  <li>
-                    <a href='/key/{key}'><code>{key}</code></a>
-                  </li>
-                </ol>
+            <li>
+              <a href='/key/{key}'><code>{key}</code></a>
+
+            </li>
+          </ol>
+
               </dd>
             </div>
             <div>
               <dt>size</dt>
               <dd>
                 3 B
+
               </dd>
             </div>
             <div>
               <dt>files</dt>
               <dd>
                 <a href='/directory/{directory}'>1 file</a>
+
               </dd>
             </div>
             <div>
               <dt>mount</dt>
               <dd>
                 <a href='/mount/0/'>view</a>
+
               </dd>
             </div>
             <div>
               <dt>media</dt>
               <dd>
                 <a href='/package/0/media'>audio</a>
+
               </dd>
             </div>
             <div>
               <dt>tracks</dt>
               <dd>
                 1
+
               </dd>
             </div>
             <div>
               <dt>duration</dt>
               <dd>
                 3:45
+
               </dd>
             </div>
             <div>
               <dt>format</dt>
               <dd>
                 <ol role=list>
-                  <li>
-                    FLAC
-                  </li>
-                </ol>
+            <li>
+              FLAC
+
+            </li>
+          </ol>
+
               </dd>
             </div>
           </dl>
+
           <ol>
             <li>
               <a href=/package/0/item/1>foo</a>
@@ -943,137 +999,161 @@ mod tests {
               <dt>number</dt>
               <dd>
                 <a href='/package/0'>0</a>
+
               </dd>
             </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
                 <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+
               </dd>
             </div>
             <div>
               <dt>size</dt>
               <dd>
                 3 B
+
               </dd>
             </div>
             <div>
               <dt>files</dt>
               <dd>
                 <a href='/directory/{directory}'>1 file</a>
+
               </dd>
             </div>
             <div>
               <dt>readme</dt>
               <dd>
                 <a href='/readme/{fingerprint}'>view</a>
+
               </dd>
             </div>
             <div>
               <dt>language</dt>
               <dd>
                 English
+
               </dd>
             </div>
             <div>
               <dt>rights</dt>
               <dd>
                 <dl>
-                  <div>
-                    <dt>status</dt>
-                    <dd>
-                      licensed
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>license</dt>
-                    <dd>
-                      <a href='https://spdx.org/licenses/CC0-1.0.html' title='Creative Commons Zero v1.0 Universal'>CC0-1.0</a>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>notices</dt>
-                    <dd>
-                      <ol role=list>
-                        <li>
-                          bob
-                        </li>
-                      </ol>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>basis</dt>
-                    <dd>
-                      qux
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>links</dt>
-                    <dd>
-                      <ol role=list>
-                        <li>
-                          <a href='http://example.com/foo'>http://example.com/foo</a>
-                        </li>
-                      </ol>
-                    </dd>
-                  </div>
-                </dl>
+            <div>
+              <dt>status</dt>
+              <dd>
+                licensed
+
+              </dd>
+            </div>
+            <div>
+              <dt>license</dt>
+              <dd>
+                <a href='https://spdx.org/licenses/CC0-1.0.html' title='Creative Commons Zero v1.0 Universal'>CC0-1.0</a>
+
+              </dd>
+            </div>
+            <div>
+              <dt>notices</dt>
+              <dd>
+                <ol role=list>
+            <li>
+              bob
+
+            </li>
+          </ol>
+
+              </dd>
+            </div>
+            <div>
+              <dt>basis</dt>
+              <dd>
+                qux
+
+              </dd>
+            </div>
+            <div>
+              <dt>links</dt>
+              <dd>
+                <ol role=list>
+            <li>
+              <a href='http://example.com/foo'>http://example.com/foo</a>
+
+            </li>
+          </ol>
+
+              </dd>
+            </div>
+          </dl>
+
               </dd>
             </div>
             <div>
               <dt>package</dt>
               <dd>
                 <dl>
-                  <div>
-                    <dt>title</dt>
-                    <dd>
-                      baz
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>creator</dt>
-                    <dd>
-                      foo
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>time</dt>
-                    <dd>
-                      2024-01-01
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>description</dt>
-                    <dd>
-                      bar
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>colophon</dt>
-                    <dd>
-                      <a href='/colophon/{fingerprint}'>view</a>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>homepage</dt>
-                    <dd>
-                      <a href='http://example.com'>http://example.com</a>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>sources</dt>
-                    <dd>
-                      <ol role=list>
-                        <li>
-                          <a href='http://example.com/bar'>http://example.com/bar</a>
-                        </li>
-                      </ol>
-                    </dd>
-                  </div>
-                </dl>
+            <div>
+              <dt>title</dt>
+              <dd>
+                baz
+
+              </dd>
+            </div>
+            <div>
+              <dt>creator</dt>
+              <dd>
+                foo
+
+              </dd>
+            </div>
+            <div>
+              <dt>time</dt>
+              <dd>
+                2024-01-01
+
+              </dd>
+            </div>
+            <div>
+              <dt>description</dt>
+              <dd>
+                bar
+
+              </dd>
+            </div>
+            <div>
+              <dt>colophon</dt>
+              <dd>
+                <a href='/colophon/{fingerprint}'>view</a>
+
+              </dd>
+            </div>
+            <div>
+              <dt>homepage</dt>
+              <dd>
+                <a href='http://example.com'>http://example.com</a>
+
+              </dd>
+            </div>
+            <div>
+              <dt>sources</dt>
+              <dd>
+                <ol role=list>
+            <li>
+              <a href='http://example.com/bar'>http://example.com/bar</a>
+
+            </li>
+          </ol>
+
               </dd>
             </div>
           </dl>
+
+              </dd>
+            </div>
+          </dl>
+
           <table>
             <thead>
               <tr>
@@ -1088,6 +1168,7 @@ mod tests {
               </tr>
             </tbody>
           </table>
+
         ",
         directory = Hash::from(Fingerprint::EXAMPLE.parse::<Fingerprint>().unwrap()),
         fingerprint = Fingerprint::EXAMPLE,
@@ -1124,46 +1205,55 @@ mod tests {
               <dt>fingerprint</dt>
               <dd>
                 <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+
               </dd>
             </div>
             <div>
               <dt>size</dt>
               <dd>
                 0 B
+
               </dd>
             </div>
             <div>
               <dt>files</dt>
               <dd>
                 <a href='/directory/{directory}'>0 files</a>
+
               </dd>
             </div>
             <div>
               <dt>media</dt>
               <dd>
                 <a href='/package/{fingerprint}/media'>text</a>
+
               </dd>
             </div>
             <div>
               <dt>texts</dt>
               <dd>
                 2
+
               </dd>
             </div>
             <div>
               <dt>format</dt>
               <dd>
                 <ol role=list>
-                  <li>
-                    Markdown
-                  </li>
-                  <li>
-                    plain text
-                  </li>
-                </ol>
+            <li>
+              Markdown
+
+            </li>
+            <li>
+              plain text
+
+            </li>
+          </ol>
+
               </dd>
             </div>
           </dl>
+
           <ol>
             <li>
               <a href=/package/{fingerprint}/item/1>bar</a>
@@ -1284,55 +1374,65 @@ mod tests {
               <dt>number</dt>
               <dd>
                 <a href='/package/0'>0</a>
+
               </dd>
             </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
                 <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+
               </dd>
             </div>
             <div>
               <dt>size</dt>
               <dd>
                 3 B
+
               </dd>
             </div>
             <div>
               <dt>files</dt>
               <dd>
                 <a href='/directory/{directory}'>1 file</a>
+
               </dd>
             </div>
             <div>
               <dt>media</dt>
               <dd>
                 <a href='/package/{fingerprint}/media'>video</a>
+
               </dd>
             </div>
             <div>
               <dt>videos</dt>
               <dd>
                 4
+
               </dd>
             </div>
             <div>
               <dt>duration</dt>
               <dd>
                 3:48
+
               </dd>
             </div>
             <div>
               <dt>format</dt>
               <dd>
                 <ol role=list>
-                  <li>
-                    MP4
-                  </li>
-                </ol>
+            <li>
+              MP4
+
+            </li>
+          </ol>
+
               </dd>
             </div>
           </dl>
+
           <ol class=thumbnails role=list>
             <li style=\"--aspect-ratio: 2 / 1\">
               <a href=/package/{fingerprint}/item/1>

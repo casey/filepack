@@ -99,9 +99,11 @@ html.text {
 
   pre {
     flex: 1;
-    margin: 0;
+    margin: 0 auto;
+    max-width: 100%;
     overflow-x: auto;
     padding: var(--space-2);
+    width: fit-content;
 
     &:fullscreen {
       background-color: var(--background);

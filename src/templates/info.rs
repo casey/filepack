@@ -28,16 +28,19 @@ mod tests {
           <ol role=list>
             <li>
               foo
+
             </li>
             <li>
               <dl>
-                <div>
-                  <dt>bar</dt>
-                  <dd>
-                    baz
-                  </dd>
-                </div>
-              </dl>
+            <div>
+              <dt>bar</dt>
+              <dd>
+                baz
+
+              </dd>
+            </div>
+          </dl>
+
             </li>
           </ol>
         "
@@ -63,19 +66,22 @@ mod tests {
               <dt>foo</dt>
               <dd>
                 bar
+
               </dd>
             </div>
             <div>
               <dt>baz</dt>
               <dd>
                 <dl>
-                  <div>
-                    <dt>qux</dt>
-                    <dd>
-                      quux
-                    </dd>
-                  </div>
-                </dl>
+            <div>
+              <dt>qux</dt>
+              <dd>
+                quux
+
+              </dd>
+            </div>
+          </dl>
+
               </dd>
             </div>
           </dl>

@@ -97,74 +97,87 @@ mod tests {
               <dt>number</dt>
               <dd>
                 <a href='/package/0'>0</a>
+
               </dd>
             </div>
             <div>
               <dt>fingerprint</dt>
               <dd>
                 <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+
               </dd>
             </div>
             <div>
               <dt>items</dt>
               <dd>
                 <ol role=list>
-                  <li>
-                    <dl>
-                      <div>
-                        <dt>file</dt>
-                        <dd>
-                          <a href='/package/{identifier}/item/1'>foo.png</a>
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>format</dt>
-                        <dd>
-                          PNG
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>dimensions</dt>
-                        <dd>
-                          1×1
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>orientation</dt>
-                        <dd>
-                          0°
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>color type</dt>
-                        <dd>
-                          RGB
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>bit depth</dt>
-                        <dd>
-                          8-bit
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>alpha</dt>
-                        <dd>
-                          false
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>compression</dt>
-                        <dd>
-                          lossless
-                        </dd>
-                      </div>
-                    </dl>
-                  </li>
-                </ol>
+            <li>
+              <dl>
+            <div>
+              <dt>file</dt>
+              <dd>
+                <a href='/package/{identifier}/item/1'>foo.png</a>
+
+              </dd>
+            </div>
+            <div>
+              <dt>format</dt>
+              <dd>
+                PNG
+
+              </dd>
+            </div>
+            <div>
+              <dt>dimensions</dt>
+              <dd>
+                1×1
+
+              </dd>
+            </div>
+            <div>
+              <dt>orientation</dt>
+              <dd>
+                0°
+
+              </dd>
+            </div>
+            <div>
+              <dt>color type</dt>
+              <dd>
+                RGB
+
+              </dd>
+            </div>
+            <div>
+              <dt>bit depth</dt>
+              <dd>
+                8-bit
+
+              </dd>
+            </div>
+            <div>
+              <dt>alpha</dt>
+              <dd>
+                false
+
+              </dd>
+            </div>
+            <div>
+              <dt>compression</dt>
+              <dd>
+                lossless
+
               </dd>
             </div>
           </dl>
+
+            </li>
+          </ol>
+
+              </dd>
+            </div>
+          </dl>
+
         ",
           fingerprint = Fingerprint::EXAMPLE,
         )),
@@ -191,9 +204,11 @@ mod tests {
             <dt>fingerprint</dt>
             <dd>
               <a href='/package/{fingerprint}'><code>{fingerprint}</code></a>
+
             </dd>
           </div>
         </dl>
+
       ",
         fingerprint = Fingerprint::EXAMPLE,
       )),
