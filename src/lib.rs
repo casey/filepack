@@ -147,6 +147,7 @@ use {
     package_identifier_error::PackageIdentifierError,
     package_metadata::PackageMetadata,
     package_summary::PackageSummary,
+    package_text::PackageText,
     packager::Packager,
     page_error::PageError,
     path_error::PathError,
@@ -490,6 +491,7 @@ mod package_identifier;
 mod package_identifier_error;
 mod package_metadata;
 mod package_summary;
+mod package_text;
 mod packager;
 mod page;
 mod page_error;

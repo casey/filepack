@@ -21,23 +21,4 @@
   src=/media/video/{{ self.fingerprint }}/item/{{ Ordinal(self.index) }}></video>
 %%   }
 %% }
-<footer>
-  <hgroup>
-    <h1>{{ self.item().display_title(self.index) }}</h1>
-    <p>
-%% if let Some(creator) = self.creator() {
-      <span>{{ creator }}</span>
-%% }
-      <a href=/package/{{ self.identifier }}>
-%% if let Some(title) = self.title() {
-        {{ title }}
-%% } else if let PackageIdentifier::Fingerprint(fingerprint) = self.identifier {
-        <code>{{ fingerprint }}</code>
-%% } else {
-        {{ self.identifier }}
-%% }
-      </a>
-    </p>
-  </hgroup>
-  <a download href={{ self.download_link() }}>Download</a>
-</footer>
+{{ Trusted(self.footer()) }}

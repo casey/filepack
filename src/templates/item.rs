@@ -11,10 +11,6 @@ pub(crate) struct ItemHtml {
 }
 
 impl ItemHtml {
-  fn creator(&self) -> Option<&Line> {
-    self.metadata.creator.as_ref()
-  }
-
   fn download_link(&self) -> String {
     let ty = match self.items() {
       Items::Audio(_) => "audio",
@@ -30,16 +26,21 @@ impl ItemHtml {
     )
   }
 
+  fn footer(&self) -> FooterHtml {
+    FooterHtml {
+      download: self.download_link(),
+      heading: self.item().display_title(self.index),
+      identifier: self.identifier,
+      metadata: &self.metadata,
+    }
+  }
+
   fn item(&self) -> &dyn MediaItem {
     self.items().get(self.index).unwrap()
   }
 
   fn items(&self) -> Items {
     self.metadata.media.as_ref().unwrap().items().unwrap()
-  }
-
-  fn title(&self) -> Option<&Line> {
-    self.metadata.title.as_ref()
   }
 }
 
@@ -397,6 +398,7 @@ mod tests {
             </hgroup>
             <a download href=/media/audio/{fingerprint}/item/1>Download</a>
           </footer>
+
         "
       ),
     );
@@ -436,6 +438,7 @@ mod tests {
             </hgroup>
             <a download href=/media/image/{fingerprint}/item/1>Download</a>
           </footer>
+
         "
       ),
     );
@@ -468,6 +471,7 @@ mod tests {
             </hgroup>
             <a download href=/media/text/{fingerprint}/item/1>Download</a>
           </footer>
+
         "
       ),
     );
@@ -497,6 +501,7 @@ mod tests {
             </hgroup>
             <a download href=/media/video/{fingerprint}/item/1>Download</a>
           </footer>
+
         "
       ),
     );
@@ -533,6 +538,7 @@ mod tests {
             </hgroup>
             <a download href=/media/video/{fingerprint}/item/1>Download</a>
           </footer>
+
         "
       ),
     );
@@ -562,6 +568,7 @@ mod tests {
             </hgroup>
             <a download href=/media/image/{fingerprint}/item/1>Download</a>
           </footer>
+
         "
       ),
     );
@@ -593,6 +600,7 @@ mod tests {
             </hgroup>
             <a download href=/media/image/{fingerprint}/item/1>Download</a>
           </footer>
+
         "
       )),
     );

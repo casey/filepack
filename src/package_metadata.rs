@@ -28,7 +28,7 @@ pub(crate) struct PackageMetadata {
 }
 
 impl PackageMetadata {
-  pub(crate) fn info(&self, fingerprint: Fingerprint) -> Info {
+  pub(crate) fn info(&self, identifier: PackageIdentifier) -> Info {
     InfoBuilder::new()
       .optional("title", self.title.as_ref())
       .optional("creator", self.creator.as_ref())
@@ -37,7 +37,7 @@ impl PackageMetadata {
       .when(self.colophon.is_some(), |builder| {
         builder.link(
           "colophon",
-          Link::new("view").href(format!("/colophon/{fingerprint}")),
+          Link::new("view").href(PackageText::Colophon.path(identifier)),
         )
       })
       .when_some(self.homepage.as_ref(), |builder, homepage| {

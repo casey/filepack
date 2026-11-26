@@ -53,9 +53,12 @@ impl Route {
       mount_file_route(registry),
       mount_redirect_route(registry),
       package_route(registry),
+      package_colophon_route(registry),
       package_history_route(registry),
       package_item_route(registry),
+      package_license_route(registry),
       package_media_route(registry),
+      package_readme_route(registry),
       packages_route(registry),
       readme_route(registry),
       static_asset_route(registry),
@@ -273,7 +276,13 @@ pub(crate) async fn colophon(
   fingerprint: Path<Fingerprint>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  block_in_place(|| Ok(server.colophon(*fingerprint)?.range(range)))
+  block_in_place(|| {
+    Ok(
+      server
+        .package_text(*fingerprint, PackageText::Colophon)?
+        .range(range),
+    )
+  })
 }
 
 /// Display entries of directory with `hash`.
@@ -396,7 +405,13 @@ pub(crate) async fn license(
   Path((fingerprint, Ordinal(index))): Path<(Fingerprint, Ordinal)>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  block_in_place(|| Ok(server.license(fingerprint, index)?.range(range)))
+  block_in_place(|| {
+    Ok(
+      server
+        .package_text(fingerprint, PackageText::License(index))?
+        .range(range),
+    )
+  })
 }
 
 /// Serve audio `item` of package with `fingerprint`.
@@ -637,6 +652,24 @@ pub(crate) async fn package(
   })
 }
 
+/// Display colophon of `package`.
+///
+/// `package`: Fingerprint, revision hash, or number of the package.
+#[route(GET, "/package/{package}/colophon")]
+pub(crate) async fn package_colophon(
+  server: ServerExtension,
+  server_config: ServerConfigExtension,
+  Path(identifier): Path<PackageIdentifier>,
+) -> PageResult<PackageTextHtml> {
+  block_in_place(|| {
+    Ok(
+      server
+        .package_text_html(identifier, PackageText::Colophon)?
+        .page(server_config.url.clone()),
+    )
+  })
+}
+
 /// Display revision history of `package`.
 ///
 /// `package`: Fingerprint, revision hash, or number of the package.
@@ -692,7 +725,7 @@ pub(crate) async fn package_item(
     }
 
     let text = if let Items::Text(items) = items {
-      Some(server.package_text(fingerprint, &items[index].content.path)?)
+      Some(server.text(fingerprint, &items[index].content.path)?)
     } else {
       None
     };
@@ -706,6 +739,25 @@ pub(crate) async fn package_item(
         text,
       }
       .page(server_config.url.clone()),
+    )
+  })
+}
+
+/// Display license text `index` of `package`.
+///
+/// `package`: Fingerprint, revision hash, or number of the package.
+/// `index`: One-based index of the license text.
+#[route(GET, "/package/{package}/license/{index}")]
+pub(crate) async fn package_license(
+  server: ServerExtension,
+  server_config: ServerConfigExtension,
+  Path((identifier, Ordinal(index))): Path<(PackageIdentifier, Ordinal)>,
+) -> PageResult<PackageTextHtml> {
+  block_in_place(|| {
+    Ok(
+      server
+        .package_text_html(identifier, PackageText::License(index))?
+        .page(server_config.url.clone()),
     )
   })
 }
@@ -746,6 +798,24 @@ pub(crate) async fn package_media(
   })
 }
 
+/// Display readme of `package`.
+///
+/// `package`: Fingerprint, revision hash, or number of the package.
+#[route(GET, "/package/{package}/readme")]
+pub(crate) async fn package_readme(
+  server: ServerExtension,
+  server_config: ServerConfigExtension,
+  Path(identifier): Path<PackageIdentifier>,
+) -> PageResult<PackageTextHtml> {
+  block_in_place(|| {
+    Ok(
+      server
+        .package_text_html(identifier, PackageText::Readme)?
+        .page(server_config.url.clone()),
+    )
+  })
+}
+
 /// Display all packages.
 #[route(GET, "/packages")]
 pub(crate) async fn packages(
@@ -777,7 +847,13 @@ pub(crate) async fn readme(
   fingerprint: Path<Fingerprint>,
   range: Option<TypedHeader<headers::Range>>,
 ) -> ServerResult<Resource> {
-  block_in_place(|| Ok(server.readme(*fingerprint)?.range(range)))
+  block_in_place(|| {
+    Ok(
+      server
+        .package_text(*fingerprint, PackageText::Readme)?
+        .range(range),
+    )
+  })
 }
 
 /// Serve static asset at `path`.

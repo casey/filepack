@@ -4,7 +4,7 @@ use {
     Database, MultimapTableDefinition, ReadOnlyTable, ReadableDatabase, ReadableMultimapTable,
     ReadableTable, TableDefinition,
   },
-  templates::{HistoryHtml, KeyHtml, PackageHtml},
+  templates::{HistoryHtml, KeyHtml, PackageHtml, PackageTextHtml},
 };
 
 const DIRECTORIES: TableDefinition<Hash, ()> = TableDefinition::new("directories");
@@ -58,18 +58,6 @@ impl Server {
         .filename(stem.filename(&image.format))
         .ty(image.resource_type()),
     )
-  }
-
-  pub(crate) fn colophon(&self, fingerprint: Fingerprint) -> ServerResult<Resource> {
-    let metadata = self.package_metadata(fingerprint)?;
-
-    let colophon = metadata
-      .package
-      .as_ref()
-      .and_then(|package| package.colophon.as_ref())
-      .context(server_error::ColophonNotFound { fingerprint })?;
-
-    self.text(fingerprint, Stem::Colophon, colophon)
   }
 
   pub(crate) fn delete_number(&self, number: u64) -> ServerResult {
@@ -447,19 +435,6 @@ impl Server {
     })
   }
 
-  pub(crate) fn license(&self, fingerprint: Fingerprint, index: usize) -> ServerResult<Resource> {
-    let metadata = self.package_metadata(fingerprint)?;
-
-    let text = metadata
-      .rights
-      .as_ref()
-      .and_then(|rights| rights.texts.as_ref())
-      .and_then(|texts| texts.get(index))
-      .context(server_error::LicenseTextNotFound { fingerprint, index })?;
-
-    self.text(fingerprint, Stem::License, text)
-  }
-
   pub(crate) fn media_item(
     &self,
     fingerprint: Fingerprint,
@@ -827,11 +802,40 @@ impl Server {
   pub(crate) fn package_text(
     &self,
     fingerprint: Fingerprint,
-    path: &RelativePath,
-  ) -> ServerResult<String> {
-    let hash = self.verified_package_file(fingerprint, path)?;
-    let bytes = self.read_file(hash)?;
-    String::from_utf8(bytes).context(server_error::PackageTextCorrupt { fingerprint, path })
+    ty: PackageText,
+  ) -> ServerResult<Resource> {
+    let metadata = self.package_metadata(fingerprint)?;
+
+    let text = ty.text(&metadata, fingerprint)?;
+
+    let hash = self.verified_package_file(fingerprint, &text.path)?;
+
+    Ok(
+      self
+        .open_file(hash)?
+        .filename(ty.stem().filename(&text.format))
+        .ty(text.resource_type()),
+    )
+  }
+
+  pub(crate) fn package_text_html(
+    &self,
+    identifier: PackageIdentifier,
+    ty: PackageText,
+  ) -> ServerResult<PackageTextHtml> {
+    let Resolved { fingerprint, .. } = self.resolve(identifier)?;
+
+    let metadata = self.package_metadata(fingerprint)?;
+
+    let text = self.text(fingerprint, &ty.text(&metadata, fingerprint)?.path)?;
+
+    Ok(PackageTextHtml {
+      fingerprint,
+      identifier,
+      metadata,
+      text,
+      ty,
+    })
   }
 
   pub(crate) fn packages(&self, sort: Sort, order: Order) -> ServerResult<Vec<PackageSummary>> {
@@ -886,17 +890,6 @@ impl Server {
   fn read_revision(&self, revision: RevisionHash) -> ServerResult<Revision> {
     Revision::decode_from_slice(&self.read_file(revision.into())?)
       .context(server_error::RevisionCorrupt { revision })
-  }
-
-  pub(crate) fn readme(&self, fingerprint: Fingerprint) -> ServerResult<Resource> {
-    let metadata = self.package_metadata(fingerprint)?;
-
-    let readme = metadata
-      .readme
-      .as_ref()
-      .context(server_error::ReadmeNotFound { fingerprint })?;
-
-    self.text(fingerprint, Stem::Readme, readme)
   }
 
   pub(crate) fn resolve(&self, identifier: PackageIdentifier) -> ServerResult<Resolved> {
@@ -1007,15 +1000,10 @@ impl Server {
       .collect()
   }
 
-  fn text(&self, fingerprint: Fingerprint, stem: Stem, text: &Text) -> ServerResult<Resource> {
-    let hash = self.verified_package_file(fingerprint, &text.path)?;
-
-    Ok(
-      self
-        .open_file(hash)?
-        .filename(stem.filename(&text.format))
-        .ty(text.resource_type()),
-    )
+  pub(crate) fn text(&self, fingerprint: Fingerprint, path: &RelativePath) -> ServerResult<String> {
+    let hash = self.verified_package_file(fingerprint, path)?;
+    let bytes = self.read_file(hash)?;
+    String::from_utf8(bytes).context(server_error::PackageTextCorrupt { fingerprint, path })
   }
 
   fn verified_package_file(

@@ -84,7 +84,7 @@ impl PackageHtml {
         )
       })
       .when_some(self.metadata.as_ref(), |builder, metadata| {
-        metadata.info(builder, self.identifier, self.fingerprint)
+        metadata.info(builder, self.identifier)
       })
       .build()
   }
@@ -275,7 +275,7 @@ mod tests {
               <dd>
                 <ol role=list>
             <li>
-              <a href='/license/{fingerprint}/1'>foo/LICENSE.txt</a>
+              <a href='/package/{fingerprint}/license/1'>foo/LICENSE.txt</a>
 
             </li>
           </ol>
@@ -1026,7 +1026,7 @@ mod tests {
             <div>
               <dt>readme</dt>
               <dd>
-                <a href='/readme/{fingerprint}'>view</a>
+                <a href='/package/{fingerprint}/readme'>view</a>
 
               </dd>
             </div>
@@ -1125,7 +1125,7 @@ mod tests {
             <div>
               <dt>colophon</dt>
               <dd>
-                <a href='/colophon/{fingerprint}'>view</a>
+                <a href='/package/{fingerprint}/colophon'>view</a>
 
               </dd>
             </div>
