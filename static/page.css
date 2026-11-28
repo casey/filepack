@@ -42,7 +42,7 @@ a:not([href]) {
   color: var(--text);
 }
 
-a[download], button {
+button, footer > a[download] {
   border: 1px solid var(--border);
   color: var(--muted);
   transition: border-color var(--duration), color var(--duration);
